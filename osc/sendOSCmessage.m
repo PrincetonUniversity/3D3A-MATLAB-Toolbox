@@ -1,21 +1,57 @@
 function [retFlag, retMsg, retDat] = sendOSCmessage(udps, sendMsg, sendDat, udpr, retMsg, retDat, waitTime)
-%sendOSCmessage Closed-loop OSC messaging.
-%   [FLAG, RMSG, RDAT] = sendOSCmessage(UDPS, SMSG, SDAT, UDPR, RMSG, RDAT, T)
-%   sends OSC message and data (SMSG, SDAT) over UDPSender UDPS and
-%   awaits a return message (RMSG, RDAT) over UDPReceiver UDPR. The maximum
-%   wait time for a response is T, whose default value is 0.5 seconds.
-%   Returns FLAG as true if the desired message and data are received,
-%   otherwise FLAG is false.
+%SENDOSCMESSAGE Send an OSC message.
+%   FLAG = SENDOSCMESSAGE(UDPS, SMSG, SDAT) sends OSC message and data
+%   (SMSG, SDAT) over UDPSender UDPS. Returns FLAG as false since to
+%   indicate that no response is received (see below).
 %
-%   [FLAG, RMSG, RDAT] = sendOSCmessage(UDPS, SMSG, SDAT, UDPR, RMSG, [], T)
-%   if the return data is not specified, then any response with the correct
-%   return message will be accepted.
+%   FLAG = SENDOSCMESSAGE(UDPS, SMSG, SDAT, UDPR, RMSG) waits for up to 0.5
+%   seconds for a response message (RMSG) to arrive over UDPReceiver UDPR.
+%   FLAG is true only if the desired response message is received within
+%   the wait time.
 %
-%   [FLAG, RMSG, RDAT] = sendOSCmessage(UDPS, SMSG, SDAT, UDPR, [], [], T)
-%   if neither the return message or data are specified, then this becomes
-%   an open-loop messaging function (no response is needed).
+%   FLAG = SENDOSCMESSAGE(UDPS, SMSG, SDAT, UDPR, RMSG, RDAT) waits for
+%   the specified response message and data (RMSG, RDAT) to arrive. FLAG is
+%   true only if the desired message and data are received together within
+%   the wait time.
 %
-%   See also writeOSCmessage, readOSCmessage.
+%   FLAG = SENDOSCMESSAGE(UDPS, SMSG, SDAT, UDPR, RMSG, RDAT, T) waits for
+%   T seconds for the desired response instead of the usual 0.5 seconds.
+%
+%   [FLAG, RMSG, RDAT] = SENDOSCMESSAGE(UDPS, SMSG, SDAT, UDPR, RMSG, ...)
+%   returns also the recieved OSC message and data (RMSG, RDAT).
+%
+%   See also WRITEOSCMESSAGE, READOSCMESSAGE.
+
+%   ==============================================================================
+%   This file is part of the 3D3A MATLAB Toolbox.
+%   
+%   Contributing author(s), listed alphabetically by last name:
+%   Joseph G. Tylka <josephgt@princeton.edu>
+%   3D Audio and Applied Acoustics (3D3A) Laboratory
+%   Princeton University, Princeton, New Jersey 08544, USA
+%   
+%   MIT License
+%   
+%   Copyright (c) 2017 Princeton University
+%   
+%   Permission is hereby granted, free of charge, to any person obtaining a copy
+%   of this software and associated documentation files (the "Software"), to deal
+%   in the Software without restriction, including without limitation the rights
+%   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+%   copies of the Software, and to permit persons to whom the Software is
+%   furnished to do so, subject to the following conditions:
+%   
+%   The above copyright notice and this permission notice shall be included in all
+%   copies or substantial portions of the Software.
+%   
+%   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+%   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+%   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+%   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+%   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+%   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+%   SOFTWARE.
+%   ==============================================================================
 
 if nargin < 7
     waitTime = 0.5;

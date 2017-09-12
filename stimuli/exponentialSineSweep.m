@@ -1,19 +1,63 @@
 function x = exponentialSineSweep(f1, f2, Fs, T, varargin)
-%exponentialSineSweep Generate exponential sine sweep (ESS).
-%   x = exponentialSineSweep(f1, f2, Fs, T) generates an ESS at sampling
-%   rate Fs that sweeps from f1 to f2 in T seconds.
+%EXPONENTIALSINESWEEP Generate exponential sine sweep (ESS).
+%   X = EXPONENTIALSINESWEEP(F1, F2, FS, T) generates an ESS at sampling
+%   rate FS that sweeps from F1 to F2 in T seconds.
 %
-%   Beyond the 4 required inputs, exponentialSineSweep accepts the
-%   following optional argument(s):
-%       {'pad', Tpad} - pads the sweep with Tpad seconds of zeros before
-%           and after the sweep.
+%   EXPONENTIALSINESWEEP(F1,F2,FS,T,Name1,Value1,Name2,Value2, ...) 
+%   Specifies optional comma-separated pairs of Name,Value arguments, 
+%   where Name is the argument name and Value is the corresponding value. 
+%   Name must appear inside single quotes (' '). You can specify several 
+%   name and value pair arguments in any order as Name1,Value1,...,NameN,
+%   ValueN.  Valid Name,Value arguments are as follows:
 %
-%       {'pad', [Tpre, Tpost]} - pads the sweep with Tpre seconds of zeros
-%           before and Tpost seconds of zeros after the sweep.
+%   'pad'   Duration (in seconds) of zeros before and after the sweep. If
+%           given as a scalar, TPAD, this option pads the sweep with TPAD
+%           seconds of zeros before and after the sweep. If given as a
+%           pair, [TPRE, TPOST], this option pads the sweep with TPRE
+%           seconds of zeros before and TPOST seconds of zeros after the
+%           sweep.
 %
-%       {'method', 'phase'} - generates a phase-controlled ESS. Note that
-%           the specified start frequency f1 and the duration T are only
-%           satisfied approximately.
+%   'type'  Type of ESS to generate. Supported types are 'standard' (Farina
+%           ESS) and 'phase', which generates a phase-controlled ESS. Note
+%           that the specified start frequency F1 and the duration T are
+%           only satisfied approximately for 'phase' type sweeps.
+
+%   ==============================================================================
+%   This file is part of the 3D3A MATLAB Toolbox.
+%   
+%   Contributing author(s), listed alphabetically by last name:
+%   Joseph G. Tylka <josephgt@princeton.edu>
+%   3D Audio and Applied Acoustics (3D3A) Laboratory
+%   Princeton University, Princeton, New Jersey 08544, USA
+%   
+%   MIT License
+%   
+%   Copyright (c) 2017 Princeton University
+%   
+%   Permission is hereby granted, free of charge, to any person obtaining a copy
+%   of this software and associated documentation files (the "Software"), to deal
+%   in the Software without restriction, including without limitation the rights
+%   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+%   copies of the Software, and to permit persons to whom the Software is
+%   furnished to do so, subject to the following conditions:
+%   
+%   The above copyright notice and this permission notice shall be included in all
+%   copies or substantial portions of the Software.
+%   
+%   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+%   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+%   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+%   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+%   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+%   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+%   SOFTWARE.
+%   ==============================================================================
+
+%   References:
+%     [1] Farina (2000) Simultaneous Measurement of Impulse Response and
+%         Distortion with a Swept-Sine Technique.
+%     [2] Vetter and di Rosario (2011) ExpoChirpToolbox: a Pure Data
+%         implementation of ESS impulse response measurement.
 
 narginchk(4,inf);
 
