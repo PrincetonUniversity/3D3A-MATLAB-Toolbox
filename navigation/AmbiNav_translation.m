@@ -1,7 +1,11 @@
-function b = sphCoefficientB(n, m)
-%SPHCOEFFICIENTB Spherical harmonic translation recurrence coefficient b.
-%   B = SPHCOEFFICIENTB(L,M) returns the recurrence coefficient B for
-%   spherical harmonic order L and degree M.
+function T = AmbiNav_translation(Li, Lo, d, kVec)
+%AMBINAV_TRANSLATION Ambisonics translation coefficients matrix.
+%   T = AMBINAV_TRANSLATION(LI,LO,D,K) computes the ambisonic translation
+%   coefficients matrix T, for input ambisonics order LI, output order LO,
+%   translation position vector D (given in Cartesian coordinates), and for
+%   angular wavenumber K. K may be a vector, in which case T is (LO+1)^2-by
+%   -(LI+1)^2-by-LENGTH(K). The N3D ambisonics normalization convention is
+%   assumed.
 
 %   ==============================================================================
 %   This file is part of the 3D3A MATLAB Toolbox.
@@ -40,13 +44,27 @@ function b = sphCoefficientB(n, m)
 %     [2] Zotter (2009) Analysis and Synthesis of Sound-Radiation with
 %         Spherical Arrays.
 
-% Eq. (146) [2]
-b = 0;
-if (n >= 0) && (abs(m) <= n)
-    b = sqrt(((n - m - 1)*(n - m))/((2*n - 1)*(2*n + 1)));
-    if m < 0
-        b = -b;
-    end
+narginchk(4,4);
+
+if numel(d) == 3
+    [AZIM,ELEV,R] = cart2sph(d(1),d(2),d(3));
+else
+    error('Translation vector D should have three elements.');
+end
+
+kLen = length(kVec);
+
+maxOrder = max([Li, Lo]);
+Ni = (Li + 1)^2;
+No = (Lo + 1)^2;
+
+Qz = AmbiNav_zRotation(AZIM, ELEV, maxOrder);
+
+T = zeros(No,Ni,kLen);
+for kk = 1:kLen
+    Tz = AmbiNav_zTranslation(kVec(kk)*R, maxOrder);
+    temp = Qz*Tz/Qz;
+    T(:,:,kk) = temp(1:No,1:Ni);
 end
 
 end

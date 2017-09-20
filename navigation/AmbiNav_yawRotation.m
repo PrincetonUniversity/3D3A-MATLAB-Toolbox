@@ -1,8 +1,8 @@
-function Qc = fixedRollAmbRotationMatrix(maxOrder)
-%FIXEDROLLAMBROTATIONMATRIX Ambisonics rotation of 90 degrees roll.
-%   Q = FIXEDROLLAMBROTATIONMATRIX(L) computes the ambisonic rotation
-%   coefficients matrix Q, up to ambisonics order L, for a rotation of 90
-%   degrees roll.
+function Qa = AmbiNav_yawRotation(alpha, maxOrder)
+%AMBINAV_YAWROTATION Ambisonics rotation in yaw.
+%   Q = AMBINAV_YAWROTATION(A, L) computes the ambisonic rotation
+%   coefficients matrix Q, up to ambisonics order L, for a rotation of A 
+%   radians yaw.
 
 %   ==============================================================================
 %   This file is part of the 3D3A MATLAB Toolbox.
@@ -41,7 +41,20 @@ function Qc = fixedRollAmbRotationMatrix(maxOrder)
 %     [2] Zotter (2009) Analysis and Synthesis of Sound-Radiation with
 %         Spherical Arrays.
 
-Qb = fixedPitchAmbRotationMatrix(maxOrder);
-Qc = Qb*fixedYawAmbRotationMatrix(maxOrder)/Qb;
+HOATerms = (maxOrder + 1)^2;
+[nList, mList] = getAmbOrder(0:HOATerms-1);
+
+Qa = zeros(HOATerms);
+for ii = 1:HOATerms
+    for jj = 1:HOATerms
+        if (nList(ii) == nList(jj)) && (abs(mList(ii)) == abs(mList(jj)))
+            if mList(ii)*mList(jj) >= 0
+                Qa(ii,jj) = cos(mList(jj)*alpha);
+            else
+                Qa(ii,jj) = sin(mList(jj)*alpha);
+            end
+        end
+    end
+end
 
 end

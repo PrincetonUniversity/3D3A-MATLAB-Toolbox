@@ -1,12 +1,12 @@
-function Tz = zAmbTranslationMatrix(kd, maxOrder)
-%ZAMBTRANSLATIONMATRIX Ambisonics translation along the z axis.
-%   T = ZAMBTRANSLATIONMATRIX(KD, L) computes the ambisonic translation
+function Tz = AmbiNav_zTranslation(kd, maxOrder)
+%AMBINAV_ZTRANSLATION Ambisonics translation along the z axis.
+%   T = AMBINAV_ZTRANSLATION(KD, L) computes the ambisonic translation
 %   coefficients matrix T, up to ambisonics order L and for non-dimensional
 %   frequency KD, given by product of the angular wavenumber K and the
 %   translation distance D. KD must be a scalar. The N3D ambisonics
 %   normalization convention is assumed.
 %
-%   See also AMBTRANSLATIONMATRIX.
+%   See also AMBINAV_TRANSLATION.
 
 %   ==============================================================================
 %   This file is part of the 3D3A MATLAB Toolbox.
@@ -71,9 +71,9 @@ else
         m = n;
         for l = n:(2*maxOrder-n)
             % Eq. 163 [2]; Eq. 3.2.104 [1]
-            term1 = sphCoefficientB(l,-m)*Tz(getACN(m-1,m-1)+1,getACN(l-1,m-1)+1);
-            term2 = sphCoefficientB(l+1,m-1)*Tz(getACN(m-1,m-1)+1,getACN(l+1,m-1)+1);
-            Tz(getACN(n,m)+1,getACN(l,n)+1) = (term1-term2)/sphCoefficientB(m,-m);
+            term1 = AmbiNav_coefficientB(l,-m)*Tz(getACN(m-1,m-1)+1,getACN(l-1,m-1)+1);
+            term2 = AmbiNav_coefficientB(l+1,m-1)*Tz(getACN(m-1,m-1)+1,getACN(l+1,m-1)+1);
+            Tz(getACN(n,m)+1,getACN(l,n)+1) = (term1-term2)/AmbiNav_coefficientB(m,-m);
         end
     end
     
@@ -82,10 +82,10 @@ else
         for n = m:(maxOrder-1)
             for l = (n+1):(2*maxOrder - (n+1))
                 % Eq. 163 [2]; Eq. 3.2.90 [1]
-                term1 = sphCoefficientA(l,m)*Tz(getACN(n,m)+1,getACN(l+1,m)+1);
-                term2 = sphCoefficientA(l-1,m)*Tz(getACN(n,m)+1,getACN(l-1,m)+1);
-                term3 = sphCoefficientA(n-1,m)*Tz(getACN(n-1,m)+1,getACN(l,m)+1);
-                Tz(getACN(n+1,m)+1,getACN(l,m)+1) = -(term1-term2-term3)/sphCoefficientA(n,m);
+                term1 = AmbiNav_coefficientA(l,m)*Tz(getACN(n,m)+1,getACN(l+1,m)+1);
+                term2 = AmbiNav_coefficientA(l-1,m)*Tz(getACN(n,m)+1,getACN(l-1,m)+1);
+                term3 = AmbiNav_coefficientA(n-1,m)*Tz(getACN(n-1,m)+1,getACN(l,m)+1);
+                Tz(getACN(n+1,m)+1,getACN(l,m)+1) = -(term1-term2-term3)/AmbiNav_coefficientA(n,m);
             end
         end
     end

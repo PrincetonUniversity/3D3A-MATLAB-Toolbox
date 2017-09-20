@@ -1,11 +1,10 @@
-function T = ambTranslationMatrix(Li, Lo, d, kVec)
-%AMBTRANSLATIONMATRIX Ambisonics translation coefficients matrix.
-%   T = AMBTRANSLATIONMATRIX(LI,LO,D,K) computes the ambisonic translation
-%   coefficients matrix T, for input ambisonics order LI, output order LO,
-%   translation position vector D (given in Cartesian coordinates), and for
-%   angular wavenumber K. K may be a vector, in which case T is (LO+1)^2-by
-%   -(LI+1)^2-by-LENGTH(K). The N3D ambisonics normalization convention is
-%   assumed.
+function Qc = AmbiNav_fixedRollRotation(maxOrder)
+%AMBINAV_FIXEDROLLROTATION Ambisonics rotation of 90 degrees roll.
+%   Q = AMBINAV_FIXEDROLLROTATION(L) computes the ambisonic rotation
+%   coefficients matrix Q, up to ambisonics order L, for a rotation of 90
+%   degrees roll.
+%
+%   See also AMBINAV_FIXEDPITCHROTATION, AMBINAV_FIXEDYAWROTATION.
 
 %   ==============================================================================
 %   This file is part of the 3D3A MATLAB Toolbox.
@@ -44,27 +43,7 @@ function T = ambTranslationMatrix(Li, Lo, d, kVec)
 %     [2] Zotter (2009) Analysis and Synthesis of Sound-Radiation with
 %         Spherical Arrays.
 
-narginchk(4,4);
-
-if numel(d) == 3
-    [AZIM,ELEV,R] = cart2sph(d(1),d(2),d(3));
-else
-    error('Translation vector D should have three elements.');
-end
-
-kLen = length(kVec);
-
-maxOrder = max([Li, Lo]);
-Ni = (Li + 1)^2;
-No = (Lo + 1)^2;
-
-Qz = zAmbRotationMatrix(AZIM, ELEV, maxOrder);
-
-T = zeros(No,Ni,kLen);
-for kk = 1:kLen
-    Tz = zAmbTranslationMatrix(kVec(kk)*R, maxOrder);
-    temp = Qz*Tz/Qz;
-    T(:,:,kk) = temp(1:No,1:Ni);
-end
+Qb = AmbiNav_fixedPitchRotation(maxOrder);
+Qc = Qb*AmbiNav_fixedYawRotation(maxOrder)/Qb;
 
 end

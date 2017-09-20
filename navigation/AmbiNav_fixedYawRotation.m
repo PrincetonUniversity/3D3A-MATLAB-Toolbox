@@ -1,8 +1,10 @@
-function Qa = variableYawAmbRotationMatrix(alpha, maxOrder)
-%VARIABLEYAWAMBROTATIONMATRIX Ambisonics rotation in yaw.
-%   Q = VARIABLEYAWAMBROTATIONMATRIX(A, L) computes the ambisonic rotation
-%   coefficients matrix Q, up to ambisonics order L, for a rotation of A 
-%   radians yaw.
+function Qa = AmbiNav_fixedYawRotation(maxOrder)
+%AMBINAV_FIXEDYAWROTATION Ambisonics rotation of 90 degrees yaw.
+%   Q = AMBINAV_FIXEDYAWROTATION(L) computes the ambisonic rotation
+%   coefficients matrix Q, up to ambisonics order L, for a rotation of 90
+%   degrees yaw.
+%
+%   See also AMBINAV_YAWROTATION.
 
 %   ==============================================================================
 %   This file is part of the 3D3A MATLAB Toolbox.
@@ -49,9 +51,13 @@ for ii = 1:HOATerms
     for jj = 1:HOATerms
         if (nList(ii) == nList(jj)) && (abs(mList(ii)) == abs(mList(jj)))
             if mList(ii)*mList(jj) >= 0
-                Qa(ii,jj) = cos(mList(jj)*alpha);
+                if ~mod(mList(jj),2)
+                    Qa(ii,jj) = (-1)^(mList(jj)/2);
+                end
             else
-                Qa(ii,jj) = sin(mList(jj)*alpha);
+                if mod(mList(jj),2)
+                    Qa(ii,jj) = (-1)^((mList(jj)-1)/2);
+                end
             end
         end
     end

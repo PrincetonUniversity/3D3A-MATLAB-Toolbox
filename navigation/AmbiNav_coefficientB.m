@@ -1,8 +1,9 @@
-function Qa = fixedYawAmbRotationMatrix(maxOrder)
-%FIXEDYAWAMBROTATIONMATRIX Ambisonics rotation of 90 degrees yaw.
-%   Q = FIXEDYAWAMBROTATIONMATRIX(L) computes the ambisonic rotation
-%   coefficients matrix Q, up to ambisonics order L, for a rotation of 90
-%   degrees yaw.
+function b = AmbiNav_coefficientB(n, m)
+%AMBINAV_COEFFICIENTB Spherical harmonic translation recurrence coefficient b.
+%   B = AMBINAV_COEFFICIENTB(L,M) returns the recurrence coefficient B for
+%   spherical harmonic order L and degree M.
+%
+%   See also AMBINAV_COEFFICIENTA.
 
 %   ==============================================================================
 %   This file is part of the 3D3A MATLAB Toolbox.
@@ -41,23 +42,12 @@ function Qa = fixedYawAmbRotationMatrix(maxOrder)
 %     [2] Zotter (2009) Analysis and Synthesis of Sound-Radiation with
 %         Spherical Arrays.
 
-HOATerms = (maxOrder + 1)^2;
-[nList, mList] = getAmbOrder(0:HOATerms-1);
-
-Qa = zeros(HOATerms);
-for ii = 1:HOATerms
-    for jj = 1:HOATerms
-        if (nList(ii) == nList(jj)) && (abs(mList(ii)) == abs(mList(jj)))
-            if mList(ii)*mList(jj) >= 0
-                if ~mod(mList(jj),2)
-                    Qa(ii,jj) = (-1)^(mList(jj)/2);
-                end
-            else
-                if mod(mList(jj),2)
-                    Qa(ii,jj) = (-1)^((mList(jj)-1)/2);
-                end
-            end
-        end
+% Eq. (146) [2]
+b = 0;
+if (n >= 0) && (abs(m) <= n)
+    b = sqrt(((n - m - 1)*(n - m))/((2*n - 1)*(2*n + 1)));
+    if m < 0
+        b = -b;
     end
 end
 

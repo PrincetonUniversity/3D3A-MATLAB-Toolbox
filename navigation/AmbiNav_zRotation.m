@@ -1,6 +1,6 @@
-function Qz = zAmbRotationMatrix(AZIM, ELEV, L)
-%ZAMBROTATIONMATRIX Ambisonics rotation to align the z axis.
-%   Q = ZAMBROTATIONMATRIX(AZIM, ELEV, L) computes the ambisonic rotation
+function Qz = AmbiNav_zRotation(AZIM, ELEV, L)
+%AMBINAV_ZROTATION Ambisonics rotation to align the z axis.
+%   Q = AMBINAV_ZROTATION(AZIM, ELEV, L) computes the ambisonic rotation
 %   matrix Q, up to ambisonics order L, which aligns the z-axis in the
 %   rotated coordinate system with a certain azimuth and elevation (AZIM
 %   and ELEV, given in radians) in the original coordinate system.
@@ -10,7 +10,7 @@ function Qz = zAmbRotationMatrix(AZIM, ELEV, L)
 %   expansion coefficients, the inverse of Q should be multiplied on the
 %   left.
 %
-%   See also AMBTRANSLATIONMATRIX.
+%   See also AMBINAV_TRANSLATION.
 
 %   ==============================================================================
 %   This file is part of the 3D3A MATLAB Toolbox.
@@ -49,8 +49,8 @@ function Qz = zAmbRotationMatrix(AZIM, ELEV, L)
 %     [2] Zotter (2009) Analysis and Synthesis of Sound-Radiation with
 %         Spherical Arrays.
 
-Qz = (variableYawAmbRotationMatrix(AZIM, L) / fixedRollAmbRotationMatrix(L)) ...
-    * variableYawAmbRotationMatrix((pi/2) - ELEV, L) ...
-    * fixedRollAmbRotationMatrix(L);
+Qz = (AmbiNav_yawRotation(AZIM, L) / AmbiNav_fixedRollRotation(L)) ...
+    * AmbiNav_yawRotation((pi/2) - ELEV, L) ...
+    * AmbiNav_fixedRollRotation(L);
 
 end

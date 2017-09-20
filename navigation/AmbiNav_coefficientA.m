@@ -1,7 +1,9 @@
-function a = sphCoefficientA(n, m)
-%SPHCOEFFICIENTA Spherical harmonic translation recurrence coefficient a.
-%   A = SPHCOEFFICIENTA(L,M) returns the recurrence coefficient A for
+function a = AmbiNav_coefficientA(n, m)
+%AMBINAV_COEFFICIENTA Spherical harmonic translation recurrence coefficient a.
+%   A = AMBINAV_COEFFICIENTA(L,M) returns the recurrence coefficient A for
 %   spherical harmonic order L and degree M.
+%
+%   See also AMBINAV_COEFFICIENTB.
 
 %   ==============================================================================
 %   This file is part of the 3D3A MATLAB Toolbox.
