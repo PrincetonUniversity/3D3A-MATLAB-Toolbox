@@ -3,5 +3,6 @@ function [] = start3D3AMATLABToolbox()
 
 [dir,~,~] = fileparts(which('start3D3AMATLABToolbox'));
 addpath(genpath(dir))
+rmpath(genpath(fullfile(dir,'.git')))
 
 end
