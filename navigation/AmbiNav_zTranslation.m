@@ -47,84 +47,80 @@ function Tz = AmbiNav_zTranslation(kd, maxOrder)
 
 narginchk(2,2);
 
-% Uses first element of kd by default
-if length(kd) > 1
-    warning('Only computing coefficients for kd(1).');
-    kd = kd(1);
+kdLen = length(kd);
+HOATerms = (maxOrder + 1)^2;
+Tz = zeros(HOATerms, (2*maxOrder+1)^2, kdLen);
+zkd = kd==0;
+nzkd = ~zkd;
+
+zkdPos = find(zkd);
+for ii = 1:sum(zkd)
+    Tz(:,:,zkdPos(ii)) = eye(HOATerms, (2*maxOrder+1)^2);
 end
 
-HOATerms = (maxOrder + 1)^2;
+% Step 1
+for l = 0:2*maxOrder
+    % Eq. 166 [2]; Eq. 3.2.103 [1]
+    Tz(1,getACN(l,0)+1,nzkd) = ((-1)^l)*sqrt(2*l+1)*sphericalBesselJ(l,kd(nzkd));
+end
 
-if kd == 0
-    Tz = eye(HOATerms);
-else
-    Tz = zeros(HOATerms, (2*maxOrder+1)^2);
-    
-    % Step 1
-    for l = 0:2*maxOrder
-        % Eq. 166 [2]; Eq. 3.2.103 [1]
-        Tz(1,getACN(l,0)+1) = ((-1)^l)*sqrt(2*l+1)*sphericalBesselJ(l,kd);
+% Step 2
+for n = 1:maxOrder
+    m = n;
+    for l = n:(2*maxOrder-n)
+        % Eq. 163 [2]; Eq. 3.2.104 [1]
+        term1 = AmbiNav_coefficientB(l,-m)*Tz(getACN(m-1,m-1)+1,getACN(l-1,m-1)+1,nzkd);
+        term2 = AmbiNav_coefficientB(l+1,m-1)*Tz(getACN(m-1,m-1)+1,getACN(l+1,m-1)+1,nzkd);
+        Tz(getACN(n,m)+1,getACN(l,n)+1,nzkd) = (term1-term2)/AmbiNav_coefficientB(m,-m);
     end
-    
-    % Step 2
-    for n = 1:maxOrder
-        m = n;
-        for l = n:(2*maxOrder-n)
-            % Eq. 163 [2]; Eq. 3.2.104 [1]
-            term1 = AmbiNav_coefficientB(l,-m)*Tz(getACN(m-1,m-1)+1,getACN(l-1,m-1)+1);
-            term2 = AmbiNav_coefficientB(l+1,m-1)*Tz(getACN(m-1,m-1)+1,getACN(l+1,m-1)+1);
-            Tz(getACN(n,m)+1,getACN(l,n)+1) = (term1-term2)/AmbiNav_coefficientB(m,-m);
+end
+
+% Step 3
+for m = 0:(maxOrder-1)
+    for n = m:(maxOrder-1)
+        for l = (n+1):(2*maxOrder - (n+1))
+            % Eq. 163 [2]; Eq. 3.2.90 [1]
+            term1 = AmbiNav_coefficientA(l,m)*Tz(getACN(n,m)+1,getACN(l+1,m)+1,nzkd);
+            term2 = AmbiNav_coefficientA(l-1,m)*Tz(getACN(n,m)+1,getACN(l-1,m)+1,nzkd);
+            term3 = AmbiNav_coefficientA(n-1,m)*Tz(getACN(n-1,m)+1,getACN(l,m)+1,nzkd);
+            Tz(getACN(n+1,m)+1,getACN(l,m)+1,nzkd) = -(term1-term2-term3)/AmbiNav_coefficientA(n,m);
         end
     end
-    
-    % Step 3
-    for m = 0:(maxOrder-1)
-        for n = m:(maxOrder-1)
-            for l = (n+1):(2*maxOrder - (n+1))
-                % Eq. 163 [2]; Eq. 3.2.90 [1]
-                term1 = AmbiNav_coefficientA(l,m)*Tz(getACN(n,m)+1,getACN(l+1,m)+1);
-                term2 = AmbiNav_coefficientA(l-1,m)*Tz(getACN(n,m)+1,getACN(l-1,m)+1);
-                term3 = AmbiNav_coefficientA(n-1,m)*Tz(getACN(n-1,m)+1,getACN(l,m)+1);
-                Tz(getACN(n+1,m)+1,getACN(l,m)+1) = -(term1-term2-term3)/AmbiNav_coefficientA(n,m);
-            end
+end
+
+% Step 4
+for n = 1:maxOrder
+    for l = n:maxOrder
+        for m = -1:-1:-n
+            % Eq. 161 [2]; Eq. 3.2.92 [1]
+            Tz(getACN(n,m)+1,getACN(l,m)+1,nzkd) = Tz(getACN(n,-m)+1,getACN(l,-m)+1,nzkd);
         end
     end
-    
-    % Step 4
-    for n = 1:maxOrder
-        for l = n:maxOrder
-            for m = -1:-1:-n
-                % Eq. 161 [2]; Eq. 3.2.92 [1]
-                Tz(getACN(n,m)+1,getACN(l,m)+1) = Tz(getACN(n,-m)+1,getACN(l,-m)+1);
-            end
+end
+
+% Step 5
+for n = 0:maxOrder
+    for l = (n+1):maxOrder
+        for m = -n:n
+            % Eq. 162 [2]; Eq. 3.2.96 [1]
+            coeff = (-1)^(n+l);
+            Tz(getACN(l,m)+1,getACN(n,m)+1,nzkd) = coeff*Tz(getACN(n,m)+1,getACN(l,m)+1,nzkd);
         end
     end
-    
-    % Step 5
-    for n = 0:maxOrder
-        for l = (n+1):maxOrder
-            for m = -n:n
-                % Eq. 162 [2]; Eq. 3.2.96 [1]
-                coeff = (-1)^(n+l);
-                Tz(getACN(l,m)+1,getACN(n,m)+1) = coeff*Tz(getACN(n,m)+1,getACN(l,m)+1);
-            end
+end
+
+% Make square matrix
+Tz = Tz(:,1:HOATerms,:);
+
+% Real-valued signal (N3D) correction
+[nList, ~] = getAmbOrder(0:HOATerms-1);
+for ii = 1:HOATerms
+    for jj = 1:HOATerms
+        if any(Tz(ii,jj,nzkd))
+            coeff = (-1i)^(nList(jj)-nList(ii));
+            Tz(ii,jj,nzkd) = coeff*Tz(ii,jj,nzkd);
         end
     end
-    
-    % Make square matrix
-    Tz = Tz(:,1:HOATerms);
-    
-    % Real-valued signal (N3D) correction
-    [nList, ~] = getAmbOrder(0:HOATerms-1);
-    for ii = 1:HOATerms
-        for jj = 1:HOATerms
-            if Tz(ii,jj)~=0
-                coeff = (-1i)^(nList(jj)-nList(ii));
-                Tz(ii,jj) = coeff*Tz(ii,jj);
-            end
-        end
-    end
-    
 end
 
 end

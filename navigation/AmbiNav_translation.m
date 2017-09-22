@@ -54,17 +54,16 @@ end
 
 kLen = length(kVec);
 
-maxOrder = max([Li, Lo]);
 Ni = (Li + 1)^2;
 No = (Lo + 1)^2;
 
-Qz = AmbiNav_zRotation(AZIM, ELEV, maxOrder);
+QzL = AmbiNav_zRotation(AZIM, ELEV, Lo);
+QzR = AmbiNav_zRotation(AZIM, ELEV, Li);
 
 T = zeros(No,Ni,kLen);
+Tz = AmbiNav_zTranslation(kVec*R, max([Li, Lo]));
 for kk = 1:kLen
-    Tz = AmbiNav_zTranslation(kVec(kk)*R, maxOrder);
-    temp = Qz*Tz/Qz;
-    T(:,:,kk) = temp(1:No,1:Ni);
+    T(:,:,kk) = QzL*Tz(1:No,1:Ni,kk)/QzR;
 end
 
 end
