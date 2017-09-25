@@ -1,23 +1,18 @@
-function avgVal = computeSpectrumAvg(inputSpectra,fVec,METHOD,RANGE)
-%COMPUTESPECTRUMAVG Average an input spectrum over frequency.
-%   avgVal = COMPUTESPECTRUMAVG(inputSpectra,fVec) computes the logarithmic 
-%   average, over frequency, of the spectra in inputSpectra. fVec is a 
-%   vector of frequencies specified in Hz. The frequencies in fVec 
-%   correspond to the frequencies at which spectral data in inputSpectra 
-%   are specified. inputSpectra may be a vector or 2D matrix. If it's a 
-%   matrix, individual spectra must be stored as columns. avgVal is either 
-%   a scalar or vector depending on whether inputSpectra is a vector or 2D 
-%   matrix, respectively.
+function avgVal = computeDirectionAvg(inputSpectra,METHOD)
+%COMPUTEDIRECTIONAVG Average input spectra over "directions" (columns).
+%   avgVal = COMPUTEDIRECTIONAVG(inputSpectra) computes the linear average,
+%   over "directions" (columns), of the spectra in inputSpectra. 
+%   inputSpectra may be a vector or 2D matrix. If it's a matrix, individual
+%   spectra must be stored as columns and avgVal is a column vector with 
+%   length equal to the number of rows in inputSpectra. If inputSpectra is
+%   a vector, then it is forced to a row vector and avgVal is a scalar.
 %
-%   avgVal = COMPUTESPECTRUMAVG(...,METHOD) additionally specifies the 
-%   method used to average the data in inputSpectra across frequency to 
-%   produce avgVal. The options are 'log' (logarithmic average, default), 
-%   'lin' (linear average), and 'rms' (root-mean-square).
+%   avgVal = COMPUTEDIRECTIONAVG(...,METHOD) additionally specifies the 
+%   method used to average the data in inputSpectra across columns to 
+%   produce avgVal. The options are 'lin' (linear average, default), and 
+%   'rms' (root-mean-square).
 %
-%   avgVal = COMPUTESPECTRUMAVG(...,METHOD,RANGE) additionally specifies 
-%   the frequency range, in Hz, over which averaging should be performed.
-%
-%   See also LOGMEAN, MEAN, RMS, COMPUTEDIRECTIONAVG.
+%   See also MEAN, RMS, COMPUTESPECTRUMAVG.
 
 %   ==============================================================================
 %   This file is part of the 3D3A MATLAB Toolbox.
@@ -50,30 +45,23 @@ function avgVal = computeSpectrumAvg(inputSpectra,fVec,METHOD,RANGE)
 %   SOFTWARE.
 %   ==============================================================================
 
-narginchk(2,4);
+narginchk(1,2);
 
-if nargin < 4
-    RANGE = [20,20000];
+if nargin < 2
+    METHOD = 'lin';
 end
 
-if nargin < 3
-    METHOD = 'log';
+if isvector(inputSpectra)
+    inputSpectra = reshape(inputSpectra,[1,length(inputSpectra)]);
 end
-
-fVec = shiftdim(fVec);
-
-[~,lInd] = findNearest(fVec,RANGE(1));
-[~,hInd] = findNearest(fVec,RANGE(2));
 
 switch lower(METHOD)
-    case 'log'
-        avgVal = logmean(inputSpectra,fVec,RANGE);
     case 'lin'
-        avgVal = mean(inputSpectra(lInd:hInd,:));
+        avgVal = mean(inputSpectra,2);
     case 'rms'
-        avgVal = rms(inputSpectra(lInd:hInd,:));
+        avgVal = rms(inputSpectra,2);
     otherwise
-        error('Invalid input for METHOD.');
+        error('Invalid input for METHOD');
 end
 
 end
