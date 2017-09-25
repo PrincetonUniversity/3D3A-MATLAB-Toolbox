@@ -13,8 +13,7 @@ function [distSpec,distValF,distValD] = spectralDistortion(hTest,hRef,fS,...
 %   Averaging is performed on the computed distortion spectrum, distSpec,
 %   represented in dB. fS is sampling rate in Hz. hTest and hRef may be
 %   vectors or 2D matrices of impulse responses (IRs). If matrices, the IRs
-%   must be stored as columns. distSpec has the same dimensions as hTest 
-%   and hRef whereas distValF and distValD are each one dimension smaller.
+%   must be stored as columns.
 %
 %   [distSpec,distValF,distValD] = SPECTRALDISTORTION(...,METHODF)
 %   additionally specifies the method to average distSpec across frequency 
@@ -95,6 +94,8 @@ if nargin < 4
     METHODF = 'log';
 end
 
+hTest = shiftdim(hTest);
+hRef = shiftdim(hRef);
 hrirLen = size(hTest,1);
 fVec = getFreqVec(fS,hrirLen);
 
