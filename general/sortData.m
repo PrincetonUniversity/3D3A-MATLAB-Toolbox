@@ -1,4 +1,4 @@
-function [outputData,outputPos] = sortData(inputData,posMat,DIM)
+function [outputData,outputPos] = sortData(inputData,posMat,DIM,ROUND)
 %SORTDATA Sort inputData based on sorting of posMat.
 %   [outputData,outputPos] = SORTDATA(inputData,posMat) removes any
 %   non-singleton dimensions in posMat, sorts the first column in ascending
@@ -10,7 +10,11 @@ function [outputData,outputPos] = sortData(inputData,posMat,DIM)
 %   specific columns to sort sequentially. For example, DIM = [2,1] first 
 %   sorts by column 2, then by column 1.
 %
-%   See also SORTROWS.
+%   [outputData,outputPos] = SORTDATA(...,ROUND) additionally specifies 
+%   the number of digits to round data in posMat prior to sorting. For more
+%   information, see ROUND.
+%
+%   See also SORTROWS, ROUND.
 
 %   ==============================================================================
 %   This file is part of the 3D3A MATLAB Toolbox.
@@ -43,13 +47,17 @@ function [outputData,outputPos] = sortData(inputData,posMat,DIM)
 %   SOFTWARE.
 %   ==============================================================================
 
-narginchk(2,3);
+narginchk(2,4);
+
+if nargin < 4
+    ROUND = 3;
+end
 
 if nargin < 3
     DIM = 1;
 end
 
-[outputPos,sortIndices] = sortrows(round(posMat,3),DIM);
+[outputPos,sortIndices] = sortrows(round(posMat,ROUND),DIM);
 outputData = inputData(:,sortIndices);
 
 end
