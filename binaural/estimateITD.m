@@ -125,7 +125,7 @@ if indx
 end
 
 % Perform resampling next ('upsample' included for backwards-compatibility)
-indx = findInCell(varargin,'resample') || findInCell(varargin,'upsample');
+indx = findInCell(varargin,'resample')+findInCell(varargin,'upsample');
 if indx
     Fs = varargin{indx+1}*Fs;
     hL = resample(hL,varargin{indx+1},1);

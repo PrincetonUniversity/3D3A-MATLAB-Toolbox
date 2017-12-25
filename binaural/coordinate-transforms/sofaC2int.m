@@ -3,9 +3,9 @@ function [az,el,rad] = sofaC2int(x,y,z)
 %coordinates.
 %   [az,el,rad] = SOFAC2INT(x,y,z) converts from SOFA cartesian  
 %   coordinates to interaural polar coordinates specified using the same 
-%   azimuth and elevation sign conventions and ranges as SOFA's spherical 
-%   coordinate system. az and el are specified in degrees. x, y, and z may 
-%   be specified as scalars or vectors. If vectors, they must have the same
+%   azimuth and elevation sign conventions as SOFA's spherical coordinate 
+%   system. az and el must be specified in degrees. x, y, and z may be 
+%   specified as scalars or vectors. If vectors, they must have the same
 %   length. az, el, and rad are either scalars or column vectors.
 %
 %   See also INT2SOFAC, SOFAS2SOFAC.
@@ -40,11 +40,6 @@ function [az,el,rad] = sofaC2int(x,y,z)
 %   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 %   SOFTWARE.
 %   ==============================================================================
-
-%sofaC2int converts SOFA's cartesian coordinates to interaural polar 
-%coordinates while maintaining the same azimuth and elevation sign
-%conventions and ranges as SOFA's spherical coordinate system. Output 
-%azimuth and elevation are in degrees.
 
 narginchk(3,3);
 
