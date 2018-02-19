@@ -93,16 +93,13 @@ end
 indx = find(strcmpi(varargin,'variables'),1,'first');
 if indx
     varNames = varargin{indx+1};
-    hrirL = S.(varNames{1});
-    hrirR = S.(varNames{2});
-    sourcePosition = S.(varNames{3});
-    sampleRate = S.(varNames{4});
 else
-    hrirL = S.hrirL;
-    hrirR = S.hrirR;
-    sourcePosition = S.sourcePosition;
-    sampleRate = S.sampleRate;
+    varNames = {'hrirL','hrirR','sourcePosition','sampleRate'};
 end
+hrirL = S.(varNames{1});
+hrirR = S.(varNames{2});
+sourcePosition = S.(varNames{3});
+sampleRate = S.(varNames{4});
 
 % Specify coordinate system
 indx = find(strcmpi(varargin,'coordinate'),1,'first');
