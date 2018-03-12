@@ -50,7 +50,7 @@ narginchk(2,2);
 kdLen = length(kd);
 HOATerms = (maxOrder + 1)^2;
 Tz = zeros(HOATerms, (2*maxOrder+1)^2, kdLen);
-zkd = kd==0;
+zkd = (kd==0) | (kd < f2k(10)*0.001);
 nzkd = ~zkd;
 
 zkdPos = find(zkd);

@@ -57,13 +57,22 @@ kLen = length(kVec);
 Ni = (Li + 1)^2;
 No = (Lo + 1)^2;
 
-QzL = AmbiNav_zRotation(AZIM, ELEV, Lo);
-QzR = AmbiNav_zRotation(AZIM, ELEV, Li);
+if R == 0
+    QzL = eye(No);
+    QzR = eye(Ni);
+else
+    QzL = AmbiNav_zRotation(AZIM, ELEV, Lo);
+    QzR = AmbiNav_zRotation(AZIM, ELEV, Li);
+end
 
 T = zeros(No,Ni,kLen);
 Tz = AmbiNav_zTranslation(kVec*R, max([Li, Lo]));
 for kk = 1:kLen
-    T(:,:,kk) = QzL*Tz(1:No,1:Ni,kk)/QzR;
+    if kVec(kk)*R < f2k(10)*0.001
+        T(:,:,kk) = eye(No,Ni);
+    else
+        T(:,:,kk) = QzL*Tz(1:No,1:Ni,kk)/QzR;
+    end
 end
 
 end
