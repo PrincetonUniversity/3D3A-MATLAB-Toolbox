@@ -18,7 +18,7 @@ function [retFlag, retMsg, retDat] = sendOSCmessage(udps, sendMsg, sendDat, udpr
 %   T seconds for the desired response instead of the usual 0.5 seconds.
 %
 %   [FLAG, RMSG, RDAT] = SENDOSCMESSAGE(UDPS, SMSG, SDAT, UDPR, RMSG, ...)
-%   returns also the recieved OSC message and data (RMSG, RDAT).
+%   returns also the received OSC message and data (RMSG, RDAT).
 %
 %   See also WRITEOSCMESSAGE, READOSCMESSAGE.
 
