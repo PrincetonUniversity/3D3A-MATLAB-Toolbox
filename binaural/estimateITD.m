@@ -42,12 +42,10 @@ function ITD = estimateITD(hL,hR,Fs,method,varargin)
 %                   an optional fourth parameter that may be specified to
 %                   design a zero-phase filter.
 %
-%   'resample'      Resample hL and hR prior to estimating ITD. This must
+%   'resample'      Resample hL and hR prior to computing ITD. This must
 %                   be a scalar > 0 such that a value in the range (0,1)
 %                   corresponds to downsampling, and a value > 1
-%                   corresponds to upsampling. This corresponds to
-%                   specifying parameter 'P' in the 'resample' function
-%                   assuming 'Q' is set to 1.
+%                   corresponds to upsampling.
 %
 %   'range'         Frequency range, in Hz, over which averaging is
 %                   performed for the 'group delay' and 'phase delay' 
@@ -127,9 +125,10 @@ end
 % Perform resampling next ('upsample' included for backwards-compatibility)
 indx = findInCell(varargin,'resample')+findInCell(varargin,'upsample');
 if indx
-    Fs = varargin{indx+1}*Fs;
-    hL = resample(hL,varargin{indx+1},1);
-    hR = resample(hR,varargin{indx+1},1);
+    [p,q] = rat(varargin{indx+1});
+    hL = resample(hL,p,q);
+    hR = resample(hR,p,q);
+    Fs = Fs*(p/q);
 end
 
 if isvector(hL)

@@ -21,9 +21,7 @@ function onsetMat = thresholdIRs(irData,thp,varargin)
 %   'resample'      Resample irData prior to computing onsets. This must
 %                   be a scalar > 0 such that a value in the range (0,1)
 %                   corresponds to downsampling, and a value > 1
-%                   corresponds to upsampling. This corresponds to
-%                   specifying parameter 'P' in the 'resample' function
-%                   assuming 'Q' is set to 1.
+%                   corresponds to upsampling.
 
 %   ==============================================================================
 %   This file is part of the 3D3A MATLAB Toolbox.
@@ -71,10 +69,11 @@ end
 % Perform resampling ('upsample' included for backwards-compatibility)
 indx = findInCell(varargin,'resample')+findInCell(varargin,'upsample');
 if indx && ~iscell(irData) && ~(ndims(irData)-2)
-    p = varargin{indx+1};
-    irData = resample(irData,p,1);
+    [p,q] = rat(varargin{indx+1});
+    irData = resample(irData,p,q);
 else
     p = 1;
+    q = 1;
 end
 
 switch ndims(irData)
@@ -100,7 +99,7 @@ else
             for jj=1:nCols
                 peakVal = max(abs(irData(:,jj)));
                 onsetMat(jj) = find(abs(irData(:,jj)) >= (thp*peakVal),1,...
-                    'first')/p;
+                    'first')*(p/q);
             end
         case 3
             onsetMat = zeros(nRows,nCols);
