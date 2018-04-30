@@ -194,7 +194,7 @@ switch lower(method)
         end
         d = Fs*mean(diag(1./(2*pi*freqVec(avgRange)))*(pR(avgRange,:)-...
             pL(avgRange,:)),1,'omitnan');
-    otherwise %thresholding
+    otherwise % Thresholding
         dL = thresholdIRs(hL,thp);
         dR = thresholdIRs(hR,thp);
         d = dL-dR;

@@ -1,10 +1,10 @@
 function winVec = raisedCosWin(winLen,r)
 %RAISEDCOSWIN Generate a raised-cosine window.
-%   winVec = raisedCosWin(winLen) generates a raised-cosine window of
+%   winVec = RAISEDCOSWIN(winLen) generates a raised-cosine window of
 %   length winLen such that the window onset and roll-off each occurs over
 %   half winLen. The output, winVec, is a column vector.
 %
-%   winVec = raisedCosWin(winLen,r) additionally specifies r, which is a
+%   winVec = RAISEDCOSWIN(winLen,r) additionally specifies r, which is a
 %   1x2 vector where the first element is the fraction of winLen for the 
 %   window onset and the second element is the fraction of winLen for the 
 %   window roll-off. The default value for r is [0.5,0.5].
