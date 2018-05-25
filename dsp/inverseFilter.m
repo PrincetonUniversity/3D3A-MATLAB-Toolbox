@@ -11,7 +11,7 @@ function hInv = inverseFilter(h,reg,varargin)
 %   listed below. If a custom regularization profile is not provided, no
 %   regularization is performed.
 %
-%   hInv = INVERSEFILTER(h,'piecewise',range) specifies the regularization
+%   hInv = INVERSEFILTER(h,'piecewise','range',range) specifies the regularization
 %   frequency range and regularization value for each "piece" of the
 %   piecewise regularization function as a 3x1 row vector [w1,w2,eps]. 
 %   Multiple "pieces" are specified as separate rows. eps is the 
@@ -139,7 +139,7 @@ end
 
 switch lower(reg)
     case {'piecewise'}
-        H = fft(h);
+        H = fft(h,[],1);
         err = zeros(ceil((hLen+1)/2),1);
         lfIndVec = round(range(:,1)*(ceil((hLen+1)/2)-1))+1;
         hfIndVec = round(range(:,2)*(ceil((hLen+1)/2)-1))+1;
@@ -150,7 +150,7 @@ switch lower(reg)
                 m = (range(ii+1,3)-range(ii,3))/...
                     (lfIndVec(ii+1)-hfIndVec(ii));
                 err(hfIndVec(ii)+1:lfIndVec(ii+1)-1,1) = range(ii,3)+...
-                    m*((hfIndVec(ii)+1:lfIndVec(ii+1)-1)-hfIndVec(ii));
+                    m*((hfIndVec(ii)+1:lfIndVec(ii+1)-1).'-hfIndVec(ii));
             end
         end
         err(lfIndVec(numPieces):hfIndVec(numPieces),1) = range(numPieces,3);
@@ -163,7 +163,7 @@ switch lower(reg)
         maxHighFreq = fVec(nyqInd);
         avgRange = clip(avgRange,[minLowFreq,maxHighFreq]);
         dynRange = clip(dynRange,[1,150]);
-        H = fft(h);
+        H = fft(h,[],1);
         HdBMag = mag2db(abs(H));
         avgdBMag = repmat(logmean(HdBMag,fVec,avgRange),hLen,1);
         dynHalfRange = dynRange/2;
