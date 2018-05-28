@@ -54,6 +54,7 @@ function hInv = inverseFilter(h,reg,varargin)
 %   
 %   Contributing author(s), listed alphabetically by last name:
 %   Rahulram Sridhar <rahulram@princeton.edu>
+%   Joseph G. Tylka <josephgt@princeton.edu>
 %   3D Audio and Applied Acoustics (3D3A) Laboratory
 %   Princeton University, Princeton, New Jersey 08544, USA
 %   
