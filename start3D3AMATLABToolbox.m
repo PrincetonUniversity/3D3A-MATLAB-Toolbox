@@ -5,4 +5,6 @@ function [] = start3D3AMATLABToolbox()
 addpath(genpath(dir))
 rmpath(genpath(fullfile(dir,'.git')))
 
+disp('3D3A MATLAB Toolbox found and initialized.')
+
 end
