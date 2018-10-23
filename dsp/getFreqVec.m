@@ -1,7 +1,7 @@
 function f = getFreqVec(Fs,K)
 %GETFREQVEC Vector of linearly-spaced frequencies.
-%   GETFREQVEC(Fs,K) returns a length K column-vector of linearly-spaced
-%   frequencies ranging from 0 to (Fs - df), where df = Fs/K.
+%   F = GETFREQVEC(FS,K) returns a length K column-vector of linearly-
+%   spaced frequencies ranging from 0 to (FS - DF), where DF = FS/K.
 %
 %   See also GETTIMEVEC.
 
