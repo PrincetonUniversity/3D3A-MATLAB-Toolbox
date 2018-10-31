@@ -57,7 +57,8 @@ if nargin==3 && numel(FRANGE)==2
     F = F(F1:F2);
 end
 
-W = shiftdim(log((F + dF/2)./(F - dF/2)));
+% W = shiftdim(log((F + dF/2)./(F - dF/2)));
+W = shiftdim(1./F);
 Y = (W.'*shiftdim(Q))/sum(W);
 
 end
