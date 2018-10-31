@@ -7,7 +7,7 @@ function x = getInverseSTFT(Y, window, noverlap, nfft)
 %   X = GETINVERSESTFT(Y,WINDOW,NOVERLAP,NFFT) computes NFFT-length IFFTs
 %   for each time frame. If unspecified, NFFT = LENGTH(WINDOW).
 %
-%   See also SPECTROGRAM, GETSTFT.
+%   See also SPECTROGRAM, GETFORWARDSTFT.
 
 %   ==============================================================================
 %   This file is part of the 3D3A MATLAB Toolbox.

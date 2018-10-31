@@ -1,10 +1,10 @@
-function Y = getSTFT(x, window, noverlap, nfft)
-%GETSTFT Two-sided spectrogram using short-time Fourier transform (STFT).
-%   Y = GETSTFT(X,WINDOW,NOVERLAP) returns Y, the STFT of a signal X, using
-%   the specified WINDOW vector and overlapping NOVERLAP samples.
+function Y = getForwardSTFT(x, window, noverlap, nfft)
+%GETFORWARDSTFT Spectrogram using short-time Fourier transform (STFT).
+%   Y = GETFORWARDSTFT(X,WINDOW,NOVERLAP) returns Y, the STFT of a signal
+%   X, using the specified WINDOW vector and overlapping NOVERLAP samples.
 %
-%   Y = GETSTFT(X,WINDOW,NOVERLAP,NFFT) computes NFFT-length FFTs at each
-%   time frame. If unspecified, NFFT = LENGTH(WINDOW).
+%   Y = GETFORWARDSTFT(X,WINDOW,NOVERLAP,NFFT) computes NFFT-length FFTs at
+%   each time frame. If unspecified, NFFT = LENGTH(WINDOW).
 %
 %   See also SPECTROGRAM, GETINVERSESTFT.
 
