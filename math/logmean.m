@@ -43,7 +43,7 @@ function Y = logmean(Q,F,FRANGE)
 
 narginchk(2,3);
 
-dF = mean(diff(F));
+% dF = mean(diff(F));
 
 if nargin==3 && numel(FRANGE)==2
     [F1Val, F1] = findNearest(F,FRANGE(1));
