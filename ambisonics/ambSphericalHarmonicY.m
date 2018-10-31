@@ -1,9 +1,13 @@
-function Nlm = ambNormalization(l, m, ambNorm)
-%AMBNORMALIZATION Ambisonics spherical harmonic normalization factor.
-%   N = AMBNORMALIZATION(L,M,AMBNORM) returns the normalization factor
-%   for the real-valued spherical harmonics used in Ambisonics.
+function val = ambSphericalHarmonicY(l, m, r, ambNorm)
+%AMBSPHERICALHARMONICY Real-valued spherical harmonic function.
+%   Y = AMBSPHERICALHARMONICY(L,M,R,AMBNORM) computes Y, the real-valued
+%   spherical harmonic of order L and degree M used in Ambisonics, with
+%   normalization convention AMBNORM.
 %
-%   See also AMBSPHERICALHARMONICY.
+%   R may be a P-by-3 matrix of directions, where each row is a Cartesian
+%   vector. In this case, Y will be a P-by-1 vector.
+%
+%   See also AMBNORMALIZATION.
 
 %   ==============================================================================
 %   This file is part of the 3D3A MATLAB Toolbox.
@@ -40,23 +44,40 @@ function Nlm = ambNormalization(l, m, ambNorm)
 %     [1] Zotter (2009) Analysis and Synthesis of Sound-Radiation with
 %         Spherical Arrays.
 
-% Needs at least 2 input arguments
-narginchk(2,3);
+% coder.extrinsic('warning')
+
+% Needs at least 3 input arguments
+if nargin < 3
+    error('Not enough input arguments.');
+end
 
 % Uses N3D normalization by default
-if nargin < 3
+if nargin < 4
     ambNorm = 'N3D';
 end
 
-switch lower(ambNorm)
-    case 'none' % For compatibility with ambisonics.ch website
-        Nlm = ((-1)^m)*sqrt((2*l+1).*(2-(~m))).*sqrt(factorial(l-m)./factorial(l+m));
-    case 'sn3d' % Not confirmed
-        Nlm = ((-1)^m)*sqrt((2-(~m))/(4*pi)).*sqrt(factorial(l-m)./factorial(l+m));
-    case 'n3d' % Eq. (31)
-        Nlm = ((-1)^m)*sqrt((2*l+1).*(2-(~m))/(4*pi)).*sqrt(factorial(l-m)./factorial(l+m));
-    otherwise
-        error('Unknown normalization convention.');
+if (l >= 0) && (abs(m) <= l)
+    if isvector(r)
+        [AZIM,ELEV,~] = cart2sph(r(1),r(2),r(3));
+    else
+        [AZIM,ELEV,~] = cart2sph(r(:,1),r(:,2),r(:,3));
+    end
+    Nlm = ambNormalization(l, abs(m), ambNorm);
+    Pl = legendre(l, sin(ELEV));
+    Plm = Pl(abs(m) + 1,:).';
+%     Plm = legendrePnm(l, abs(m), sin(ELEV));
+    
+    if m >= 0
+        Tm = cos(m * AZIM);
+    elseif m < 0
+        Tm = sin(abs(m) * AZIM);
+    else
+        Tm = 0;
+    end
+    val = Nlm*Plm.*Tm;
+else
+    warning('Invalid order and degree.');
+    val = 0;
 end
 
 end

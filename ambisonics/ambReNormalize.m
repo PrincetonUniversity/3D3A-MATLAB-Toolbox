@@ -2,6 +2,8 @@ function A = ambReNormalize(A, ambNormIn, ambNormOut)
 %AMBRENORMALIZE Change normalization of HOA signals.
 %   B = AMBRENORMALIZE(A,AMBNORMIN,AMBNORMOUT) renormalized ambisonics
 %   signals A from normalization AMBNORMIN to AMBNORMOUT.
+%
+%   See also AMBNORMALIZATION.
 
 %   ==============================================================================
 %   This file is part of the 3D3A MATLAB Toolbox.
