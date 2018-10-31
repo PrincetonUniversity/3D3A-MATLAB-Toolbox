@@ -1,10 +1,10 @@
 function PSI = getPotential(P, N, DIM)
 %GETPOTENTIAL Discrete Fourier transform for acoustic signals.
-%   Computes the potential due to a pressure signal using the following
-%   convention:
+%   PSI = GETPOTENTIAL(P) computes the potential due to a pressure signal
+%   using the following convention:
 % 
-%   For a length N pressure signal P, the potential is a length N vector PSI,
-%   with elements
+%   For a length N pressure signal P, the potential is a length N vector
+%   PSI, with elements
 %                       N
 %       PSI(k) = (1/N) sum  P (n)*exp( j*2*pi*(k-1)*(n-1)/N), 1 <= k <= N.
 %                      n=1
@@ -12,6 +12,12 @@ function PSI = getPotential(P, N, DIM)
 %                       N
 %        P (n) =       sum PSI(k)*exp(-j*2*pi*(k-1)*(n-1)/N), 1 <= n <= N.
 %                      k=1
+%
+%   PSI = GETPOTENTIAL(P,N) computes the N-point FFT.
+%
+%   PSI = GETPOTENTIAL(P,N,DIM) computes the FFT along dimension DIM.
+%
+%   PSI = GETPOTENTIAL(P,[],DIM) computes the FFT of length SIZE(P,DIM).
 %
 %   See also GETPRESSURE, FFT.
 
@@ -47,9 +53,7 @@ function PSI = getPotential(P, N, DIM)
 %   ==============================================================================
 
 % Needs at least 1 input argument
-if nargin < 1
-    error('No input arguments.');
-end
+narginchk(1,3);
 
 sizeVec = size(P);
 
@@ -59,7 +63,7 @@ if nargin < 3
 end
 
 % Uses length along dimension DIM by default
-if (nargin < 2) || ((nargin >= 2) && isempty(N))
+if (nargin < 2) || isempty(N)
     N = sizeVec(DIM);
 end
 

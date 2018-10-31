@@ -1,7 +1,10 @@
-function P = getPressure(PSI, N, DIM, OPTION)
+function P = getPressure(varargin)
 %GETPRESSURE Inverse discrete Fourier transform for acoustic signals.
-%   Computes the pressure due to a potential signal using the convention 
-%   shown in GETPOTENTIAL.
+%   P = GETPRESSURE(PSI) computes the pressure P due to a potential signal 
+%   PSI.
+%
+%   P = GETPRESSURE(...,'symmetric') returns a real-valued signal P by
+%   forcing conjugate-symmetry of PSI.
 %
 %   See also GETPOTENTIAL, IFFT.
 
@@ -37,25 +40,27 @@ function P = getPressure(PSI, N, DIM, OPTION)
 %   ==============================================================================
 
 % Needs at least 1 input argument
-if nargin < 1
-    error('No input arguments.');
+if ischar(varargin{end})
+    maxNargin = 4;
+    OPTION = varargin{end};
+else
+    maxNargin = 3;
+    OPTION = 'nonsymmetric'; % No assumption is made about the symmetry of the spectrum by default
 end
+narginchk(1,maxNargin);
 
+PSI = varargin{1};
 sizeVec = size(PSI);
-
-% No assumption is made about the symmetry of the spectrum by default
-if nargin < 4
-    OPTION = 'nonsymmetric';
-end
-
-% Uses first non-singleton dimension by default
-if nargin < 3
-    DIM = find(sizeVec ~= 1, 1, 'first');
-end
-
-% Uses length along dimension DIM by default
-if (nargin < 2) || ((nargin >= 2) && isempty(N))
-    N = sizeVec(DIM);
+switch maxNargin - nargin
+    case 0
+        DIM = varargin{3};
+        N = varargin{2};
+    case 1
+        DIM = find(sizeVec ~= 1, 1, 'first'); % Uses first non-singleton dimension by default
+        N = varargin{2};
+    case 2
+        DIM = find(sizeVec ~= 1, 1, 'first');
+        N = sizeVec(DIM); % Uses length along dimension DIM by default
 end
 
 P = N*conj(ifft(conj(PSI), N, DIM, OPTION));
