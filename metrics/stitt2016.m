@@ -1,6 +1,5 @@
 function [rE, rV] = stitt2016(sourcePositions, listenerPosition, sourceGains, alpha, timeDelays, sourceType, broadbandGains)
 %STITT2016 Extended energy vector of Stitt et al. (2016).
-%   
 %   rE = STITT2016(RS, RL, G, ALPHA, T, TYPE, B) returns the
 %   K-by-3 matrix rE of extended energy vectors (specified in Cartesian
 %   coordinates) for K frequencies, as computed by Stitt et al. (citation
@@ -56,6 +55,7 @@ function [rE, rV] = stitt2016(sourcePositions, listenerPosition, sourceGains, al
 %     [1] Stitt et al. (2016) Extended Energy Vector Prediction of
 %         Ambisonically Reproduced Image Direction at Off-Center Listening
 %         Positions.
+%     [2] https://circlesounds.wordpress.com/matlab-code/
 
 numSources = size(sourceGains,2);
 
