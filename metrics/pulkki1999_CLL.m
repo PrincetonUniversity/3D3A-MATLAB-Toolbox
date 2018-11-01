@@ -5,6 +5,8 @@ function [CLL, fc] = pulkki1999_CLL(b, Fs, fc)
 %   rate FS.
 %
 %   [CLL,~] = PULKKI1999_CLL(B,FS,FC) uses specifed center frequencies FC.
+%
+%   See also GETGAMMATONEFILTERS.
 
 %   ==============================================================================
 %   This file is part of the 3D3A MATLAB Toolbox.

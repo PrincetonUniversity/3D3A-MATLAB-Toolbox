@@ -1,5 +1,5 @@
 function rP = wrap_wierstorf2013(b, Fs, varargin)
-%WRAP_WIERSTORF2013 Wierstorf's azimulation binaural localization model.
+%WRAP_WIERSTORF2013 Wierstorf's azimuthal binaural localization model.
 %   R = WRAP_WIERSTORF2013(B,FS,...) computes a predicted localization
 %   vector (given in Cartesian coordinates) for binaural signals B at
 %   sampling rate FS. The following additional inputs may also be

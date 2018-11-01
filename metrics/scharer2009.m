@@ -13,6 +13,8 @@ function [E, fc] = scharer2009(h, h0, Fs, fc)
 %   Suggested center frequencies for the equivalent rectangular bandwidth
 %   (ERB) scale:
 %       fc = erbspacebw(f_low,f_high); % Needs LTFAT toolbox.
+%
+%   See also GETGAMMATONEFILTERS.
 
 %   ==============================================================================
 %   This file is part of the 3D3A MATLAB Toolbox.
