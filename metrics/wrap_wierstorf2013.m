@@ -84,8 +84,12 @@ else
     error('Must either provide lookup table or specify HRTF.');
 end
 
-[AZ,~,~,~,~] = wierstorf2013_estimateazimuth(b, lookupTable, 'fs', Fs,...
-    modelToUse, specWeights, 'remove_outlier');
+if exist('wierstorf2013_estimateazimuth','file') == 2
+    [AZ,~,~,~,~] = wierstorf2013_estimateazimuth(b, lookupTable, 'fs',...
+        Fs, modelToUse, specWeights, 'remove_outlier');
+else
+    error('wierstorf2013_estimateazimuth from AMTOOLBOX not found.');
+end
 
 [rP(:,1),rP(:,2),rP(:,3)] = sph2cart(shiftdim(AZ)*pi/180,0,1);
 

@@ -43,8 +43,12 @@ if nargin < 2 || isempty(modelToUse)
     modelToUse = 'dietz2011';
 end
 
-% Load HRTF
-HRTFObj = SOFAload(hrtfFile);
+if exist('SOFAload','file') == 2
+    % Load HRTF
+    HRTFObj = SOFAload(hrtfFile);
+else
+    error('SOFAload from SOFA API not found.');
+end
 if strcmpi(HRTFObj.SourcePosition_Type,'cartesian')
     HRTFObj.SourcePosition = sofaC2sofaS(sourcePosition);
     HRTFObj.SourcePosition_Type = 'spherical';
@@ -52,7 +56,11 @@ if strcmpi(HRTFObj.SourcePosition_Type,'cartesian')
 end
 HRTFObj.SourcePosition(:,1) = mod(HRTFObj.SourcePosition(:,1)+180,360)-180;
 
-% Construct lookup table
-lookupTable = itd2angle_lookuptable(HRTFObj, HRTFObj.Data.SamplingRate, modelToUse);
+if exist('itd2angle_lookuptable','file') == 2
+    % Construct lookup table
+    lookupTable = itd2angle_lookuptable(HRTFObj, HRTFObj.Data.SamplingRate, modelToUse);
+else
+    error('itd2angle_lookuptable from AMTOOLBOX not found.');
+end
 
 end
