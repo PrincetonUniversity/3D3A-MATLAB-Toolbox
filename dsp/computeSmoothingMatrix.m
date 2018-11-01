@@ -4,6 +4,8 @@ function M = computeSmoothingMatrix(FFTLen, FRAC, METHOD, WINTYPE)
 %   matrix M for smoothing a transfer function of length HLEN with
 %   1/N-octave smoothing, using the specified smoothing METHOD and WINTYPE.
 %
+%   The returned matrix M will be (1+HLEN/2)-by-HLEN.
+%
 %   See also FRACTIONALOCTAVESMOOTH.
 
 %   ==============================================================================
@@ -45,9 +47,18 @@ function M = computeSmoothingMatrix(FFTLen, FRAC, METHOD, WINTYPE)
 %         Smoothing of Transfer Functions that Preserves Log-Frequency
 %         Symmetry.
 
+if FRAC == 0
+    warning('No smoothing applied.')
+    specLen = 1 + FFTLen/2;
+    M = eye(specLen,FFTLen);
+    return;
+end
+
 switch(lower(METHOD))
     case 'tylka'
         M = smoothingMatrix_tylka(FFTLen, FRAC, WINTYPE);
+    case {'hatz','hatziantoniou'}
+        M = smoothingMatrix_hatz(FFTLen, FRAC, WINTYPE);
     otherwise
         specLen = 1 + FFTLen/2;
         M = eye(specLen,FFTLen);
@@ -60,7 +71,8 @@ function M = smoothingMatrix_tylka(FFTLen, FRAC, WINTYPE)
 specLen = 1 + FFTLen/2;
 M = zeros(specLen, FFTLen);
 
-for n = 0:(specLen-1)
+M(1,1) = 1;
+for n = 1:(specLen-2)
     fL = n*2^(-1/2/FRAC);
     nL = floor(fL);
     fH = n*2^(1/2/FRAC);
@@ -100,7 +112,44 @@ for n = 0:(specLen-1)
     M(n+1,m+1) = winVec;
 end
 
-
 M(specLen, specLen) = 1;
+
+end
+
+function M = smoothingMatrix_hatz(FFTLen, FRAC, WINTYPE)
+
+specLen = 1 + FFTLen/2;
+M = zeros(specLen, FFTLen);
+
+Q = 1 / (2^(0.5 / FRAC) - 2^(-0.5 / FRAC));
+mMax = (FFTLen/2) - 1;
+
+M(1,1) = 1;
+for n = 1:(specLen-1)
+    % Window half-width calculation
+    m = floor((0.5 * n) / Q);
+    if m < 1
+        m = 1;
+    end
+    if m > mMax
+        m = mMax;
+    end
+    
+    % Window function computation
+    indx = (n-m):(n+m);
+    winLen = 2*m + 1;
+    if winLen == 1
+        winVec = 1;
+    else
+        switch(lower(WINTYPE))
+            case {'rectangular','rect'}
+                tempWinVec = ones(1,winLen);
+            case {'hanning','hann'}
+                tempWinVec = hann(winLen);
+        end
+        winVec = tempWinVec/sum(tempWinVec);
+    end
+    M(n+1,indx+1) = winVec;
+end
 
 end
