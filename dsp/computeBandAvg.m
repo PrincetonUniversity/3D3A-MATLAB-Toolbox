@@ -1,6 +1,6 @@
-function [Y, fc] = computeBandAverage(Q,F,B,FRANGE,Fs)
-%COMPUTEBANDAVERAGE Averages of a function in specified frequency bands.
-%   Y = COMPUTEBANDAVERAGE(Q,F,B,[FMIN,FMAX]) computes the log-weighted
+function [Y, fc] = computeBandAvg(Q,F,B,FRANGE,Fs)
+%COMPUTEBANDAVG Averages of a function in specified frequency bands.
+%   Y = COMPUTEBANDAVG(Q,F,B,[FMIN,FMAX]) computes the log-weighted
 %   averages of Q, whose values are specified as a function of F, for bands
 %   of width B (in octaves) within FMIN and FMAX. F should have uniformly
 %   (linearly) spaced values. Q must have the same number of rows as F.
@@ -8,7 +8,7 @@ function [Y, fc] = computeBandAverage(Q,F,B,FRANGE,Fs)
 %   B may also be specified as 'erb' to use ERB-spaced auditory bands
 %   (implemented as a gammatone filterbank), in which case the sampling
 %   rate Fs must also be specified:
-%   Y = COMPUTEBANDAVERAGE(Q,F,'erb',[FMIN,FMAX],Fs)
+%   Y = COMPUTEBANDAVG(Q,F,'erb',[FMIN,FMAX],Fs)
 %   and F must be given as subset of a standard frequency vector.
 %
 %   See also LOGMEAN, GETGAMMATONEFILTERS, GETFREQVEC.
@@ -43,6 +43,8 @@ function [Y, fc] = computeBandAverage(Q,F,B,FRANGE,Fs)
 %   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 %   SOFTWARE.
 %   ==============================================================================
+
+narginchk(4,5);
 
 if isnumeric(B) % Fractional-octave bands
     numfc = round(log2(FRANGE(2)/FRANGE(1))/B);
