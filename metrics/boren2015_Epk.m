@@ -22,6 +22,8 @@ function [Epk, En] = boren2015_Epk(h, h0, Fs, FRANGE, SCALE, BW, THRESH)
 %   [EPK,EN] = BOREN2015_EPK(H,H0,FS,FRANGE,SCALE,BW,THRESH) uses the
 %   specified threshold (in dB) for peak detection. By default, THRESH = 1
 %   dB.
+%
+%   See also FINDPEAKS, FRACTIONALOCTAVESMOOTH.
 
 %   ==============================================================================
 %   This file is part of the 3D3A MATLAB Toolbox.
