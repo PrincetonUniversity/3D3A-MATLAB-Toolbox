@@ -37,7 +37,7 @@ function [posMat, wQList] = loadGridFile(matFile)
 narginchk(1,1);
 
 load(matFile)
-posMat = [x.',y.',z.'];
+posMat = [shiftdim(x),shiftdim(y),shiftdim(z)];
 wQList = shiftdim(w);
 
 end
