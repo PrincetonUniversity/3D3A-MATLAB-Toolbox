@@ -1,0 +1,102 @@
+\documentclass[11pt, oneside]{article}
+
+%   ==============================================================================
+%   This file is part of the 3D3A MATLAB Toolkit.
+%   
+%   Contributing author(s), listed alphabetically by last name:
+%   Rahulram Sridhar <rahulram@princeton.edu>
+%   Joseph G. Tylka <josephgt@princeton.edu>
+%   3D Audio and Applied Acoustics (3D3A) Laboratory
+%   Princeton University, Princeton, New Jersey 08544, USA
+%   
+%   MIT License
+%   
+%   Copyright (c) 2018 Princeton University
+%   
+%   Permission is hereby granted, free of charge, to any person obtaining a copy
+%   of this software and associated documentation files (the "Software"), to deal
+%   in the Software without restriction, including without limitation the rights
+%   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+%   copies of the Software, and to permit persons to whom the Software is
+%   furnished to do so, subject to the following conditions:
+%   
+%   The above copyright notice and this permission notice shall be included in all
+%   copies or substantial portions of the Software.
+%   
+%   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+%   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+%   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+%   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+%   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+%   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+%   SOFTWARE.
+%   ==============================================================================
+
+% Required packages
+\usepackage[letterpaper, margin=1in, includeheadfoot]{geometry}
+\usepackage{hyperref}
+\usepackage{tabularx}
+
+% Header and Footer
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\renewcommand{\headrulewidth}{1pt}
+\lhead{}\chead{\textsc{3D Audio and Applied Acoustics Laboratory $\cdot$ Princeton University}}\rhead{}
+\lfoot{}\cfoot{\thepage}\rfoot{}
+
+\renewcommand{\abstractname}{Summary} % Activate to modify the name of the Abstract
+%\renewcommand*{\thefootnote}{\fnsymbol{footnote}} % Activate to use symbols rather than numbers for footnotes
+
+% Additional packages
+\usepackage{graphicx}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage[numbers,square,sort]{natbib}
+\usepackage{tikz}
+
+% User-defined commands
+\newcommand{\citeref}[1]{Ref.~\cite{#1}}
+\newcommand{\Citeref}[1]{Reference~\cite{#1}}
+\newcommand{\citerefs}[1]{Refs.~\cite{#1}}
+\newcommand{\Citerefs}[1]{References~\cite{#1}}
+\newcommand{\figref}[1]{Fig.~\ref{#1}}
+\newcommand{\Figref}[1]{Figure~\ref{#1}}
+\newcommand{\figreftwo}[2]{Figs.~\ref{#1} and~\ref{#2}}
+\newcommand{\eqnref}[1]{Eq.~(\ref{#1})}
+\newcommand{\eqnreftwo}[2]{Eqs.~(\ref{#1}) and~(\ref{#2})}
+\newcommand{\secref}[1]{Section~\ref{#1}}
+\newcommand{\Secref}[1]{Section~\ref{#1}}
+\newcommand{\secreftwo}[2]{Sections~\ref{#1} and~\ref{#2}}
+\newcommand{\secrefthru}[2]{Sections~\ref{#1} through~\ref{#2}}
+\newcommand{\tabref}[1]{Table~\ref{#1}}
+\newcommand{\Tabref}[1]{Table~\ref{#1}}
+\newcommand{\tabreftwo}[2]{Tables~\ref{#1} and~\ref{#2}}
+
+\begin{document}
+
+% Title and Author block
+\begin{centering}
+{\Large \textbf{The 3D3A Lab's MATLAB Toolbox}}\\
+\vspace{\baselineskip}
+\newcolumntype{C}{>{\centering\arraybackslash}p{0.4\textwidth}} % Sets horizontal spacing between authors
+\begin{tabular}{CC}
+    Rahulram Sridhar & Joseph G.~Tylka \\
+    \href{mailto:rahulram@princeton.edu}{rahulram@princeton.edu} & \href{mailto:josephgt@princeton.edu}{josephgt@princeton.edu}
+\end{tabular}\\
+\vspace{\baselineskip}
+v0 -- November 1\textsuperscript{st}, 2018\\
+\end{centering}
+
+% Abstract
+\begin{abstract}
+The 3D3A lab's MATLAB toolbox is an open-source collection MATLAB functions for spatial audio processing.
+\end{abstract}
+
+\section{Introduction}
+
+
+% References
+\bibliographystyle{unsrtnat}
+\bibliography{refs}
+
+\end{document}
