@@ -71,6 +71,7 @@
 \newcommand{\tabref}[1]{Table~\ref{#1}}
 \newcommand{\Tabref}[1]{Table~\ref{#1}}
 \newcommand{\tabreftwo}[2]{Tables~\ref{#1} and~\ref{#2}}
+\newcommand{\function}[1]{\subsubsection*{\texttt{#1}}}
 
 \begin{document}
 
@@ -94,6 +95,140 @@ The 3D3A lab's MATLAB toolbox is an open-source collection MATLAB functions for 
 
 \section{Introduction}
 
+
+\section{Function Folders}
+
+%% ambisonics %%
+\subsection{Ambisonics}
+
+\function{ambSphericalHarmonicY}
+The real-valued spherical harmonics commonly used in ambisonics are given by~\citet[section~2.2]{Zotter2009PhD}
+\begin{equation}\label{eq:ambSphericalHarmonicY}
+Y_l^m(\theta,\phi) = N_l^{|m|} P_l^{|m|} (\sin \theta) \times
+    \begin{cases}
+	\cos m \phi & \textrm{for } m \geq 0,\\
+	\sin |m| \phi & \textrm{for } m < 0,
+    \end{cases}
+\end{equation}
+where $P_l^m$ is the associated Legendre polynomial of degree $l$ and order $m$, as defined in the MATLAB \texttt{legendre} function\footnote{See:~\url{https://www.mathworks.com/help/matlab/ref/legendre.html}} by
+\begin{equation}
+P_l^m(x) = (-1)^m (1 - x^2)^{m/2} \frac{d^m}{dx^m} P_l(x), \quad
+\textrm{with} \quad
+P_l(x) = \frac{1}{2^l l!} \left[ \frac{d^l}{dx^l}(x^2 - 1)^l \right],
+\end{equation}
+and $N_l^m$ is a normalization term.
+
+\function{ambNormalization}
+The orthonormal (N3D) spherical harmonics with Condon-Shortley phase\footnote{Note that including Condon-Shortley phase in the normalization term cancels it in the associated Legendre term.} is given by
+\begin{equation}\label{eq:ambNormalization_N3D}
+N_l^m = (-1)^m \sqrt{\frac{(2l+1)(2 - \delta_m)}{4 \pi} \frac{(l-m)!}{(l+m)!}},
+\end{equation}
+where $\delta_m$ is the Kronecker delta.
+A commonly-used alternative is the Schmidt seminormalized (SN3D) spherical harmonic normalization convention (again with Condon-Shortley phase), given by~\citep{Nachbar2011}
+\begin{equation}\label{eq:ambNormalization_SN3D}
+N_l^m = (-1)^m \sqrt{\frac{2 - \delta_m}{4 \pi} \frac{(l-m)!}{(l+m)!}}.
+\end{equation}
+
+\function{getACN}
+The ambisonics channel numbering (ACN) convention~\citep{Nachbar2011} is defined such that, for a spherical harmonic function of degree $l \in [0,\infty)$ and order $m \in [-l,l]$, the ACN index $n$ is given by
+\begin{equation}\label{eq:getACN}
+n = l (l + 1) + m.
+\end{equation}
+
+\function{getAmbOrder}
+Correspondingly, for ACN index $n$, the spherical harmonic degree and order are given by
+\begin{equation}\label{eq:getAmbOrder}
+\begin{aligned}
+l &= \left\lfloor \sqrt{n} \right\rfloor,\\
+m &= n - l (l + 1),
+\end{aligned}
+\end{equation}
+where $\lfloor \cdot \rfloor$ denotes rounding down to the nearest integer (i.e., the ``floor'' function).
+
+%% dsp %%
+\subsection{DSP}
+
+\function{fractionalOctaveSmooth}
+Used to perform fractional-octave smoothing of a transfer function.
+\begin{equation}\label{eq:fractionalOctaveSmooth}
+H_\text{s}[k] = \sum_{k' = 0}^{N - 1} M[k, k'] H[k'].
+\end{equation}
+
+\function{computeSmoothingMatrix}
+Used for computing the smoothing matrix $M$.
+Currently, the methods of \citet{HatziantoniouMourjopoulos2000} and \citet{Tylka2017} have been implemented.
+
+%% math %%
+\subsection{Math}
+
+\function{logmean}
+Consider a discrete spectrum $X[k]$ for $k \in [0, K-1]$, where the frequency index, $k$, is proportional to the frequency in Hz, given by $k F_s/K$, and $F_s$ is the sampling rate.
+We define the logarithmically-weighted average, $\overline{X}$, over the frequency index range $[K_1, K_2]$, as a weighted average
+\begin{equation}\label{eq:logmean}
+\overline{X} = \frac{\displaystyle \sum_{k=K_1}^{K_2} \frac{1}{k} \cdot X[k]}{\displaystyle \sum_{k=K_1}^{K_2} \frac{1}{k}}.
+\end{equation}
+
+\function{logvar}
+Similarly, we define the logarithmically-weighted variance $\sigma_X^2$ by
+\begin{equation}\label{eq:logvar}
+\sigma_X^2 = \frac{\displaystyle \sum_{k=K_1}^{K_2} \frac{1}{k} \left( X[k] - \overline{X} \right)^2}{\displaystyle \sum_{k=K_1}^{K_2} \frac{1}{k}}.
+\end{equation}
+
+%% metrics %%
+\subsection{Metrics}
+
+\function{boren2015\_Epk}
+Implemented peak and notch errors coloration metrics of \citet{Boren2015}.
+
+\function{computeDirectionalError}
+Computes a directional error between two vectors, $\vec{r}_1$ and $\vec{r}_2$, such that
+\begin{equation}
+\epsilon = \cos^{-1} \left( \hat{r}_1 \cdot \hat{r}_2 \right).
+\end{equation}
+Alternatively,
+\begin{equation}
+\epsilon = \sqrt{ \left( \hat{r}_1 - \hat{r}_2 \right) \cdot \left( \hat{r}_1 - \hat{r}_2 \right) }.
+\end{equation}
+
+\function{estimateAudibleEnergy}
+We define the \textit{mean audible energy} (MAE) of a signal as its average energy in critical bands, i.e., %%NOTE%% what are critical bands?
+\begin{equation}\label{eq:estimateAudibleEnergy}
+\text{MAE} = \frac{1}{N_b} \sum_{c = 1}^{N_b} \int_{-\infty}^\infty |\Gamma(f;f_c)| |X(f)|^2 df,
+\end{equation}
+where $X$ is the Fourier transform of some signal and $\Gamma(f;f_c)$ is the transfer function of a gammatone filter\footnote{In this work, we used the gammatone filters implemented in the large time-frequency analysis toolbox (LTFAT) for MATLAB:~\url{http://ltfat.sourceforge.net/}} with center frequency $f_c$ for $c \in [1, N_b]$, for a set of ERB-spaced (equivalent rectangular bandwidth) center frequencies~\citep{GlasbergMoore1990} spanning the range $f \in [20~\text{Hz}, 20~\text{kHz}]$.
+
+\function{gerzon1992}
+Implements the velocity and energy vectors of \citet{Gerzon1992}.
+
+\function{kates1984}
+Implements the central spectrum coloration model of \citet{Kates1984}.
+
+\function{merimaa2005}
+Implements the intensity vector and diffuseness parameter, computed from first-order ambisonics signals, as given by \citet{MerimaaPulkki2005}.
+
+\function{pulkki1999\_CLL}
+Implements the composite loudness level model of \citet{Pulkki1999}.
+
+\function{scharer2009}
+Implements the auditory band spectral error of \citet{ScharerLindau2009}.
+
+\function{stitt2016}
+Implements the precedence-effect-based energy vector model of \citet{Stitt2016}.
+
+\function{tylka2017}
+Implements the ambisonics localization vector model of \citet{TylkaChoueiri2017a}.
+
+\function{wittek2007}
+Implements the spectral alterations coloration model of \citet{Wittek2007}.
+
+%% stimuli %%
+\subsection{Stimuli}
+
+\function{exponentialSineSweep}
+Implements the exponential sine sweep (ESS) of \citet{Farina2000} and the phase-controlled ESS of \citet{VetterdiRosario2011}.
+
+\function{warpedSineSweep}
+Implements the warped sine sweep of \citet{OchiaiKaneda2013}.
 
 % References
 \bibliographystyle{unsrtnat}
