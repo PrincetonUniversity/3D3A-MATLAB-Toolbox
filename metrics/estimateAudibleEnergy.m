@@ -1,5 +1,5 @@
 function E = estimateAudibleEnergy(x, Fs, FRANGE)
-%ESTIMATEAUDIBLEENERGY Total energy in auditory critical bands.
+%ESTIMATEAUDIBLEENERGY Average energy in auditory critical bands.
 %   E = ESTIMATEAUDIBLEENERGY(X,FS) computes the total audible energy E for
 %   a signal X given at sample rate FS. The total audible energy is
 %   computed as the sum of the signal energies in critical bands, modeled

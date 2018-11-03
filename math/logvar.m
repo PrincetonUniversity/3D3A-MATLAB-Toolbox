@@ -1,5 +1,5 @@
 function S = logvar(Q,F,FRANGE)
-%LOGVAR Log-scale variance of a function
+%LOGVAR Log-scale variance of a function.
 %   S = LOGVAR(Q,F) computes the log-weighted variance of Q, whose values
 %   are specified as a function of F. F should have uniformly (linearly) 
 %   spaced values. Q must have the same number of rows as F.

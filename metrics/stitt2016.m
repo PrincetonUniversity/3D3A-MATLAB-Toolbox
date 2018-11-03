@@ -1,5 +1,5 @@
 function [rE, rV] = stitt2016(sourcePositions, listenerPosition, sourceGains, alpha, timeDelays, sourceType, broadbandGains)
-%STITT2016 Extended energy vector of Stitt et al. (2016).
+%STITT2016 Stitt's precedence-effect-based energy vector.
 %   rE = STITT2016(RS, RL, G, ALPHA, T, TYPE, B) returns the
 %   K-by-3 matrix rE of extended energy vectors (specified in Cartesian
 %   coordinates) for K frequencies, as computed by Stitt et al. (citation

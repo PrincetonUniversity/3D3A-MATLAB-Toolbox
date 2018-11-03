@@ -1,5 +1,5 @@
 function x = exponentialSineSweep(f1, f2, Fs, T, varargin)
-%EXPONENTIALSINESWEEP Generate exponential sine sweep (ESS).
+%EXPONENTIALSINESWEEP Generate an exponential sine sweep (ESS).
 %   X = EXPONENTIALSINESWEEP(F1, F2, FS, T) generates an ESS at sampling
 %   rate FS that sweeps from F1 to F2 in T seconds.
 %

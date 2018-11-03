@@ -1,5 +1,5 @@
 function x = warpedSineSweep(Xmag, Fs, T, varargin)
-%WARPEDSINESWEEP Generate warped sine sweep.
+%WARPEDSINESWEEP Generate a warped sine sweep.
 %   X = WARPEDSINESWEEP(XMAG, FS, T) generates a warped sine sweep at
 %   sampling rate FS that has a magnitude spectrum XMAG and duration T
 %   seconds.

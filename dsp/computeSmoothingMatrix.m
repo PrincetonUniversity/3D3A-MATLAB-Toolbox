@@ -1,5 +1,5 @@
 function M = computeSmoothingMatrix(FFTLen, FRAC, METHOD, WINTYPE)
-%COMPUTESMOOTHINGMATRIX Fractional octave smoothing matrix.
+%COMPUTESMOOTHINGMATRIX Fractional-octave smoothing matrix.
 %   M = COMPUTESMOOTHINGMATRIX(HLEN,N,METHOD,WINTYPE) computes a smoothing
 %   matrix M for smoothing a transfer function of length HLEN with
 %   1/N-octave smoothing, using the specified smoothing METHOD and WINTYPE.
