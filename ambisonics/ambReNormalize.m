@@ -41,9 +41,8 @@ if ~strcmpi(ambNormIn,ambNormOut)
     coeffs = zeros(1,N);
     for n = 1:N
         [l, m] = getAmbOrder(n-1);
-        coeffs(n) = ambNormalization(l, m, ambNormOut)/ambNormalization(l, m, ambNormIn);
+        coeffs(n) = ambNormalization(l, abs(m), ambNormOut)/ambNormalization(l, abs(m), ambNormIn);
     end
-    
     A = A*diag(coeffs);
 end
 
