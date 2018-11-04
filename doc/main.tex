@@ -233,7 +233,7 @@ These two approximations are plotted in \figref{fig:fc2erb}.
 This function is essentially a wrapper for the function \texttt{gammatonefir} included in the LTFAT toolbox.
 The impulse responses of the gammatone filters are given by
 \begin{equation}
-g(t) = a t^3 \cos(2 \pi i f_c t) e^{-2 \pi \beta t},
+h_\Gamma(t;f_c) = a t^3 \cos(2 \pi f_c t) e^{-2 \pi \beta t},
 \end{equation}
 where, for a sampling rate $F_s$, we have
 \begin{equation}
@@ -242,20 +242,88 @@ a &= \frac{2 (2 \pi \beta)^4}{3! F_s}, \\
 \beta &= 1.0183 \times W_1(f_c),
 \end{aligned}
 \end{equation}
-and $W_1(f_c)$ is the ERB at $f_c$, as given by \eqnref{eq:fc2erb_1}. %%NOTE%% check this
+and $W_1(f_c)$ is the ERB at $f_c$, as given by \eqnref{eq:fc2erb_1}.
 
 \function{getPattersonFilters} Auditory filters that represent human critical bands. \\
 As given by \citet[Eq.~(5.9)]{Salomons1995PhD}, Patterson's auditory filters are given by
 \begin{equation}
-C(f;f_c) = \left( 1 + \frac{4|f-f_c|}{W_2(f_c)} \right) e^{-\frac{4|f-f_c|}{W_2(f_c)}},
+H_\text{P}(f;f_c) = \left( 1 + \frac{4|f-f_c|}{W_2(f_c)} \right) e^{-\frac{4|f-f_c|}{W_2(f_c)}},
 \end{equation}
 where $W_2(f_c)$ is the ERB at $f_c$, as given by \eqnref{eq:fc2erb_2}.
 
 %% binaural %%
 \subsection{Binaural}
 
+\function{estimateITD} Estimate the interaural time difference (ITD), in seconds. \\
+
+%%% coordinate-transforms %%%
+\subsubsection{Coordinate Transforms}
+
+As defined in the SOFA format, $(x,y,z) \in \mathbb{R}^3$ are the Cartesian coordinates.
+\function{sofaC2sofaS} Convert SOFA cartesian to SOFA spherical coordinates. \\
+The radial coordinate is strictly non-negative, $r \in [0,\infty)$, the azimuthal coordinate is given in degrees, $\phi \in [0, 360^\circ )$, and the elevation coordinate is given in degrees, $\theta \in [-90^\circ, 90^\circ ]$.
+\begin{equation}
+\begin{aligned}
+r &= \sqrt{x^2 + y^2 + z^2} \\
+\phi &= \tan^{-1} \left( \frac{y}{x} \right) \\
+\theta &= \tan^{-1} \left( \frac{z}{\sqrt{x^2 + y^2}} \right)
+\end{aligned}
+\end{equation}
+
+\function{sofaS2sofaC} Convert SOFA spherical to SOFA cartesian coordinates. \\
+\begin{equation}
+\begin{aligned}
+x &= r \cos(\theta) \cos(\phi) \\
+y &= r \cos(\theta) \sin(\phi) \\
+z &= r \sin(\theta)
+\end{aligned}
+\end{equation}
+
+\function{sofaC2cipic} Convert SOFA cartesian coordinates to CIPIC interaural polar coordinates. \\
+The radial coordinate is strictly non-negative, $r \in [0,\infty)$, the azimuthal coordinate is given in degrees, $\varphi \in [-90^\circ, 90^\circ ]$, and the elevation coordinate is given in degrees, $\theta \in [-90^\circ, 270^\circ ]$.
+\begin{equation}
+\begin{aligned}
+r &= \sqrt{x^2 + y^2 + z^2} \\
+\varphi &= \tan^{-1} \left( \frac{-y}{\sqrt{x^2 + z^2}} \right) \\
+\vartheta &= \tan^{-1} \left( \frac{z}{x} \right)
+\end{aligned}
+\end{equation}
+
+\function{cipic2sofaC} Convert CIPIC interaural polar coordinates to SOFA cartesian coordinates. \\
+\begin{equation}
+\begin{aligned}
+x &= r \cos(-\varphi) \cos(\vartheta) \\
+y &= r \sin(-\varphi) \\
+z &= r \cos(-\varphi) \sin(\vartheta)
+\end{aligned}
+\end{equation}
+
+\function{oldenburg2sofaC} Convert Oldenburg spherical coordinates to SOFA cartesian coordinates. \\
+\begin{equation}
+\begin{aligned}
+x &= r \cos(\theta) \cos(-\phi) \\
+y &= r \cos(\theta) \sin(-\phi) \\
+z &= r \sin(\theta)
+\end{aligned}
+\end{equation}
+
 %% dsp %%
 \subsection{DSP}
+
+\function{clip} Limit the range of values of a signal. \\
+\begin{equation}
+y =
+\begin{cases}
+y_\text{min}, & \text{for}~x < x_\text{min}, \\
+x, & \text{for}~x \in [x_\text{min}, x_\text{max}], \\
+y_\text{max}, & \text{for}~x > x_\text{max}.
+\end{cases}
+\end{equation}
+
+\function{computeBandAvg} Averages of a function in specified frequency bands. \\
+\begin{equation}
+\overline{X}[f_c] = \frac{\displaystyle \sum_{k=0}^{K-1} \left| H_\Gamma[k;f_c] \right| X[k]}{\displaystyle \sum_{k=0}^{K-1} \left| H_\Gamma[k;f_c] \right|}
+\end{equation}
 
 \function{fractionalOctaveSmooth} Fractional-octave smoothing of transfer functions. \\
 Used to perform fractional-octave smoothing of a transfer function.
