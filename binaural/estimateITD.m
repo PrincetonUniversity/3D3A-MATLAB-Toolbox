@@ -105,8 +105,8 @@ if ~isequal(size(hL),size(hR))
 end
 
 % Perform optional filtering first
-indx = findInCell(varargin,'filter');
-if indx
+indx = find(strcmpi(varargin,'filter'),1);
+if ~isempty(indx)
     specCell = varargin{indx+1};
     n = specCell{1,1}; % filter order; see 'butter' help
     cutoff = specCell{1,2}; % cutoff frequency in Hz
@@ -123,8 +123,8 @@ if indx
 end
 
 % Perform resampling next ('upsample' included for backwards-compatibility)
-indx = findInCell(varargin,'resample')+findInCell(varargin,'upsample');
-if indx
+indx = find(strcmpi(varargin,'resample') | strcmpi(varargin,'upsample'),1);
+if ~isempty(indx)
     [p,q] = rat(varargin{indx+1});
     hL = resample(hL,p,q);
     hR = resample(hR,p,q);
@@ -142,8 +142,8 @@ end
 halfLen = ceil((FFTLen+1)/2);
 
 freqVec = getFreqVec(Fs,FFTLen);
-indx = findInCell(varargin,'range');
-if indx
+indx = find(strcmpi(varargin,'range'),1);
+if ~isempty(indx)
     if numel(varargin{indx+1})==1
         fU = varargin{indx+1};
         fL = 0;
@@ -160,8 +160,8 @@ end
 [nU,~] = min([nU;halfLen]); % Prevents choosing value above Nyquist freq.
 avgRange = nL:nU;
 
-indx = findInCell(varargin,'threshold');
-if indx
+indx = find(strcmpi(varargin,'threshold'),1);
+if ~isempty(indx)
     thp = varargin{indx+1};
 else
     thp = 0.2;
@@ -182,8 +182,8 @@ switch lower(method)
     case {'phase delay','phase'}
         pL = unwrap(angle(fft(hL,FFTLen,1)),[],1);
         pR = unwrap(angle(fft(hR,FFTLen,1)),[],1);
-        indx = findInCell(varargin,'linearfit');
-        if indx
+        indx = find(strcmpi(varargin,'linearfit'),1);
+        if ~isempty(indx)
             for ii = 1:numIRs
                 fitL = polyfit(freqVec(avgRange),pL(avgRange,ii),1);
                 fitR = polyfit(freqVec(avgRange),pR(avgRange,ii),1);
