@@ -1,17 +1,17 @@
-function y = clip(x,lim,val)
-%CLIP Limit the range of values of x.
+function y = clip(x,xlim,yval)
+%CLIP Limit the range of values of a signal.
 %   y = CLIP(x) gives x clipped to be between -1 and +1.
 %   
-%   y = CLIP(x,[min,max]) gives x for min <= x <= max, min for x < min, and
-%   max for x > max.
+%   y = CLIP(x,[xmin,xmax]) gives x for xmin <= x <= xmax, xmin for
+%   x < xmin, and xmax for x > xmax.
 %   
-%   y = CLIP(x,[min,max],[vmin,vmax]) gives vmin for x < min and vmax for 
-%   x > max.
+%   y = CLIP(x,[xmin,xmax],[ymin,ymax]) gives vmin for x < xmin and ymax
+%   for x > xmax.
 %   
-%   y = CLIP(x,max) and CLIP(x,max,vmax) apply an upper bound only.
+%   y = CLIP(x,xmax) and CLIP(x,xmax,ymax) apply an upper bound only.
 %   
-%   Note: for max > 0, sign(x).*CLIP(abs(x),max,vmax) is equivalent to
-%   CLIP(x,[-max,max],[-vmax,vmax]).
+%   Note: for xmax > 0, sign(x).*CLIP(abs(x),xmax,ymax) is equivalent to
+%   CLIP(x,[-xmax,xmax],[-ymax,ymax]).
 
 %   ==============================================================================
 %   This file is part of the 3D3A MATLAB Toolbox.
@@ -45,43 +45,38 @@ function y = clip(x,lim,val)
 %   ==============================================================================
 
 % Needs at least 1 input argument
-if nargin < 1
-    error('Not enough input arguments.');
-end
+narginchk(1,3);
 
 % Gives x clipped to be between -1 and +1 by default
-if nargin < 2
-    lim = [-1 1];
+if nargin < 2 || isempty(xlim)
+    xlim = [-1 1];
 else
-    if numel(lim) > 2
+    if numel(xlim) > 2
         error('Too many elements of limit vector.');
     end
 end
 
 % Clips to limits by default
-if nargin < 3
-    val = lim;
+if nargin < 3 || isempty(yval)
+    yval = xlim;
 else
-    if numel(val) ~= numel(lim)
+    if numel(yval) ~= numel(xlim)
         error('Limit and value vectors must have same number of elements.');
     end
 end
 
 y = x;
-switch numel(lim)
+switch numel(xlim)
     case 1 % Upper bound only
-        max = lim;
-        vmax = val;
+        xmax = xlim;
+        ymax = yval;
     case 2 % Upper and lower bounds
-        min = lim(1);
-        vmin = val(1);
-        max = lim(2);
-        vmax = val(2);
-        if min > max
-            error('Lower bound must not be greater than upper bound.');
-        end
-        y(y<min) = vmin;
+        xmin = min(xlim);
+        ymin = min(yval);
+        xmax = max(xlim);
+        ymax = max(yval);
+        y(y<xmin) = ymin;
 end
-y(y>max) = vmax;
+y(y>xmax) = ymax;
 
 end
