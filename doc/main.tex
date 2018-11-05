@@ -317,6 +317,7 @@ The conventions for the CIPIC interaural coordinates are specified by~\citet{Alg
 \subsection{DSP}
 
 \function{clip} Limit the range of values of a signal. \\
+Given an input signal $x$, an output signal $y$ is created whose range of values are clipped, such that
 \begin{equation}
 y =
 \begin{cases}
@@ -325,6 +326,13 @@ x, & \text{for}~x \in [x_\text{min}, x_\text{max}], \\
 y_\text{max}, & \text{for}~x > x_\text{max}.
 \end{cases}
 \end{equation}
+This function is illustrated in \figref{fig:clip}.
+
+\begin{figure}
+\centering
+\input{figures/clip}
+\caption{Clipping function.}\label{fig:clip}
+\end{figure}
 
 \function{computeBandAvg} Averages of a function in specified frequency bands. \\
 For fractional-octave bands, a \texttt{logmean} (see \eqnref{eq:logmean}) is taken over a specified bandwidth of $B$ octaves, from $f_c / 2^{\frac{B}{2}}$ to $f_c \times 2^{\frac{B}{2}}$.

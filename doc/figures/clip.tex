@@ -1,0 +1,32 @@
+\begin{tikzpicture}[scale=2]
+% Parameters
+\def\ymin{-1}; \def\ymax{1};
+\def\xmin{-1}; \def\xmax{0.8};
+\def\xstart{-1.5}; \def\xend{1.5};
+\def\ystart{-1.2}; \def\yend{1.2};
+
+% Axes
+\draw[->] (\xstart-0.1,0) -- (\xend+0.1,0) node[right]{$x$};
+\draw[->] (0,\ystart-0.1) -- (0,\yend+0.1) node[above]{$y$};
+
+% Tick labels
+\draw (-0.05,\ymin) -- (0.05,\ymin) node[right]{$y_\text{min}$};
+\draw[dashed] (\xmin-0.1,\ymin) -- (0,\ymin);
+\draw (0.05,\ymax) -- (-0.05,\ymax) node[left]{$y_\text{max}$};
+\draw[dashed] (0,\ymax) -- (\xmax+0.1,\ymax);
+
+\draw (\xmin,-0.05) -- (\xmin,0.05) node[above]{$x_\text{min}$};
+\draw[dashed] (\xmin,\ymin-0.1) -- (\xmin,0);
+\draw (\xmax,0.05) -- (\xmax,-0.05) node[below]{$x_\text{max}$};
+\draw[dashed] (\xmax,0) -- (\xmax,\ymax+0.1);
+
+\node at (\xmin,\xmin){\Large $\bullet$};
+%\node at (\xmin,\ymin){\Large $\circ$};
+\node at (\xmax,\xmax){\Large $\bullet$};
+\node at (\xmax,\ymax){\Large $\circ$};
+
+% Plot
+\draw[ultra thick] (\xstart,\ymin) -- (\xmin,\ymin);
+\draw[ultra thick] (\xmin,\xmin) -- (\xmax,\xmax);
+\draw[ultra thick] (\xmax,\ymax) -- (\xend,\ymax);
+\end{tikzpicture}
