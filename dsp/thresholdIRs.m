@@ -1,27 +1,31 @@
 function onsetMat = thresholdIRs(irData,thp,varargin)
-%THRESHOLDIRs Find the onset(s) of input IR(s) using thresholding.
-%   onsetMat = THRESHOLDIRs(irData) identifies the onset samples in input 
-%   IRs using a 10% threshold. If irData is a matrix, the input IRs must be
-%   stored as columns. onsetMat is then a row vector. If irData is a
-%   tensor (3D matrix), the deepest dimension is assumed to contain the IR
-%   data. onsetMat is then a matrix. For example, if irData has dimensions 
-%   2-by-3-by-100, it is assumed that 100 is the length of each of the IRs.
+%THRESHOLDIRS Find the onset(s) of input IR(s) using thresholding.
+%   D = THRESHOLDIRS(X) identifies the onset samples D for input IRs X
+%   using a 10% threshold. If X is an matrix M-by-N, thresholding is
+%   performed along its columns, and D is then a 1-by-N row vector. If X is
+%   an M-by-N-by-K 3D array, thresholding is performed along the third
+%   dimension and D is then an N-by-M matrix.
 %
-%   onsetMat = THRESHOLDIRs(...,thp) specifies the threshold value to use
-%   to compute the onset. thp takes on values between 0 and 1 and
-%   corresponds to a fraction of the maximum absolute value of each IR. The
-%   first sample in a given IR to exceed thp times the maximum absolute
-%   amplitude of that IR is considered the onset sample of that IR.
+%   Similarly, if X is a 2D cell array of size M-by-N, then D will be an
+%   M-by-N matrix. Note that each element of the cell array must be a
+%   vector, and thresholding will be performed along each of those vectors.
 %
-%   onsetMat = THRESHOLDIRs(...,Name1,Value1,...) specifies optional 
+%   D = THRESHOLDIRS(X,THP) specifies the threshold value to use to compute
+%   the onsets. THP takes on values between 0 and 1 and corresponds to a
+%   fraction of the maximum absolute value of each IR. The first sample in
+%   a given IR to exceed THP times the maximum absolute amplitude of that
+%   IR is considered the onset sample of that IR.
+%
+%   D = THRESHOLDIRS(X,THP,Name1,Value1,...) specifies optional
 %   comma-separated pairs of Name,Value arguments, where Name is the 
 %   argument name and Value is the corresponding value. Name must appear 
 %   inside single quotes (' '). You can specify the following:
 %
-%   'resample'      Resample irData prior to computing onsets. This must
-%                   be a scalar > 0 such that a value in the range (0,1)
+%   'resample'      Resample X prior to computing onsets. This value must
+%                   be a scalar > 0, where a value in the range (0,1)
 %                   corresponds to downsampling, and a value > 1
-%                   corresponds to upsampling.
+%                   corresponds to upsampling. Onsets are returned at the
+%                   original sampling rate.
 
 %   ==============================================================================
 %   This file is part of the 3D3A MATLAB Toolbox.
@@ -56,26 +60,22 @@ function onsetMat = thresholdIRs(irData,thp,varargin)
 %   ==============================================================================
 
 % Needs at least 1 input argument
-if nargin == 0
-    onsetMat = 0;
-    return
-end
+narginchk(1,4);
 
 % Use 10% (-20 dB) threshold by default
 if nargin == 1
     thp = 0.1;
 end
 
-% Perform resampling ('upsample' included for backwards-compatibility)
-indx = findInCell(varargin,'resample')+findInCell(varargin,'upsample');
-if indx && ~iscell(irData) && ~(ndims(irData)-2)
-    [p,q] = rat(varargin{indx+1});
-    irData = resample(irData,p,q);
-else
-    p = 1;
-    q = 1;
+% Check input data type
+array2D = (~iscell(irData) && ismatrix(irData));
+array3D = (~iscell(irData) && nDims(irData)==3);
+cell2D = (iscell(irData) && ismatrix(irData));
+if ~(array2D || array3D || cell2D)
+    error('Input data must be either: a 2D numeric array, a 3D numeric array, or a 2D cell array.');
 end
-
+    
+% Get array dimensions
 switch ndims(irData)
     case 2
         [nRows,nCols] = size(irData);
@@ -83,33 +83,62 @@ switch ndims(irData)
         [nRows,nCols,~] = size(irData);
 end
 
-if iscell(irData)
+% Perform resampling ('upsample' included for backwards-compatibility)
+indx = find(strcmpi(varargin,'resample')|strcmpi(varargin,'upsample'),1);
+if ~isempty(indx)
+    [p,q] = rat(varargin{indx+1});
+    if array2D
+        irData = resample(irData,p,q);
+    elseif array3D
+        tempIR = resample(irData(1,1,:),p,q);
+        resampleData = zeros(nRows,nCols,length(tempIR));
+        for ii = 1:nRows
+            for jj = 1:nCols
+                resampleData(ii,jj,:) = resample(irData(ii,jj,:),p,q);
+            end
+        end
+        irData = resampleData;
+    elseif cell2D
+        for ii = 1:nRows
+            for jj = 1:nCols
+                tempIR = irData{ii,jj};
+                if ~isvector(tempIR)
+                    error('Cell array elements must be vectors.')
+                end
+                irData{ii,jj} = resample(shiftdim(tempIR),p,q);
+            end
+        end
+    end
+else
+    p = 1;
+    q = 1;
+end
+
+% Perform thresholding
+if array2D
+    onsetMat = zeros(1,nCols);
+    for jj=1:nCols
+        peakVal = max(abs(irData(:,jj)));
+        onsetMat(jj) = find(abs(irData(:,jj)) >= (thp*peakVal),1,...
+            'first')*(q/p);
+    end
+elseif array3D
+    onsetMat = zeros(nRows,nCols);
+    for ii=1:nRows
+        for jj=1:nCols
+            peakVal = max(abs(irData(ii,jj,:)));
+            onsetMat(ii,jj) = find(abs(irData(ii,jj,:)) >= ...
+                (thp*peakVal),1,'first')*(q/p);
+        end
+    end
+elseif cell2D
     onsetMat = zeros(nRows,nCols);
     for ii=1:nRows
         for jj=1:nCols
             peakVal = max(abs(irData{ii,jj}));
             onsetMat(ii,jj) = find(abs(irData{ii,jj}) >= (thp*peakVal),1,...
-                'first');
+                'first')*(q/p);
         end
-    end
-else
-    switch ndims(irData)
-        case 2
-            onsetMat = zeros(1,nCols);
-            for jj=1:nCols
-                peakVal = max(abs(irData(:,jj)));
-                onsetMat(jj) = find(abs(irData(:,jj)) >= (thp*peakVal),1,...
-                    'first')*(p/q);
-            end
-        case 3
-            onsetMat = zeros(nRows,nCols);
-            for ii=1:nRows
-                for jj=1:nCols
-                    peakVal = max(abs(irData(ii,jj,:)));
-                    onsetMat(ii,jj) = find(abs(irData(ii,jj,:)) >= ...
-                        (thp*peakVal),1,'first');
-                end
-            end
     end
 end
 
