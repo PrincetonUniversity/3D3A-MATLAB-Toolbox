@@ -44,9 +44,8 @@ function outputSpec = getMagSpec(inputIR,DIM)
 
 narginchk(1,2);
 
-if ~ismatrix(inputIR)
-    error('inputIR can be a scalar, vector, or matrix, only.');
-end
+validateattributes(inputIR,{'double'},{'2d','nonempty','nonnan',...
+    'finite','real'},'getMagSpec','inputIR',1)
 
 if nargin < 2
     outputSpec = abs(fft(inputIR));
