@@ -1,21 +1,20 @@
-import os
-import numpy as np
-from matplotlib import pyplot
+import os # for determining file path
+import numpy as np # for creating data vectors
+from matplotlib import pyplot # for plotting
 
 scriptDirectory = os.path.dirname(os.path.realpath(__file__)) # must run entire file
 
 numfc = 100 # number of center frequencies
 fc = np.logspace(2.0, 4.0, num=numfc) / 1000 # log-spaced center frequencies in kHz
 
-w1 = 24.7 * (4.37 * fc + 1)
-w2 = 6.23 * np.power(fc, 2) + 93.39 * fc + 28.52
+w1 = 24.7 * (4.37 * fc + 1) # linear approximation
+w2 = 6.23 * np.power(fc, 2) + 93.39 * fc + 28.52 # quadratic approximation
 
 #%% Plot curves and save figure
 fc2erbPlot = pyplot.figure()
 pyplot.rcParams["font.family"] = "Times New Roman"
-pyplot.rcParams["axes.formatter.useoffset"] = False
-pyplot.plot(fc, w1, 'k')
-pyplot.plot(fc, w2, 'k--')
+pyplot.plot(fc, w1, 'k') # linear is solid
+pyplot.plot(fc, w2, 'k--') # quadratic  is dashed
 pyplot.xscale('log')
 pyplot.yscale('log')
 pyplot.xlim(fc[1]/1.5,fc[-1]*1.5)
