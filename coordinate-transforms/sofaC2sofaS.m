@@ -1,5 +1,6 @@
 function [az,el,rad] = sofaC2sofaS(x,y,z)
-%SOFAC2SOFAS Convert SOFA cartesian to SOFA spherical coordinates.
+%SOFAC2SOFAS Convert SOFA cartesian coordinates to SOFA spherical 
+%coordinates.
 %   [az,el,rad] = SOFAC2SOFAS(x,y,z) converts from SOFA cartesian to
 %   SOFA spherical coordinates. x, y, and z may be scalars or vectors. az
 %   and el are specified in degrees. az, el, and rad may be scalars or

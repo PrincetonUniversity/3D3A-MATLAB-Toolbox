@@ -53,6 +53,7 @@
 \usepackage{amsmath}
 \usepackage[numbers,square,sort]{natbib}
 \usepackage{tikz}
+\usepackage{mathtools}
 
 % User-defined commands
 \newcommand{\citeref}[1]{Ref.~\cite{#1}}
@@ -252,60 +253,65 @@ H_\text{P}(f;f_c) = \left( 1 + \frac{4|f-f_c|}{W_2(f_c)} \right) e^{-\frac{4|f-f
 where $W_2(f_c)$ is the ERB at $f_c$, as given by \eqnref{eq:fc2erb_2}.
 
 %% binaural %%
-\subsection{Binaural}
+%\subsection{Binaural}
 
-\function{estimateITD} Estimate the interaural time difference (ITD), in seconds. \\
+%\function{estimateITD} Estimate the interaural time difference (ITD), in seconds. \\
 
 %%% coordinate-transforms %%%
-\subsubsection{Coordinate Transforms}
+\subsection{Coordinate Transforms}
 
-As defined in the SOFA format, $(x,y,z) \in \mathbb{R}^3$ are the Cartesian coordinates.
-\function{sofaC2sofaS} Convert SOFA cartesian to SOFA spherical coordinates. \\
-The radial coordinate is strictly non-negative, $r \in [0,\infty)$, the azimuthal coordinate is given in degrees, $\phi \in [0, 360^\circ )$, and the elevation coordinate is given in degrees, $\theta \in [-90^\circ, 90^\circ ]$.
-\begin{equation}
-\begin{aligned}
-r &= \sqrt{x^2 + y^2 + z^2} \\
-\phi &= \tan^{-1} \left( \frac{y}{x} \right) \\
-\theta &= \tan^{-1} \left( \frac{z}{\sqrt{x^2 + y^2}} \right)
-\end{aligned}
-\end{equation}
+As defined in the SOFA format~\citep{AES69-2015}, $(x,y,z) \in \mathbb{R}^3$ are the Cartesian coordinates.
+\function{sofaC2sofaS} Convert SOFA cartesian coordinates to SOFA spherical coordinates. \\
+The relationships between SOFA spherical coordinates, $\left(r,\theta,\phi\right)$, and SOFA cartesian coordinates, $\left(x,y,z\right)$, are given by
+\begin{align}
+r &= \sqrt{x^2 + y^2 + z^2}, \\
+\theta &= \arctan \left(\frac{y}{x}\right) \mod 360, \\
+\phi &= \arcsin \left(\frac{z}{\sqrt{x^2 + y^2 + z^2}}\right),
+\end{align}
+where mod denotes the modulo operation, and the ranges, in degrees, of the $\arctan$ and $\arcsin$ functions are $\left[-180,180\right]$ and $\left[-90,90\right]$, respectively.
+The resulting $r$, $\theta$, and $\phi$ have the following ranges: $r \in (0,\infty)$, $\phi \in \left[-90,90\right]$, and $\theta \in \left[0,360\right)$.
+Elevation, $\phi$, and azimuth, $\theta$, are specified in degrees.
 
-\function{sofaS2sofaC} Convert SOFA spherical to SOFA cartesian coordinates. \\
-\begin{equation}
-\begin{aligned}
-x &= r \cos(\theta) \cos(\phi) \\
-y &= r \cos(\theta) \sin(\phi) \\
-z &= r \sin(\theta)
-\end{aligned}
-\end{equation}
+\function{sofaS2sofaC} Convert SOFA spherical coordinates to SOFA cartesian coordinates. \\
+The relationships between SOFA cartesian coordinates, $\left(x,y,z\right)$, and SOFA spherical coordinates, $\left(r,\theta,\phi\right)$, are given by
+\begin{align}
+x &= r \cos \phi \cos \theta, \\
+y &= r \cos \phi \sin \theta, \\
+z &= r \sin \phi,
+\end{align}
+where $r \in (0,\infty)$.
+Elevation, $\phi \in \left[-90,90\right]$, and azimuth, $\theta \in \left[0,360\right)$, are specified in degrees.
 
-\function{sofaC2cipic} Convert SOFA cartesian coordinates to CIPIC interaural polar coordinates. \\
-The radial coordinate is strictly non-negative, $r \in [0,\infty)$, the azimuthal coordinate is given in degrees, $\varphi \in [-90^\circ, 90^\circ ]$, and the elevation coordinate is given in degrees, $\theta \in [-90^\circ, 270^\circ ]$.
+\function{sofaC2cipicI} Convert SOFA cartesian coordinates to CIPIC interaural coordinates. \\
+The relationships between CIPIC interaural coordinates, $\left(r,\vartheta,\varphi\right)$, and SOFA cartesian coordinates, $\left(x,y,z\right)$, are given by
+\begin{align}
+r &= \sqrt{x^2 + y^2 + z^2}, \\
+\vartheta &= \arcsin \left(\frac{-y}{\sqrt{x^2 + y^2 + z^2}}\right), \\
+\varphi &= 
+\begin{cases*}
+\varphi' - 360, & $\forall\,x \geq 0$ and $z < 0$, \\
+\varphi', & otherwise,
+\end{cases*}
+\end{align}
+where
 \begin{equation}
-\begin{aligned}
-r &= \sqrt{x^2 + y^2 + z^2} \\
-\varphi &= \tan^{-1} \left( \frac{-y}{\sqrt{x^2 + z^2}} \right) \\
-\vartheta &= \tan^{-1} \left( \frac{z}{x} \right)
-\end{aligned}
+\varphi' =  \arctan \left(\frac{z}{x}\right) \mod 360,
 \end{equation}
+with mod denoting the modulo operation, and the ranges, in degrees, of the $\arctan$ and $\arcsin$ functions being $\left[-180,180\right]$ and $\left[-90,90\right]$, respectively.
+The resulting $r$, $\vartheta$, and $\varphi$ have the following ranges: $r \in (0,\infty)$, $\varphi \in \left[-90,270\right)$, and $\vartheta \in \left[-90,90\right]$.
+Elevation, $\varphi$, and azimuth, $\vartheta$, are specified in degrees.
+The conventions for the CIPIC interaural coordinates are specified by~\citet{Algazi2001}.
 
-\function{cipic2sofaC} Convert CIPIC interaural polar coordinates to SOFA cartesian coordinates. \\
-\begin{equation}
-\begin{aligned}
-x &= r \cos(-\varphi) \cos(\vartheta) \\
-y &= r \sin(-\varphi) \\
-z &= r \cos(-\varphi) \sin(\vartheta)
-\end{aligned}
-\end{equation}
-
-\function{oldenburg2sofaC} Convert Oldenburg spherical coordinates to SOFA cartesian coordinates. \\
-\begin{equation}
-\begin{aligned}
-x &= r \cos(\theta) \cos(-\phi) \\
-y &= r \cos(\theta) \sin(-\phi) \\
-z &= r \sin(\theta)
-\end{aligned}
-\end{equation}
+\function{cipicI2sofaC} Convert CIPIC interaural coordinates to SOFA cartesian coordinates. \\
+The relationships between SOFA cartesian coordinates, $\left(x,y,z\right)$, and CIPIC interaural coordinates, $\left(r,\vartheta,\varphi\right)$, are given by
+\begin{align}
+x &= r \cos \vartheta \cos \varphi, \\
+y &= -r \sin \vartheta, \\
+z &= r \cos \vartheta \sin \varphi,
+\end{align}
+where $r \in (0,\infty)$.
+Elevation, $\varphi \in \left[-90,270\right)$, and azimuth, $\vartheta \in \left[-90,90\right]$, are specified in degrees.
+The conventions for the CIPIC interaural coordinates are specified by~\citet{Algazi2001}.
 
 %% dsp %%
 \subsection{DSP}
@@ -337,6 +343,8 @@ H_\text{s}[k] = \sum_{k' = 0}^{N - 1} M[k, k'] H[k'].
 Used for computing the smoothing matrix $M$.
 Currently, the methods of \citet{HatziantoniouMourjopoulos2000} and \citet{Tylka2017} have been implemented.
 
+\function{fftConv} Convolve two causal signals in the frequency domain. \\
+
 \function{getForwardSTFT} Spectrogram using short-time Fourier transform (STFT). \\
 
 \function{getInverseSTFT} Inverse short-time Fourier transform (STFT). \\
@@ -353,19 +361,51 @@ Given a vector length $K$ and sampling rate $F_s$, the vector of frequencies $f[
 f[k] = \frac{k F_s}{K}, \quad\quad \text{for} ~ k \in [0, K-1].
 \end{equation}
 
-\function{inverseFilter} Compute an inverse filter with optional regularization. \\
-\begin{equation}\label{eq:inverseFilter}
-G(f) = \frac{H^\ast(f)}{H^\ast(f) H(f) + \beta(f)},
-\end{equation}
+\function{getMagSpec} Compute magnitude spectrum. \\
 
-\begin{figure}
-\centering
-\input{figures/piecewise_regularization}
-\caption{Frequency-dependent regularization function of the inverse filters for HRTF equalization.}\label{fig:beta}
-\end{figure}
+\function{getMagSpecdB} Compute magnitude spectrum in dB. \\
+
+\function{thresholdIRs} Find the onset(s) of input IR(s) using thresholding. \\
+
+%\function{inverseFilter} Compute an inverse filter with optional regularization. \\
+%\begin{equation}\label{eq:inverseFilter}
+%G(f) = \frac{H^\ast(f)}{H^\ast(f) H(f) + \beta(f)},
+%\end{equation}
+
+%\begin{figure}
+%\centering
+%\input{figures/piecewise_regularization}
+%\caption{Frequency-dependent regularization function of the inverse filters for HRTF equalization.}\label{fig:beta}
+%\end{figure}
+
+%% general %%
+\subsection{General}
+
+\function{findNearest} Find the row of a matrix nearest to a given row vector. \\
+
+\function{loadGridFile} Load a spherical grid from a MAT file. \\
+
+%% general data processing %%
+\subsection{General Data Processing}
+
+\function{getYRep} Compute a spherical harmonic representation of input data. \\
+
+\function{makePosMat} Construct a matrix of position coordinate groups. \\
+
+\function{spatialSort} Sort spatial data based on corresponding position data. \\
 
 %% math %%
 \subsection{Math}
+
+\function{computeY} Compute spherical harmonics of specific degrees. \\
+
+\function{computeYMat} Compute spherical harmonics of all degrees up to a specified maximum degree. \\
+
+\function{logAvg} Log-weighted average of a function.
+See also, \texttt{logmean}. \\
+
+\function{logSTD} Log-weighted standard deviation.
+See also, \texttt{logvar}. \\
 
 \function{logmean} Log-scale average of a function. \\
 Consider a discrete spectrum $X[k]$ for $k \in [0, K-1]$, where the frequency index, $k$, is proportional to the frequency in Hz, given by $k F_s/K$, and $F_s$ is the sampling rate.
@@ -412,6 +452,16 @@ where $H^{(k)}_n$ is the Hankel function of the $k^\text{th}$ kind and of order 
 %% metrics %%
 \subsection{Metrics}
 
+\function{computeNCC} Compute maximum of the normalized cross-correlation. \\
+
+\function{computeREE} Compute relative energy error. \\
+
+\function{computeRMSE} Compute root-mean-squared error. \\
+
+\function{computeSD} Compute spectral distortion. \\
+
+\function{computeSDR} Compute signal-to-distortion ratio. \\
+
 \function{boren2015\_Epk} Boren's peak and notch errors. \\
 The peak and notch errors ($E_{\text{pk}}, E_\text{n}$) were defined by~\citet{Boren2015}
 and essentially quantify the average peak (or notch) height (depth) in a frequency response over a certain frequency range.
@@ -428,6 +478,7 @@ E_\text{pk} = \frac{\sum_{j = 1}^{N_\text{pk}} D(f_j^\uparrow)}{3 \log_2 (f_\tex
 E_\text{n} = \frac{\sum_{j = 1}^{N_\text{n}} (-D(f_j^\downarrow))}{3 \log_2 (f_\text{U}/f_\text{L})},
 \end{equation}
 respectively. Note that, since $D$ is given in dB, the negative sign in the second equation typically ensures that both metrics are positive-valued.
+
 \function{computeDirectionalError} Directional error between two vectors. \\
 Computes a directional error between two vectors, $\vec{r}_1$ and $\vec{r}_2$, such that
 \begin{equation}
@@ -486,6 +537,30 @@ P^{\text{L},\text{R}}(f_c) = \frac{\displaystyle \int_{-\infty}^\infty |H_\text{
 \end{equation}
 where $H_\text{P}(f;f_c)$ are Patterson's auditory filters as specified by~\citet[Eq.~(5.9)]{Salomons1995PhD}
 and $B^{\text{L},\text{R}}$ are the binaural transfer functions.
+
+%% amt-wrappers %%
+\subsubsection{Wrappers for Functions in the Auditory Modeling Toolbox}
+
+The following functions require the Auditory Modeling Toolbox and its dependencies.
+
+\function{wierstorf2013_getLookupTable} ITD to azimuth lookup table. \\
+
+\function{wrap_may2011} Wrapper for may2011 from the Auditory Modeling Toolbox. \\
+
+\function{wrap_wierstorf2013} Wierstorf's azimuthal binaural localization model.
+
+%% point-cloud-processing
+\subsection{Point Cloud Processing}
+
+\function{clusterPC} Cluster points in a point cloud based on distance of points from origin. \\
+
+\function{declusterPC} Generate a single point cloud from a cluster of point clouds that have been clustered based on distance of points from origin. \\
+
+\function{downsamplePC} Downsample a point cloud to approximately contain a specified number of points. \\
+
+\function{getClusterPCYRep} Compute a spherical harmonic representation of a set of point clouds that have been clustered based on distance of points from origin. \\
+
+\function{getPCYRep} Compute spherical harmonic representation of a point cloud assuming the point cloud is a star-shaped object (i.e. a single-valued function on a sphere). \\
 
 %% stimuli %%
 \subsection{Stimuli}
