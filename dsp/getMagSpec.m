@@ -50,6 +50,9 @@ validateattributes(inputIR,{'double'},{'2d','nonempty','nonnan',...
 if nargin < 2
     outputSpec = abs(fft(inputIR));
 else
+    validateattributes(DIM,{'double'},{'scalar','nonempty','nonnan',...
+        'finite','integer','positive','<=',ndims(inputIR)},'getMagSpec',...
+        'DIM',2)
     outputSpec = abs(fft(inputIR,[],DIM));
 end
 
