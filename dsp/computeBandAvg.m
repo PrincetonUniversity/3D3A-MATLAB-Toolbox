@@ -47,7 +47,7 @@ function [Y, fc] = computeBandAvg(Q,F,B,FRANGE,Fs)
 narginchk(4,5);
 
 if isnumeric(B) % Fractional-octave bands
-    numfc = round(log2(FRANGE(2)/FRANGE(1))/B);
+    numfc = 1 + round(log2(FRANGE(2)/FRANGE(1))/B);
     fc = zeros(numfc,1);
     
     Y = zeros(numfc,size(Q,2));
