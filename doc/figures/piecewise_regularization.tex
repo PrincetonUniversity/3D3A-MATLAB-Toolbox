@@ -1,0 +1,26 @@
+\begin{tikzpicture}[scale=2.3]
+% Parameters
+\def\betaone{1}; \def\betazero{0.1};
+\def\fzero{0}; \def\fNyq{2};
+\def\fLone{0.2}; \def\fLzero{0.5};
+\def\fHzero{1.5}; \def\fHone{1.8};
+
+% Axes
+\draw[->] (\fzero-0.1,0) -- (\fNyq+0.1,0) node[right]{$f$};
+\draw[->] (\fzero,-0.1) -- (\fzero,\betaone+0.1) node[above]{$\beta$};
+
+% Tick labels
+\draw (\fzero+0.05,\betaone) -- (\fzero-0.05,\betaone) node[left]{$\beta_1$};
+\draw[dashed] (\fLzero,\betazero) -- (\fzero-0.05,\betazero) node[left]{$\beta_0$};
+\draw[dashed] (\fLone,\betaone+0.05) -- (\fLone,-0.05) node[below]{$f_{L1}$};
+\draw (\fLzero,0.05) -- (\fLzero,-0.05) node[below]{$f_{L0}$};
+\draw (\fHzero,0.05) -- (\fHzero,-0.05) node[below]{$f_{H0}$};
+\draw[dashed] (\fHone,\betaone+0.05) -- (\fHone,-0.05) node[below]{$f_{H1}$};
+
+% Plot
+\draw[ultra thick] (\fzero,\betaone) -- (\fLone,\betaone);
+\draw[ultra thick] (\fLone,\betaone) -- (\fLzero,\betazero);
+\draw[ultra thick] (\fLzero,\betazero) -- (\fHzero,\betazero);
+\draw[ultra thick] (\fHzero,\betazero) -- (\fHone,\betaone);
+\draw[ultra thick] (\fHone,\betaone) -- (\fNyq,\betaone);
+\end{tikzpicture}

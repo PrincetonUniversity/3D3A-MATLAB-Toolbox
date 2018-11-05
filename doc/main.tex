@@ -321,6 +321,8 @@ y_\text{max}, & \text{for}~x > x_\text{max}.
 \end{equation}
 
 \function{computeBandAvg} Averages of a function in specified frequency bands. \\
+For fractional-octave bands, a \texttt{logmean} (see \eqnref{eq:logmean}) is taken over a specified bandwidth of $B$ octaves, from $f_c / 2^{\frac{B}{2}}$ to $f_c \times 2^{\frac{B}{2}}$.
+Alternatively, for ERB-spaced auditory bands,
 \begin{equation}
 \overline{X}[f_c] = \frac{\displaystyle \sum_{k=0}^{K-1} \left| H_\Gamma[k;f_c] \right| X[k]}{\displaystyle \sum_{k=0}^{K-1} \left| H_\Gamma[k;f_c] \right|}
 \end{equation}
@@ -334,6 +336,33 @@ H_\text{s}[k] = \sum_{k' = 0}^{N - 1} M[k, k'] H[k'].
 \function{computeSmoothingMatrix} Fractional-octave smoothing matrix. \\
 Used for computing the smoothing matrix $M$.
 Currently, the methods of \citet{HatziantoniouMourjopoulos2000} and \citet{Tylka2017} have been implemented.
+
+\function{getForwardSTFT} Spectrogram using short-time Fourier transform (STFT). \\
+
+\function{getInverseSTFT} Inverse short-time Fourier transform (STFT). \\
+
+\function{getTimeVec} Vector of linearly-spaced time values. \\
+Given a vector length $N$ and sampling rate $F_s$, the vector of time values $t[n]$ is given by
+\begin{equation}
+t[n] = \frac{n}{F_s}, \quad\quad \text{for} ~ n \in [0, N-1].
+\end{equation}
+
+\function{getFreqVec} Vector of linearly-spaced frequencies. \\
+Given a vector length $K$ and sampling rate $F_s$, the vector of frequencies $f[k]$ is given by
+\begin{equation}
+f[k] = \frac{k F_s}{K}, \quad\quad \text{for} ~ k \in [0, K-1].
+\end{equation}
+
+\function{inverseFilter} Compute an inverse filter with optional regularization. \\
+\begin{equation}\label{eq:inverseFilter}
+G(f) = \frac{H^\ast(f)}{H^\ast(f) H(f) + \beta(f)},
+\end{equation}
+
+\begin{figure}
+\centering
+\input{figures/piecewise_regularization}
+\caption{Frequency-dependent regularization function of the inverse filters for HRTF equalization.}\label{fig:beta}
+\end{figure}
 
 %% math %%
 \subsection{Math}
@@ -351,12 +380,54 @@ Similarly, we define the logarithmically-weighted variance $\sigma_X^2$ by
 \sigma_X^2 = \frac{\displaystyle \sum_{k=K_1}^{K_2} \frac{1}{k} \left( X[k] - \overline{X} \right)^2}{\displaystyle \sum_{k=K_1}^{K_2} \frac{1}{k}}.
 \end{equation}
 
+\function{normalizeVector} Normalize vectors to unit magnitude. \\
+Returns the unit vector $\hat{r}$ given a vector $\vec{r}$, such that
+\begin{equation}
+\hat{r} = \frac{\vec{r}}{\|\vec{r}\|} = \frac{\vec{r}}{\sqrt{\langle \vec{r}, \vec{r} \rangle}},
+\end{equation}
+where $\langle \cdot, \cdot \rangle$ denotes the inner product.
+
+\function{sphericalBesselJ} Spherical Bessel function. \\
+Returns the spherical Bessel function of order $n$, given by
+\begin{equation}
+j_n(x) =
+\begin{cases}
+\displaystyle \sqrt{\frac{\pi}{2 x}} J_{n+0.5}(x), & x \geq 0 \\
+\displaystyle -\sqrt{\frac{\pi}{2 x}} J_{n+0.5}(x), & x < 0
+\end{cases}
+\end{equation}
+where $J_n$ is the Bessel function of order $n$.
+
+\function{sphericalHankelH} Spherical Hankel function. \\
+Returns the spherical Hankel function of the $k^\text{th}$ kind and of order $n$, given by
+\begin{equation}
+h^{(k)}_n(x) =
+\begin{cases}
+\displaystyle \sqrt{\frac{\pi}{2 x}} H^{(k)}_{n+0.5}(x), & x \geq 0, \\
+\displaystyle -\sqrt{\frac{\pi}{2 x}} H^{(k)}_{n+0.5}(x), & x < 0,
+\end{cases}
+\end{equation}
+where $H^{(k)}_n$ is the Hankel function of the $k^\text{th}$ kind and of order $n$.
+
 %% metrics %%
 \subsection{Metrics}
 
 \function{boren2015\_Epk} Boren's peak and notch errors. \\
-Implemented peak and notch errors coloration metrics of \citet{Boren2015}.
-
+The peak and notch errors ($E_{\text{pk}}, E_\text{n}$) were defined by~\citet{Boren2015}
+and essentially quantify the average peak (or notch) height (depth) in a frequency response over a certain frequency range.
+First, the difference (in dB) is computed between finely- and coarsely-smoothed versions of the the normalized transfer function $F(f) = G(f)/G_0(f)$, i.e.,
+\begin{equation}
+D(f) = 20 \log_{10} \left( \frac{ \mathcal{S}\left( |F(f)|; 1/48 \right) }{ \mathcal{S}\left( |F(f)|; 1 \right) } \right),
+\end{equation}
+where $\mathcal{S}(F; B)$ denotes fractional-octave smoothing\footnote{In this function, we used the method described by~\citet{Tylka2017}.} applied to the spectrum $F$ with smoothing bandwidth $B$ octaves.
+The peak- and notch-finding algorithms described by~\citeauthor{Boren2015}~are then applied to find the frequencies $f_1^\uparrow, f_2^\uparrow, \dots f_{N_\text{pk}}^\uparrow$ of all $N_\text{pk}$ spectral peaks and $f_1^\downarrow, f_2^\downarrow, \dots f_{N_\text{n}}^\downarrow$  of all $N_\text{n}$ spectral notches in the range $f \in [f_\text{L}, f_\text{U}]$.
+The peak and notch errors are then given by~\citep[Eq.~(1)]{Boren2015}
+\begin{equation}
+E_\text{pk} = \frac{\sum_{j = 1}^{N_\text{pk}} D(f_j^\uparrow)}{3 \log_2 (f_\text{U}/f_\text{L})}
+\quad\quad\text{and}\quad\quad
+E_\text{n} = \frac{\sum_{j = 1}^{N_\text{n}} (-D(f_j^\downarrow))}{3 \log_2 (f_\text{U}/f_\text{L})},
+\end{equation}
+respectively. Note that, since $D$ is given in dB, the negative sign in the second equation typically ensures that both metrics are positive-valued.
 \function{computeDirectionalError} Directional error between two vectors. \\
 Computes a directional error between two vectors, $\vec{r}_1$ and $\vec{r}_2$, such that
 \begin{equation}
@@ -364,7 +435,7 @@ Computes a directional error between two vectors, $\vec{r}_1$ and $\vec{r}_2$, s
 \end{equation}
 Alternatively,
 \begin{equation}
-\epsilon = \sqrt{ \left( \hat{r}_1 - \hat{r}_2 \right) \cdot \left( \hat{r}_1 - \hat{r}_2 \right) }.
+\epsilon = \sqrt{ \left\langle \left( \hat{r}_1 - \hat{r}_2 \right), \left( \hat{r}_1 - \hat{r}_2 \right) \right\rangle }.
 \end{equation}
 
 \function{estimateAudibleEnergy} Average energy in auditory critical bands. \\
@@ -387,7 +458,11 @@ Implements the intensity vector and diffuseness parameter, computed from first-o
 Implements the composite loudness level model of \citet{Pulkki1999}.
 
 \function{scharer2009} Scharer's spectral errors in auditory bands. \\
-Implements the auditory band spectral error of \citet{ScharerLindau2009}.
+The auditory band spectral error (ABSE), adapted from~\citet[Eq.~(9)]{ScharerLindau2009}, is given by
+\begin{equation}\label{eq:scharer2009}
+\eta(f_c) = 10 \log_{10} \left( \frac{\displaystyle \int_{-\infty}^\infty |H_\Gamma(f;f_c)| |G(f)|^2 df}{\displaystyle \int_{-\infty}^\infty |H_\Gamma(f;f_c)| |G_0(f)|^2 df} \right),
+\end{equation}
+where $G$ and $G_0$ are the transfer functions of the input and reference signals, respectively.
 
 \function{stitt2016} Stitt's precedence-effect-based energy vector. \\
 Implements the precedence-effect-based energy vector model of \citet{Stitt2016}.
@@ -396,13 +471,42 @@ Implements the precedence-effect-based energy vector model of \citet{Stitt2016}.
 Implements the ambisonics localization vector model of \citet{TylkaChoueiri2017a}.
 
 \function{wittek2007} Wittek's spectral alterations coloration model. \\
-Implements the spectral alterations coloration model of \citet{Wittek2007}.
+\citet{Wittek2007} adapted the internal spectrum (IS) defined by~\citet[chapter~5]{Salomons1995PhD} in order to define so-called \textit{spectral alterations}.
+These spectral alterations are computed as the difference (in dB) between the internal spectra for the test and reference samples, given by
+\begin{equation}
+\text{IS}(f_c) = \text{IS}(f_c) - \text{IS}_0(f_c).
+\end{equation}
+According to~\citet[section~3.2.5]{Wittek2007}, the IS for each sample is given as the average of the binaural power spectra, i.e.,
+\begin{equation}
+\text{IS}(f_c) = 10 \log_{10} \left( \frac{P^\text{L}(f_c) + P^\text{R}(f_c)}{2} \right).
+\end{equation}
+Here, $P_{\text{T},\text{R}}^{\text{L},\text{R}}$ are the binaural power spectra after critical-band filtering, given by~\citep[Eq.~(5.12)]{Salomons1995PhD}
+\begin{equation}
+P^{\text{L},\text{R}}(f_c) = \frac{\displaystyle \int_{-\infty}^\infty |H_\text{P}(f;f_c)| |B^{\text{L},\text{R}}(f)|^2 df}{\displaystyle \int_{-\infty}^\infty |H_\text{P}(f;f_c)| df},
+\end{equation}
+where $H_\text{P}(f;f_c)$ are Patterson's auditory filters as specified by~\citet[Eq.~(5.9)]{Salomons1995PhD}
+and $B^{\text{L},\text{R}}$ are the binaural transfer functions.
 
 %% stimuli %%
 \subsection{Stimuli}
 
 \function{exponentialSineSweep} Generate an exponential sine sweep (ESS). \\
 Implements the exponential sine sweep (ESS) of \citet{Farina2000} and the phase-controlled ESS of \citet{VetterdiRosario2011}.
+The conventional ESS discrete-time signal is given by~\cite{Farina2000}
+\begin{equation}
+x[k] = \sin \left\{ \frac{\omega_1\,N}{\ln\left(\omega_2/\omega_1\right)} \cdot \left[\left(\frac{\omega_2}{\omega_1}\right)^{\frac{k}{N}}-1\right] \right\}
+\end{equation}
+for $k \in[0,N-1]$, where $N = F_s T$ is the total number of samples of the signal, $T$ is the sweep duration in seconds, $F_s$ is the sampling rate in samples/second, and $\omega_1$ and $\omega_2$ are the initial and final frequencies of the sweep, respectively, in rad/sample. Note that $\omega$ represents the \textit{normalized} frequency, such that the frequency in Hz is given by $\omega F_s/2 \pi$.
+
+The so-called ``phase-controlled'' ESS requires that the phase of the sinusoid both starts and ends at an integer multiple of $2 \pi$, yielding an amplitude of zero at the start and end of the sweep~\cite{VetterdiRosario2011}. This is accomplished by constraining the final frequency to be an integer number of octaves $P$ above the initial frequency, such that $\omega_2/\omega_1=2^P$, and by allowing some flexibility in the sweep duration. The sweep $x_{pc}[n]$ is defined by~\cite{VetterdiRosario2011}
+\begin{equation}
+x_{pc}[k] = \sin \left[ \frac{ \omega_1 L}{\ln \left( 2^P \right)} \cdot \left( 2^P \right)^{\frac{k}{N}} \right]
+\end{equation}
+for $k \in[0,N-1]$, where $L$ is the so-called ``ideal'' sweep length in samples and $N$ is the actual sweep length, equal to $L$ rounded to the nearest integer. The ideal sweep length $L$ is found based on an approximate sweep duration $T$ (in seconds) such that 
+\begin{equation}
+\frac{\omega_1 L}{\ln \left( 2^P \right)} = 2 \pi \cdot \textrm{Round} \left[ \frac{\omega_1 T F_s}{2 \pi \ln \left( 2^P \right)} \right].
+\end{equation}
+For a phase-controlled sweep that terminates at the Nyquist frequency, we will refer to the sweep by its nominal initial frequency $\omega_1 F_s/2 \pi$ and duration $T$. $L$ is then computed as shown above, and the actual $\omega_1$ is found by rounding the nominal number of octaves.
 
 \function{warpedSineSweep} Generate a warped sine sweep. \\
 Implements the warped sine sweep of \citet{OchiaiKaneda2013}.
