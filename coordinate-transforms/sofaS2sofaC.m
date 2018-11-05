@@ -1,5 +1,6 @@
 function [x,y,z] = sofaS2sofaC(az,el,rad)
-%SOFAS2SOFAC Convert SOFA spherical to SOFA cartesian coordinates.
+%SOFAS2SOFAC Convert SOFA spherical coordinates to SOFA cartesian
+%coordinates.
 %   [x,y,z] = SOFAS2SOFAC(az,el,rad) converts from SOFA spherical 
 %   coordinates to SOFA cartesian coordinates. Input azimuth (az) and 
 %   elevation (el) must be specified in degrees. az, el, and rad may be 
@@ -47,11 +48,19 @@ function [x,y,z] = sofaS2sofaC(az,el,rad)
 narginchk(1,3);
 
 singleArgFlag = false;
-if nargin==1 && nargout<=1
-    singleArgFlag = true;
-    rad = az(:,3);
-    el = az(:,2);
-    az = az(:,1);
+if nargin == 1 && nargout <= 1
+    if size(az,2) == 3
+        singleArgFlag = true;
+        rad = az(:,3);
+        el = az(:,2);
+        az = az(:,1);
+    else
+        error('If only 1 input is provided, it must be a 3-column matrix.')
+    end
+end
+
+if nargin == 2
+    error('Either 1 or 3 inputs must be provided.')
 end
 
 az = shiftdim(az);

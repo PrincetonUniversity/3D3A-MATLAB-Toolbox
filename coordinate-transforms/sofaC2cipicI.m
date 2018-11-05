@@ -1,21 +1,28 @@
-function [az,el,rad] = sofaC2sofaS(x,y,z)
-%SOFAC2SOFAS Convert SOFA cartesian to SOFA spherical coordinates.
-%   [az,el,rad] = SOFAC2SOFAS(x,y,z) converts from SOFA cartesian to
-%   SOFA spherical coordinates. x, y, and z may be scalars or vectors. az
-%   and el are specified in degrees. az, el, and rad may be scalars or
-%   column vectors.
+function [az,el,rad] = sofaC2cipicI(x,y,z,FLAG)
+%SOFAC2CIPICI Convert SOFA cartesian coordinates to CIPIC interaural 
+%coordinates.
+%   [az,el,rad] = SOFAC2CIPICI(x,y,z) converts from SOFA cartesian  
+%   coordinates to CIPIC interaural coordinates. az and el are specified in
+%   degrees. x, y, and z may be specified as scalars or vectors. If 
+%   vectors, they must have the same length. az, el, and rad are either 
+%   scalars or column vectors.
 %
-%   [RS] = SOFAC2SOFAS(RC) allows x, y, and z to be specified as a 3-column
-%   matrix [x,y,z]. RS is then the 3-column matrix [az,el,rad].
+%   CI = SOFAC2CIPICI(SC) allows x, y, and z to be specified as a 3-column 
+%   matrix [x,y,z]. CI is then the 3-column matrix [az,el,rad].
 %
-%   See also SOFAS2SOFAC.
+%   __ = SOFAC2CIPICI(__,'flipAz') optionally allows the sign convention of
+%   azimuth to be flipped such that positions corresponding to positive
+%   values of 'y' in SOFA cartesian coordinates correspond to positive
+%   azimuths (unlike in the CIPIC coordinate system, where these positions
+%   correspond to negative azimuths).
+%
+%   See also CIPICI2SOFAC, SOFAS2SOFAC.
 
 %   =======================================================================
 %   This file is part of the 3D3A MATLAB Toolbox.
 %   
 %   Contributing author(s), listed alphabetically by last name:
 %   Rahulram Sridhar <rahulram@princeton.edu>
-%   Joseph G. Tylka <josephgt@princeton.edu>
 %   3D Audio and Applied Acoustics (3D3A) Laboratory
 %   Princeton University, Princeton, New Jersey 08544, USA
 %   
@@ -43,26 +50,53 @@ function [az,el,rad] = sofaC2sofaS(x,y,z)
 %   SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 %   =======================================================================
 
-narginchk(1,3);
+narginchk(1,4);
 
-singleArgFlag = false;
-if nargin == 1 && nargout <= 1
+if nargin <= 2 && nargout <= 1
     singleArgFlag = true;
+    if nargin == 2
+        FLAG = y;
+    else
+        FLAG = 'noFlipAz';
+    end
     z = x(:,3);
     y = x(:,2);
     x = x(:,1);
+else
+    singleArgFlag = false;
+    if nargin < 4
+        FLAG = 'noFlipAz';
+    end
+    z = shiftdim(z);
+    y = shiftdim(y);
+    x = shiftdim(x);
 end
-
-x = shiftdim(x);
-y = shiftdim(y);
-z = shiftdim(z);
 
 rad = sqrt(x.^2 + y.^2 + z.^2);
 I = rad ~= 0;
 rad = rad(I);
+az = zeros(size(rad));
 
-az = mod(atan2d(y(I),x(I)),360);
-el = asind(z(I)./rad);
+if isscalar(x)
+    x = ones(size(rad))*x;
+end
+if isscalar(y)
+    y = ones(size(rad))*y;
+end
+if isscalar(z)
+    z = ones(size(rad))*z;
+end
+
+switch lower(FLAG)
+    case {'flipaz'}
+        az(I) = -asind(-y(I)./rad);
+    case {'noflipaz'}
+        az(I) = asind(-y(I)./rad);
+    otherwise
+        error('Invalid FLAG specification')
+end
+el = mod(atan2d(z(I),x(I)),360);
+el(el >= 270) = el(el >= 270)-360;
 
 if singleArgFlag
     az = [az el rad];
