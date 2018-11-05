@@ -5,7 +5,7 @@ function [az,el,rad] = sofaC2cipicI(x,y,z,FLAG)
 %   coordinates to CIPIC interaural coordinates. az and el are specified in
 %   degrees. x, y, and z may be specified as scalars or vectors. If 
 %   vectors, they must have the same length. az, el, and rad are either 
-%   scalars or column vectors.
+%   scalars, or column vectors with the same length as x, y, and z.
 %
 %   CI = SOFAC2CIPICI(SC) allows x, y, and z to be specified as a 3-column 
 %   matrix [x,y,z]. CI is then the 3-column matrix [az,el,rad].
@@ -16,7 +16,7 @@ function [az,el,rad] = sofaC2cipicI(x,y,z,FLAG)
 %   azimuths (unlike in the CIPIC coordinate system, where these positions
 %   correspond to negative azimuths).
 %
-%   See also CIPICI2SOFAC, SOFAS2SOFAC.
+%   See also CIPICI2SOFAC, SOFAS2SOFAC, SOFAC2SOFAS.
 
 %   =======================================================================
 %   This file is part of the 3D3A MATLAB Toolbox.
@@ -54,48 +54,58 @@ narginchk(1,4);
 
 if nargin <= 2 && nargout <= 1
     singleArgFlag = true;
+    
+    validateattributes(x,{'double'},{'2d','nonempty','nonnan','finite',...
+        'real','size',[NaN,3]},'sofaC2cipicI','SC',1)
+    
     if nargin == 2
         FLAG = y;
+        validateattributes(FLAG,{'char'},{'scalartext','nonempty'},...
+            'sofaC2cipicI','FLAG',2)
     else
         FLAG = 'noFlipAz';
     end
+    
     z = x(:,3);
     y = x(:,2);
     x = x(:,1);
 else
     singleArgFlag = false;
+    
+    validateattributes(x,{'double'},{'vector','nonempty','nonnan',...
+        'finite','real'},'sofaC2cipicI','x',1)
+    validateattributes(y,{'double'},{'vector','nonempty','nonnan',...
+        'finite','real','numel',numel(x)},'sofaC2cipicI','y',2)
+    validateattributes(z,{'double'},{'vector','nonempty','nonnan',...
+        'finite','real','numel',numel(x)},'sofaC2cipicI','z',3)
+    
     if nargin < 4
         FLAG = 'noFlipAz';
+    else
+        validateattributes(FLAG,{'char'},{'scalartext','nonempty'},...
+            'sofaC2cipicI','FLAG',4)
     end
+    
     z = shiftdim(z);
     y = shiftdim(y);
     x = shiftdim(x);
 end
 
 rad = sqrt(x.^2 + y.^2 + z.^2);
-I = rad ~= 0;
-rad = rad(I);
-az = zeros(size(rad));
 
-if isscalar(x)
-    x = ones(size(rad))*x;
-end
-if isscalar(y)
-    y = ones(size(rad))*y;
-end
-if isscalar(z)
-    z = ones(size(rad))*z;
+if rad == 0
+    error('x, y, and z cannot all be zero.')
 end
 
 switch lower(FLAG)
     case {'flipaz'}
-        az(I) = -asind(-y(I)./rad);
+        az = -asind(-y./rad);
     case {'noflipaz'}
-        az(I) = asind(-y(I)./rad);
+        az = asind(-y./rad);
     otherwise
-        error('Invalid FLAG specification')
+        error('Invalid FLAG specification.')
 end
-el = mod(atan2d(z(I),x(I)),360);
+el = mod(atan2d(z,x),360);
 el(el >= 270) = el(el >= 270)-360;
 
 if singleArgFlag

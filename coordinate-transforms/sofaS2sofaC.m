@@ -5,10 +5,11 @@ function [x,y,z] = sofaS2sofaC(az,el,rad)
 %   coordinates to SOFA cartesian coordinates. Input azimuth (az) and 
 %   elevation (el) must be specified in degrees. az, el, and rad may be 
 %   specified as scalars or vectors. If vectors, they must have the same 
-%   length. x, y, and z are either scalars or column vectors.
+%   length. x, y, and z are either scalars, or column vectors with the same
+%   length as az, el, and rad.
 %
-%   [RC] = SOFAS2SOFAC(RS) allows az, el, and rad to be specified as a 
-%   3-column matrix [az,el,rad]. RC is then the 3-column matrix [x,y,z].
+%   SC = SOFAS2SOFAC(SS) allows az, el, and rad to be specified as a 
+%   3-column matrix [az,el,rad]. SC is then the 3-column matrix [x,y,z].
 %
 %   See also SOFAC2SOFAS.
 
@@ -49,23 +50,37 @@ narginchk(1,3);
 
 singleArgFlag = false;
 if nargin == 1 && nargout <= 1
-    if size(az,2) == 3
-        singleArgFlag = true;
-        rad = az(:,3);
-        el = az(:,2);
-        az = az(:,1);
-    else
-        error('If only 1 input is provided, it must be a 3-column matrix.')
-    end
+    singleArgFlag = true;
+    
+    validateattributes(az,{'double'},{'2d','nonempty','nonnan','finite',...
+        'real','size',[NaN,3]},'sofaS2sofaC','SS',1)
+    
+    rad = az(:,3);
+    el = az(:,2);
+    az = az(:,1);
+elseif nargin == 3
+    
+    validateattributes(az,{'double'},{'vector','nonempty','nonnan',...
+        'finite','real'},'sofaS2sofaC','az',1)
+    validateattributes(el,{'double'},{'vector','nonempty','nonnan',...
+        'finite','real','numel',numel(az)},'sofaS2sofaC','el',2)
+    validateattributes(rad,{'double'},{'vector','nonempty','nonnan',...
+        'finite','real','numel',numel(az)},'sofaS2sofaC','rad',3)
+    
+    az = shiftdim(az);
+    el = shiftdim(el);
+    rad = shiftdim(rad);
+else
+    error('2 inputs provided when either 1 or 3 inputs are required.')
 end
 
-if nargin == 2
-    error('Either 1 or 3 inputs must be provided.')
+if (max(az) >= 360) || (min(az) < 0)
+    error('One or more az values are outside the range [0,360).')
 end
 
-az = shiftdim(az);
-el = shiftdim(el);
-rad = shiftdim(rad);
+if (max(el) > 90) || (min(el) < -90)
+    error('One or more el values are outside the range [-90,90].')
+end
 
 x = rad.*cosd(el).*cosd(az);
 y = rad.*cosd(el).*sind(az);

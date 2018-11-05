@@ -1,13 +1,13 @@
 function [az,el,rad] = sofaC2sofaS(x,y,z)
 %SOFAC2SOFAS Convert SOFA cartesian coordinates to SOFA spherical 
 %coordinates.
-%   [az,el,rad] = SOFAC2SOFAS(x,y,z) converts from SOFA cartesian to
-%   SOFA spherical coordinates. x, y, and z may be scalars or vectors. az
-%   and el are specified in degrees. az, el, and rad may be scalars or
-%   column vectors.
+%   [az,el,rad] = SOFAC2SOFAS(x,y,z) converts from SOFA cartesian 
+%   coordinates to SOFA spherical coordinates. x, y, and z may be scalars 
+%   or vectors. az and el are specified in degrees. az, el, and rad are 
+%   either scalars, or column vectors with the same length as x, y, and z.
 %
-%   [RS] = SOFAC2SOFAS(RC) allows x, y, and z to be specified as a 3-column
-%   matrix [x,y,z]. RS is then the 3-column matrix [az,el,rad].
+%   SS = SOFAC2SOFAS(SC) allows x, y, and z to be specified as a 3-column
+%   matrix [x,y,z]. SS is then the 3-column matrix [az,el,rad].
 %
 %   See also SOFAS2SOFAC.
 
@@ -49,21 +49,37 @@ narginchk(1,3);
 singleArgFlag = false;
 if nargin == 1 && nargout <= 1
     singleArgFlag = true;
+    
+    validateattributes(x,{'double'},{'2d','nonempty','nonnan','finite',...
+        'real','size',[NaN,3]},'sofaC2sofaS','SC',1)
+    
     z = x(:,3);
     y = x(:,2);
     x = x(:,1);
+elseif nargin == 3
+    
+    validateattributes(x,{'double'},{'vector','nonempty','nonnan',...
+        'finite','real'},'sofaC2sofaS','x',1)
+    validateattributes(y,{'double'},{'vector','nonempty','nonnan',...
+        'finite','real','numel',numel(x)},'sofaC2sofaS','y',2)
+    validateattributes(z,{'double'},{'vector','nonempty','nonnan',...
+        'finite','real','numel',numel(x)},'sofaC2sofaS','z',3)
+    
+    x = shiftdim(x);
+    y = shiftdim(y);
+    z = shiftdim(z);
+else
+    error('2 inputs provided when either 1 or 3 inputs are required.')
 end
 
-x = shiftdim(x);
-y = shiftdim(y);
-z = shiftdim(z);
-
 rad = sqrt(x.^2 + y.^2 + z.^2);
-I = rad ~= 0;
-rad = rad(I);
 
-az = mod(atan2d(y(I),x(I)),360);
-el = asind(z(I)./rad);
+if rad == 0
+    error('x, y, and z cannot all be zero.')
+end
+
+az = mod(atan2d(y,x),360);
+el = asind(z./rad);
 
 if singleArgFlag
     az = [az el rad];

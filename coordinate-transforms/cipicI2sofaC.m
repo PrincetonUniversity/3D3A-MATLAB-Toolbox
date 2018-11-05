@@ -5,7 +5,8 @@ function [x,y,z] = cipicI2sofaC(az,el,rad,FLAG)
 %   coordinates to SOFA cartesian coordinates. Input azimuth (az) and 
 %   elevation (el) must be specified in degrees. az, el, and rad may be 
 %   specified as scalars or vectors. If vectors, they must have the same 
-%   length. x, y, and z have the same dimensions as az, el, and rad.
+%   length. x, y, and z are either scalars, or column vectors with the same 
+%   length as az, el, and rad.
 %
 %   SC = CIPICI2SOFAC(CI) allows az, el, and rad to be specified as a 3-
 %   column matrix [az,el,rad]. SC is then the 3-column matrix [x,y,z].
@@ -16,7 +17,7 @@ function [x,y,z] = cipicI2sofaC(az,el,rad,FLAG)
 %   positive azimuths (unlike in the CIPIC coordinate system, where these 
 %   positions correspond to negative azimuths).
 %
-%   See also SOFAC2CIPICI, SOFAC2SOFAS.
+%   See also SOFAC2CIPICI, SOFAC2SOFAS, SOFAS2SOFAC.
 
 %   =======================================================================
 %   This file is part of the 3D3A MATLAB Toolbox.
@@ -55,22 +56,21 @@ narginchk(1,4);
 if nargin <= 2 && nargout <= 1
     singleArgFlag = true;
     
-    if size(az,2) ~= 3
-        error('Invalid input dimensions')
-    end
+    validateattributes(az,{'double'},{'2d','nonempty','nonnan','finite',...
+        'real','size',[NaN,3]},'cipicI2sofaC','CI',1)
     
     if nargin == 2
         FLAG = el;
-        if ~ischar(FLAG)
-            error('FLAG must be of type char')
-        end
+        
+        validateattributes(FLAG,{'char'},{'scalartext','nonempty'},...
+            'cipicI2sofaC','FLAG',2)
         
         if strcmpi(FLAG,'flipAz')
             rad = az(:,3);
             el = az(:,2);
             az = -az(:,1);
         else
-            error('Invalid FLAG specification')
+            error('Invalid FLAG specification.')
         end
     else
         rad = az(:,3);
@@ -80,42 +80,37 @@ if nargin <= 2 && nargout <= 1
 else
     singleArgFlag = false;
     
-    if ~isvector(az) || ~isvector(el) || ~isvector(rad)
-        error(['az, el, and rad must be scalars or vectors when ',...
-            'specified independently'])
-    end
-    
-    if (length(az) ~= length(el)) || (length(el) ~= length(rad)) || ...
-            (length(rad) ~= length(az))
-        error(['az, el, and rad must have the same length when ',...
-            'specified independently'])
-    end
+    validateattributes(az,{'double'},{'vector','nonempty','nonnan',...
+        'finite','real'},'cipicI2sofaC','az',1)
+    validateattributes(el,{'double'},{'vector','nonempty','nonnan',...
+        'finite','real','numel',numel(az)},'cipicI2sofaC','el',2)
+    validateattributes(rad,{'double'},{'vector','nonempty','nonnan',...
+        'finite','real','numel',numel(az)},'cipicI2sofaC','rad',3)
     
     if nargin < 4
         rad = shiftdim(rad);
         el = shiftdim(el);
         az = shiftdim(az);
     else
-        if ~ischar(FLAG)
-            error('FLAG must be of type char')
-        end
+        validateattributes(FLAG,{'char'},{'scalartext','nonempty'},...
+            'cipicI2sofaC','FLAG',4)
         
         if strcmpi(FLAG,'flipAz')
             rad = shiftdim(rad);
             el = shiftdim(el);
             az = shiftdim(-az);
         else
-            error('Invalid FLAG specification')
+            error('Invalid FLAG specification.')
         end
     end
 end
 
 if (max(az) > 90) || (min(az) < -90)
-    error('Azimuths must range from -90 to 90')
+    error('One or more az values are outside the range [-90,90].')
 end
 
 if (max(el) > 270) || (min(el) < -90)
-    error('Elevations must range from -90 to 270')
+    error('One or more el values are outside the range [-90,270).')
 end
 
 x = rad.*cosd(-az).*cosd(el);
