@@ -1,13 +1,11 @@
-function val = ambSphericalHarmonicY(l, m, r, ambNorm)
-%AMBSPHERICALHARMONICY Real-valued spherical harmonic function.
-%   Y = AMBSPHERICALHARMONICY(L,M,R,AMBNORM) computes Y, the real-valued
-%   spherical harmonic of order L and degree M used in Ambisonics, with
-%   normalization convention AMBNORM.
+function Y = getAmbYMatrix(r, L, ambNorm)
+%GETAMBYMATRIX Matrix of real-valued spherical harmonics.
+%   Y = GETAMBYMATRIX(R,L,AMBNORM) returns the (L+1)^2-by-SIZE(R,1) matrix
+%   of real-valued spherical harmonics, evaluated in the directions R up to
+%   order L and with normalization convention AMBNORM. By default, N3D
+%   normalization is used.
 %
-%   R may be a P-by-3 matrix of directions, where each row is a Cartesian
-%   vector. In this case, Y will be a P-by-1 vector.
-%
-%   See also AMBNORMALIZATION.
+%   See also AMBSPHERICALHARMONICY.
 
 %   ==============================================================================
 %   This file is part of the 3D3A MATLAB Toolbox.
@@ -40,42 +38,17 @@ function val = ambSphericalHarmonicY(l, m, r, ambNorm)
 %   SOFTWARE.
 %   ==============================================================================
 
-%   References:
-%     [1] Zotter (2009) Analysis and Synthesis of Sound-Radiation with
-%         Spherical Arrays.
-
-% coder.extrinsic('warning')
-
-% Needs at least 3 input arguments
-narginchk(3,4);
-
-% Uses N3D normalization by default
-if nargin < 4 || isempty(ambNorm)
+if nargin < 3 || isempty(ambNorm)
     ambNorm = 'N3D';
 end
 
-if (l >= 0) && (abs(m) <= l)
-    if isvector(r)
-        [AZIM,ELEV,~] = cart2sph(r(1),r(2),r(3));
-    else
-        [AZIM,ELEV,~] = cart2sph(r(:,1),r(:,2),r(:,3));
-    end
-    Nlm = ambNormalization(l, abs(m), ambNorm);
-    Pl = legendre(l, sin(ELEV));
-    Plm = Pl(abs(m) + 1,:).';
-%     Plm = legendrePnm(l, abs(m), sin(ELEV));
-    
-    if m >= 0
-        Tm = cos(m * AZIM);
-    elseif m < 0
-        Tm = sin(abs(m) * AZIM);
-    else
-        Tm = 0;
-    end
-    val = Nlm*Plm.*Tm;
-else
-    warning('Invalid order and degree.');
-    val = 0;
+nRows = size(r,1);
+N = (L + 1)^2;
+
+Y = zeros(N,nRows);
+for n = 0:(N-1)
+    [l, m] = getAmbOrder(n);
+    Y(n+1,:) = ambSphericalHarmonicY(l, m, r, ambNorm);
 end
 
 end
