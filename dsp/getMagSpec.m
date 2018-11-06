@@ -45,7 +45,7 @@ function outputSpec = getMagSpec(inputIR,DIM)
 narginchk(1,2);
 
 validateattributes(inputIR,{'double'},{'2d','nonempty','nonnan',...
-    'finite','real'},'getMagSpec','inputIR',1)
+    'finite'},'getMagSpec','inputIR',1)
 
 if nargin < 2
     outputSpec = abs(fft(inputIR));

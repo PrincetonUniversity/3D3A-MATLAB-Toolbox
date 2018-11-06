@@ -56,7 +56,7 @@ function outputSpec = getPhaseSpec(inputIR,TYPE,TOL,DIM)
 narginchk(1,4);
 
 validateattributes(inputIR,{'double'},{'2d','nonempty','nonnan',...
-    'finite','real'},'getPhaseSpec','inputIR',1)
+    'finite'},'getPhaseSpec','inputIR',1)
 
 if nargin < 4
     if isvector(inputIR)
