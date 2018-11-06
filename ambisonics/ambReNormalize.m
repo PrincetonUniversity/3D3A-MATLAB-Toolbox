@@ -3,7 +3,7 @@ function A = ambReNormalize(A, ambNormIn, ambNormOut)
 %   B = AMBRENORMALIZE(A,AMBNORMIN,AMBNORMOUT) renormalized ambisonics
 %   signals A from normalization AMBNORMIN to AMBNORMOUT.
 %
-%   See also AMBNORMALIZATION.
+%   See also AMBNORMALIZATION, AMBNORMSQUARED, AMBSPHERICALHARMONICY.
 
 %   ==============================================================================
 %   This file is part of the 3D3A MATLAB Toolbox.
