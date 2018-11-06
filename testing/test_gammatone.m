@@ -37,7 +37,20 @@ Fs = 96000;
 N = 16384;
 fVec = getFreqVec(Fs,N);
 
+%% Plot gammatone filters
+
 h = getGammatoneFilters(fc,Fs,N);
+HdB = getMagSpecdB(h,1);
+
+figure()
+plot(fVec,HdB)
+set(gca,'XScale','log')
+xlim([20 24000])
+ylim([-80 20])
+
+%% Plot Patterson filters
+
+h = getPattersonFilters(fc,Fs,N);
 HdB = getMagSpecdB(h,1);
 
 figure()
