@@ -207,20 +207,12 @@ pwIndx = 5;
 muMat = zeros(kLen,numPW);
 muMat(:,pwIndx) = 1;
 
-Y1Mat = zeros(numPW,Nmax);
-Y2Mat = zeros(numPW,Nmax);
-Y3Mat = zeros(numPW,Nmax);
-for l = 0:Lmax
-    for m = -l:l
-        n = getACN(l,m);
-        Y1Mat(:,n+1) = ambSphericalHarmonicY(l, m, vMat, ambNorm1);
-        Y2Mat(:,n+1) = ambSphericalHarmonicY(l, m, vMat, ambNorm2);
-        Y3Mat(:,n+1) = ambSphericalHarmonicY(l, m, vMat, ambNorm3);
-    end
-end
-AMat1 = muMat*diag(wVec)*Y1Mat;
-AMat2 = muMat*diag(wVec)*Y2Mat;
-AMat3 = muMat*diag(wVec)*Y3Mat;
+Y1Mat = getAmbYMatrix(vMat, Lmax, ambNorm1);
+Y2Mat = getAmbYMatrix(vMat, Lmax, ambNorm2);
+Y3Mat = getAmbYMatrix(vMat, Lmax, ambNorm3);
+AMat1 = muMat*diag(wVec)*(Y1Mat.');
+AMat2 = muMat*diag(wVec)*(Y2Mat.');
+AMat3 = muMat*diag(wVec)*(Y3Mat.');
 
 muMat1 = zeros(kLen,numPW);
 muMat2 = zeros(kLen,numPW);
@@ -236,6 +228,66 @@ for l = 0:Lmax
         muMat3 = muMat3 + AMat3(:,n+1)*(Y3.')/ambNormSquared(l, ambNorm3);
     end
 end
+
+figure()
+subplot(2,2,1)
+plot(kVec,abs(muMat(:,pwIndx)))
+hold all
+plot(kVec,abs(muMat1(:,pwIndx)))
+plot(kVec,abs(muMat2(:,pwIndx)),':')
+plot(kVec,abs(muMat3(:,pwIndx)),'--')
+ylim([0,2])
+hold off
+set(gca,'XScale','log')
+subplot(2,2,2)
+plot(kVec,abs(muMat(:,1)))
+hold all
+plot(kVec,abs(muMat1(:,1)))
+plot(kVec,abs(muMat2(:,1)),':')
+plot(kVec,abs(muMat3(:,1)),'--')
+hold off
+ylim([0,2])
+set(gca,'XScale','log')
+subplot(2,2,3)
+plot(kVec,abs(muMat(:,pwIndx+2)))
+hold all
+plot(kVec,abs(muMat1(:,pwIndx+2)))
+plot(kVec,abs(muMat2(:,pwIndx+2)),':')
+plot(kVec,abs(muMat3(:,pwIndx+2)),'--')
+hold off
+ylim([0,2])
+set(gca,'XScale','log')
+subplot(2,2,4)
+plot(kVec,abs(muMat(:,numPW)))
+hold all
+plot(kVec,abs(muMat1(:,numPW)))
+plot(kVec,abs(muMat2(:,numPW)),':')
+plot(kVec,abs(muMat3(:,numPW)),'--')
+hold off
+ylim([0,2])
+set(gca,'XScale','log')
+
+%% Plane-wave synthesis - using pinv for A2mu
+
+[vMat,wVec] = loadGridFile('fliege_36');
+numPW = length(wVec);
+
+Lmax = 10; % doesn't work if Lmax is too small
+Nmax = (Lmax + 1)^2;
+
+pwIndx = 5;
+muMat = zeros(kLen,numPW);
+muMat(:,pwIndx) = 1;
+
+Y1Mat = getAmbYMatrix(vMat, Lmax, ambNorm1);
+Y2Mat = getAmbYMatrix(vMat, Lmax, ambNorm2);
+Y3Mat = getAmbYMatrix(vMat, Lmax, ambNorm3);
+AMat1 = muMat*diag(wVec)*(Y1Mat.');
+AMat2 = muMat*diag(wVec)*(Y2Mat.');
+AMat3 = muMat*diag(wVec)*(Y3Mat.');
+muMat1 = (AMat1/(Y1Mat.'))*diag(1./wVec);
+muMat2 = (AMat2/(Y2Mat.'))*diag(1./wVec);
+muMat3 = (AMat3/(Y3Mat.'))*diag(1./wVec);
 
 figure()
 subplot(2,2,1)
