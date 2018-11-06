@@ -53,7 +53,7 @@ function mu = a2mu(a,r,ambNorm,pinvFlag,w)
 narginchk(2,5);
 
 N = size(a,2);
-nCols = size(r,1);
+Q = size(r,1);
 
 if nargin < 3 || isempty(ambNorm)
     ambNorm = 'N3D';
@@ -64,7 +64,7 @@ if nargin < 4 || isempty(pinvFlag)
 end
 
 if nargin < 5 || isempty(w)
-    w = ones(nCols,1)*(4*pi/nCols);
+    w = ones(Q,1)*(4*pi/Q);
     if pinvFlag
         warning(['Using pinv method but no quadrature weights were '...
             'specified; using equal weights.']);

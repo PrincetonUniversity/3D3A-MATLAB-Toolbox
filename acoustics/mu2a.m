@@ -47,10 +47,10 @@ function a = mu2a(mu,r,L,w,ambNorm)
 
 narginchk(3,5);
 
-nCols = size(r,1);
+Q = size(r,1);
 
 if nargin < 4 || isempty(w)
-    w = ones(nCols,1)*(4*pi/nCols);
+    w = ones(Q,1)*(4*pi/Q);
 end
 
 if nargin < 5 || isempty(ambNorm)
