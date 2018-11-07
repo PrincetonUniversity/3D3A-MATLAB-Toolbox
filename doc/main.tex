@@ -444,6 +444,25 @@ f[k] = \frac{k F_s}{K}, \quad\quad \text{for} ~ k \in [0, K-1].
 \subsection{General}
 
 \function{findNearest} Find the row of a matrix nearest to a given row vector. \\
+Consider a matrix $\mathbf{X}$ with $M$ rows, given by
+\begin{equation}
+\mathbf{X} = \begin{bmatrix} \vec{x}_1 \\ \vec{x}_2 \\ \vdots \\ \vec{x}_M \end{bmatrix},
+\end{equation}
+and a vector $\vec{x}_0$.
+The distances between each row and $\vec{x}_0$ are computed by
+\begin{equation}
+d_m = \| \vec{x}_m - \vec{x}_0 \|_1,
+\end{equation}
+where $\|\cdot\|_1$ denotes the $\ell^1$ norm of a vector.
+Alternatively, the Euclidean distance is given by
+\begin{equation}
+d_m = \| \vec{x}_m - \vec{x}_0 \|_2,
+\end{equation}
+where $\|\cdot\|_2$ denotes the $\ell^2$ norm of a vector.
+Alternatively, the angular distance is given by
+\begin{equation}
+d_m = \cos^{-1} \left( \langle \hat{x}_m, \hat{x}_0 \rangle \right).
+\end{equation}
 
 \function{loadGridFile} Load a spherical grid from a MAT file. \\
 
