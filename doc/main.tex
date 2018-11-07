@@ -309,7 +309,7 @@ where $W_2(f_c)$ is the ERB at $f_c$, as given by \eqnref{eq:fc2erb_2}.
 
 %\function{estimateITD} Estimate the interaural time difference (ITD), in seconds. \\
 
-%%% coordinate-transforms %%%
+%% coordinate-transforms %%
 \subsection{Coordinate Transforms}
 
 As defined in the SOFA format~\citep{AES69-2015}, $(x,y,z) \in \mathbb{R}^3$ are the Cartesian coordinates.
@@ -422,12 +422,26 @@ f[k] = \frac{k F_s}{K}, \quad\quad \text{for} ~ k \in [0, K-1].
 \end{equation}
 
 \function{getMagSpec} Compute magnitude spectrum. \\
+Given an impulse response $h(t)$, the magnitude spectrum is given by
+\begin{equation}\label{eq:getMagSpec}
+M(\omega) = \big| \mathcal{F} \left[ h(t) \right](\omega) \big|,
+\end{equation}
+where $\mathcal{F}$ denotes taking the Fourier transform.
 
 \function{getMagSpecdB} Compute magnitude spectrum in dB. \\
+Given an impulse response $h(t)$, the magnitude spectrum in dB is given by
+\begin{equation}
+20 \log_{10} M(\omega),
+\end{equation}
+where $M$ is obtained using \eqnref{eq:getMagSpec}.
 
 \function{getPhaseSpec} Compute phase spectrum. \\
 
 \function{thresholdIRs} Find the onset(s) of input IR(s) using thresholding. \\
+Given an impulse response $h(t)$ and a threshold fraction $\alpha$, the onset time is defined as the earliest time $t_0$ at which
+\begin{equation}
+h(t_0) = \alpha \max_t |h(t)|.
+\end{equation}
 
 %\function{inverseFilter} Compute an inverse filter with optional regularization. \\
 %\begin{equation}\label{eq:inverseFilter}
