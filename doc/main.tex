@@ -171,6 +171,11 @@ A commonly-used alternative is the Schmidt seminormalized (SN3D) spherical harmo
 N_l^m = (-1)^m \sqrt{\frac{2 - \delta_m}{4 \pi} \frac{(l-m)!}{(l+m)!}}.
 \end{equation}
 
+\function{ambNormSquared} Squared norm of the spherical harmonic function. \\
+\begin{equation}\label{eq:ambNormSquared}
+\| Y_l^m \|^2 = \frac{4\pi}{2l + 1} \left( N_l^0 \right)^2.
+\end{equation}
+
 \function{ambReNormalize} Change normalization of HOA signals. \\
 In general, any acoustic pressure signal $x$ may be encoded into ambisonics as a plane-wave source originating from the direction $\hat{r}$ via
 \begin{equation}
@@ -184,11 +189,6 @@ Consequently, $\tilde{a}_l^m$ is related to $a_l^m$ by
 \begin{equation}
 \tilde{a}_l^m(t) = a_l^m(t) \frac{\tilde{Y}_l^m(\hat{r})}{Y_l^m(\hat{r})} = a_l^m(t) \frac{\tilde{N}_l^{|m|}}{N_l^{|m|}}.
 \end{equation}
-
-%\function{ambNormSquared} Squared norm of the spherical harmonic function. \\
-%\begin{equation}
-%\| Y_l^m \|^2 = \frac{4\pi}{2l + 1} \left( N_l^0 \right)^2.
-%\end{equation}
 
 \function{getACN} Ambisonic channel number (ACN). \\
 The ambisonics channel numbering (ACN) convention~\citep{Nachbar2011} is defined such that, for a spherical harmonic function of degree $l \in [0,\infty)$ and order $m \in [-l,l]$, the ACN index $n$ is given by
@@ -205,6 +205,58 @@ m &= n - l (l + 1),
 \end{aligned}
 \end{equation}
 where $\lfloor \cdot \rfloor$ denotes rounding down to the nearest integer (i.e., the ``floor'' function).
+
+\function{getAmbYMatrix} Matrix of real-valued spherical harmonics. \\
+\begin{equation}\label{eq:getAmbYMatrix}
+\mathbf{Y} = 
+\begin{bmatrix}
+Y_{0}(\hat{v}_1) & Y_{0}(\hat{v}_2) & \cdots & Y_{0}(\hat{v}_Q) \\
+Y_{1}(\hat{v}_1) & Y_{1}(\hat{v}_2) & \cdots & Y_{1}(\hat{v}_Q) \\
+\vdots & \vdots & \ddots & \vdots \\
+Y_{N-1}(\hat{v}_1) & Y_{N-1}(\hat{v}_2) & \cdots & Y_{N-1}(\hat{v}_Q)
+\end{bmatrix}.
+\end{equation}
+
+\function{a2mu} Convert ambisonics signals to plane-wave signals. \\
+Given ambisonics signals, $a_n$, the so-called \textit{signature function}, $\mu$, in the direction $\hat{v}_q$ is given by~\citep[section~2.3.3]{GumerovDuraiswami2005}
+\begin{equation}\label{eq:a2mu}
+\begin{bmatrix}
+\mu(t,\hat{v}_1) \\ \mu(t,\hat{v}_2) \\ \vdots \\ \mu(t,\hat{v}_Q)
+\end{bmatrix} 
+= \mathbf{Y}^{\textrm{T}} \cdot \mathbf{F}^{-1} \cdot
+\begin{bmatrix}
+a_{0}(t) \\ a_{1}(t) \\ \vdots \\ a_{N-1}(t)
+\end{bmatrix},
+\end{equation}
+where $Q$ is the number of plane-wave terms, $\mathbf{Y}$ is the spherical harmonic matrix given by \eqnref{eq:getAmbYMatrix} for directions $\hat{v}_q$, and $\mathbf{F}$ is a diagonal matrix given by
+\begin{equation}
+\mathbf{F} = \text{diag} \left\{ \begin{bmatrix} \left\|Y_0\right\|^{2} & \left\|Y_1\right\|^{2} & \cdots & \left\|Y_{N-1}\right\|^{2} \end{bmatrix} \right\},
+\end{equation}
+where $\|Y_n\|^2$ are given by \eqnref{eq:ambNormSquared}.
+
+Alternatively, we can compute $\mu$ via pseudoinverse, such that
+\begin{equation}\label{eq:a2mu_Pinv}
+\begin{bmatrix}
+\mu(t,\hat{v}_1) \\ \mu(t,\hat{v}_2) \\ \vdots \\ \mu(t,\hat{v}_Q)
+\end{bmatrix}
+= \text{diag} \left\{ \begin{bmatrix} w_1^{-1} & w_2^{-1} & \cdots & w_Q^{-1} \end{bmatrix} \right\} \cdot \mathbf{Y}^{+} \cdot
+\begin{bmatrix}
+a_{0}(t) \\ a_{1}(t) \\ \vdots \\ a_{N-1}(t)
+\end{bmatrix},
+\end{equation}
+where $(\cdot)^{+}$ denotes pseudoinversion and $w_q$ are quadrature weights.
+
+\function{mu2a} Convert plane-wave signals to ambisonics signals. \\
+Given plane-wave signals $\mu$ and quadrature weights $w_q$, the ambisonics signals are given by
+\begin{equation}
+\begin{bmatrix}
+a_{0}(t) \\ a_{1}(t) \\ \vdots \\ a_{N-1}(t)
+\end{bmatrix}
+= \mathbf{Y} \cdot \text{diag} \left\{ \begin{bmatrix} w_1 & w_2 & \cdots & w_Q \end{bmatrix} \right\} \cdot
+\begin{bmatrix}
+\mu(t,\hat{v}_1) \\ \mu(t,\hat{v}_2) \\ \vdots \\ \mu(t,\hat{v}_Q)
+\end{bmatrix}.
+\end{equation}
 
 %% auditory
 \subsection{Auditory}
@@ -411,12 +463,6 @@ f[k] = \frac{k F_s}{K}, \quad\quad \text{for} ~ k \in [0, K-1].
 
 \function{computeYMat} Compute spherical harmonics of all degrees up to a specified maximum degree. \\
 
-\function{logAvg} Log-weighted average of a function.
-See also, \texttt{logmean}. \\
-
-\function{logSTD} Log-weighted standard deviation.
-See also, \texttt{logvar}. \\
-
 \function{logmean} Log-scale average of a function. \\
 Consider a discrete spectrum $X[k]$ for $k \in [0, K-1]$, where the frequency index, $k$, is proportional to the frequency in Hz, given by $k F_s/K$, and $F_s$ is the sampling rate.
 We define the logarithmically-weighted average, $\overline{X}$, over the frequency index range $[K_1, K_2]$, as a weighted average
@@ -549,7 +595,7 @@ where $H_\text{P}(f;f_c)$ are Patterson's auditory filters as specified by~\cite
 and $B^{\text{L},\text{R}}$ are the binaural transfer functions.
 
 %% amt-wrappers %%
-\subsubsection{Wrappers for Functions in the Auditory Modeling Toolbox}
+\subsubsection{AMT Wrappers}
 
 The following functions require the Auditory Modeling Toolbox and its dependencies.
 
@@ -559,7 +605,16 @@ The following functions require the Auditory Modeling Toolbox and its dependenci
 
 \function{wrap\_wierstorf2013} Wierstorf's azimuthal binaural localization model.
 
-%% point-cloud-processing
+%% osc %%
+\subsection{OSC}
+
+\function{readOSCmessage} Parse an OSC message. \\
+
+\function{writeOSCmessage} Encode an OSC message. \\
+
+\function{sendOSCmessage} Send an OSC message. \\
+
+%% point-cloud-processing %%
 \subsection{Point Cloud Processing}
 
 \function{clusterPC} Cluster points in a point cloud based on distance of points from origin. \\
