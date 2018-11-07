@@ -69,7 +69,7 @@ end
 
 % Check input data type
 array2D = (~iscell(irData) && ismatrix(irData));
-array3D = (~iscell(irData) && nDims(irData)==3);
+array3D = (~iscell(irData) && ndims(irData)==3);
 cell2D = (iscell(irData) && ismatrix(irData));
 if ~(array2D || array3D || cell2D)
     error('Input data must be either: a 2D numeric array, a 3D numeric array, or a 2D cell array.');
