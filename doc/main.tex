@@ -553,13 +553,55 @@ We define the \textit{mean audible energy} (MAE) of a signal as its average ener
 where $X$ is the Fourier transform of some signal and $\Gamma(f;f_c)$ is the transfer function of a gammatone filter\footnote{In this work, we used the gammatone filters implemented in the large time-frequency analysis toolbox (LTFAT) for MATLAB:~\url{http://ltfat.sourceforge.net/}} with center frequency $f_c$ for $c \in [1, N_b]$, for a set of ERB-spaced (equivalent rectangular bandwidth) center frequencies~\citep{GlasbergMoore1990} spanning the range $f \in [20~\text{Hz}, 20~\text{kHz}]$.
 
 \function{gerzon1992} Gerzon's localization vectors. \\
-Implements the velocity and energy vectors of \citet{Gerzon1992}.
+To predict the localization of sound in multichannel playback systems, \citet{Gerzon1992} defines two localization metrics: the velocity and energy vectors.
+The velocity vector is used to predict localization due to interaural time differences at low frequencies ($<700$~Hz) and is given by \cite{Gerzon1992}
+\begin{equation}\label{eq:gerzon1992_rV}
+\vec{r}_{\text{V}}(k) = \textrm{Re} \left[ \frac{ \sum_q G_q(k) \hat{v}_q}{ \sum_q G_q(k)} \right],
+\end{equation}
+where $G_q$ is the complex-valued, frequency-dependent ``gain'' of the $q^{\text{th}}$ source, and $\vec{v}_q$ is the position of that source.
+The energy vector is used to predict localization due to interaural level differences at higher frequencies (500~Hz -- 5~kHz) and is given by~\cite{Gerzon1992}
+\begin{equation}\label{eq:gerzon1992_rE}
+\vec{r}_{\text{E}}(k) = \frac{ \sum_q |G_q(k)|^2 \hat{v}_q}{ \sum_q |G_q(k)|^2}.
+\end{equation}
+The directions of these vectors indicate the expected localization direction and their magnitudes indicate the quality of the localization.
+Ideally, the vectors should have a magnitude equal to unity and point in the direction of the virtual source.
 
 \function{kates1984} Kates' central spectrum coloration model. \\
 Implements the central spectrum coloration model of \citet{Kates1984}.
 
 \function{merimaa2005} Merimaa's intensity vector and diffuseness parameter. \\
-Implements the intensity vector and diffuseness parameter, computed from first-order ambisonics signals, as given by \citet{MerimaaPulkki2005}.
+According to~\citet{MerimaaPulkki2005}, the acoustic intensity vector and a diffuseness parameter can be computed using the four standard ``B-format'' signals.
+These signals are related to the first four ACN/N3D ambisonics signals by
+\begin{equation}
+\begin{split}
+W &= A_0 / \sqrt{2}, \\
+Y &= A_1 / \sqrt{3}, \\
+Z &= A_2 / \sqrt{3}, \\
+X &= A_3 / \sqrt{3}.
+\end{split}
+\end{equation}
+We now construct a frequency-dependent Cartesian row vector, $\vec{X}$, given by
+\begin{equation}
+\vec{X} \equiv \begin{bmatrix} X & Y & Z \end{bmatrix} = \frac{1}{\sqrt{3}} \begin{bmatrix} A_3 & A_1 & A_2 \end{bmatrix} = \frac{\vec{A}}{\sqrt{3}},
+\end{equation}
+where we have further defined a proportional vector $\vec{A} = \left[ A_3, A_1, A_2 \right] = \sqrt{3} \vec{X}$.
+We will also need the acoustic impedance of the medium, $Z_0 = \rho_0 c$, where $\rho_0$ is the density of the medium and $c$ is the speed of sound.
+
+Using the above, the acoustic intensity vector, $\vec{r}_{\textrm{I}}$, is given by~\citep{MerimaaPulkki2005}
+\begin{equation}\label{eq:merimaa2005_rI}
+\vec{r}_{\textrm{I}}(k) = \frac{\sqrt{2}}{Z_0} \text{Re} \left\{ \overline{W}(k) \vec{X}(k) \right\} = \frac{1}{{Z_0 \sqrt{3}}} \text{Re} \left\{ \overline{A_0}(k) \vec{A}(k) \right\},
+\end{equation}
+where $\overline{(\cdot)}$ and $\text{Re} \left\{ \cdot \right\}$ denote taking the complex conjugate and the real part of the argument, respectively.
+Additionally, the diffuseness parameter $\Psi$ is given by~\citep{MerimaaPulkki2005}
+\begin{align}\label{eq:merimaa2005_Psi}
+\Psi(k) &= 1 - \sqrt{2} \frac{ \left\| \text{Re} \left\{ \overline{W}(k) \vec{X}(k) \right\} \right\|}{\left| W(k) \right|^2 + \left\| \vec{X}(k) \right\|^2 / 2} \\
+	&= 1 - \frac{2}{\sqrt{3}} \frac{ \left\| \text{Re} \left\{ \overline{A_0}(k) \vec{A}(k) \right\} \right\|}{\left| A_0(k) \right|^2 + \left\| \vec{A}(k) \right\|^2 / 3}
+\end{align}
+where $\left\| \cdot \right\|$ denotes the norm of a complex-valued vector, given by
+\begin{equation}
+\| \vec{x} \| = \sqrt{\left\langle \vec{x}, \vec{x} \right\rangle} \equiv \sqrt{\vec{x} \vec{x}^\text{H}},
+\end{equation}
+where $(\cdot)^\text{H}$ denotes the conjugate (Hermitian) transpose of the argument.
 
 \function{pulkki1999\_CLL} Pulkki's composite loudness level model. \\
 Implements the composite loudness level model of \citet{Pulkki1999}.
