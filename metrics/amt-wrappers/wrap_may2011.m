@@ -100,8 +100,8 @@ switch lower(bInType)
     case 'ss' % Assume input binaural signal is steady-state
         input = bIn;
     otherwise
-        error(['Unrecognized third input. Only ''default'' and',...
-            ' ''impulse'' are accepted.']);
+        error(['Unrecognized third input. Only ''ss'' and',...
+            ' ''imp'' are accepted.']);
 end
 
 maxInput = max(max(abs(input)));
