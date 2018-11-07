@@ -43,21 +43,21 @@ function Y = logmean(Q,F,FRANGE)
 
 narginchk(2,3);
 
-% dF = mean(diff(F));
+Q(F==0,:) = [];
+F(F==0) = [];
 
 if nargin==3 && numel(FRANGE)==2
-    [F1Val, F1] = findNearest(F,FRANGE(1));
+    [~, F1] = findNearest(F,FRANGE(1));
     [~, F2] = findNearest(F,FRANGE(2));
-    
-    if F1Val == 0
-        F1 = F1 + 1;
-    end
     
     Q = Q(F1:F2,:);
     F = F(F1:F2);
 end
 
+% Old weight calculation:
+% dF = mean(diff(F));
 % W = shiftdim(log((F + dF/2)./(F - dF/2)));
+
 W = shiftdim(1./F);
 Y = (W.'*shiftdim(Q))/sum(W);
 
