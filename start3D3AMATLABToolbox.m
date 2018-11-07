@@ -32,9 +32,45 @@ function [] = start3D3AMATLABToolbox()
 %   SOFTWARE.
 %   ==============================================================================
 
-[dir,~,~] = fileparts(which('start3D3AMATLABToolbox'));
-addpath(genpath(dir))
-rmpath(genpath(fullfile(dir,'.git')))
+% First, try to find LTFAT
+foundLTFAT = false;
+if exist('ltfatstart','file') == 2
+    foundLTFAT = true;
+else
+    ltfatDir = dir(fullfile(userpath,'**','ltfatstart.m'));
+    if ~isempty(ltfatDir)
+        addpath(ltfatDir(1).folder)
+        foundLTFAT = true;
+    else
+        warning(['Could not find LTFAT! Please add LTFAT to the MATLAB'...
+            'search path, otherwise some functions may not work.']);
+    end
+end
+
+% Next, try to find auditory modeling toolbox
+foundAMT = false;
+if exist('amt_start','file') == 2
+    foundAMT = true;
+else
+    amtDir = dir(fullfile(userpath,'**','amt_start.m'));
+    if ~isempty(amtDir)
+        addpath(amtDir(1).folder)
+        foundAMT = true;
+    else
+        warning('Could not find AMToolbox! Some functions may not work.');
+    end
+end
+
+% Start the found toolbox(es)
+if foundLTFAT && foundAMT
+    amt_start; % Also starts LTFAT
+elseif foundLTFAT && ~foundAMT
+    ltfatstart;
+end
+
+[toolboxDir,~,~] = fileparts(which('start3D3AMATLABToolbox'));
+addpath(genpath(toolboxDir))
+rmpath(genpath(fullfile(toolboxDir,'.git')))
 
 disp('3D3A MATLAB Toolbox found and initialized.')
 
