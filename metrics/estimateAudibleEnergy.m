@@ -46,11 +46,11 @@ if nargin < 3
 end
 
 if exist('erbspacebw','file') == 2
-    fc = erbspacebw(min(FRANGE),max(FRANGE));
+    fc = shiftdim(erbspacebw(min(FRANGE),max(FRANGE)));
 else
     warning('erbspacebw from LTFAT not found, using 1/3-octave bands instead.');
     numfc = round(log2(max(FRANGE)/min(FRANGE))/(1/3));
-    fc = logspace(log10(min(FRANGE)),log10(min(FRANGE)*2^(numfc/3)),numfc);
+    fc = shiftdim(logspace(log10(min(FRANGE)),log10(min(FRANGE)*2^(numfc/3)),numfc));
 end
 
 FFTLen = size(x,1);
