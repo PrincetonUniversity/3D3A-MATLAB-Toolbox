@@ -56,7 +56,7 @@ end
 FFTLen = size(x,1);
 
 h = getGammatoneFilters(fc, Fs, FFTLen);
-Hmag = magSpec(h,1); % FFTLen-by-length(fc)
+Hmag = getMagSpec(h,1); % FFTLen-by-length(fc)
 
 X = fft(x,FFTLen,1);
 E = mean(((Hmag.')*(abs(X).^2)));
