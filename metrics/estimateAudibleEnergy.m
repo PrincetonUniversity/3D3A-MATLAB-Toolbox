@@ -1,4 +1,4 @@
-function E = estimateAudibleEnergy(x, Fs, FRANGE)
+function [E, Evec, fc] = estimateAudibleEnergy(x, Fs, FRANGE)
 %ESTIMATEAUDIBLEENERGY Average energy in auditory critical bands.
 %   E = ESTIMATEAUDIBLEENERGY(X,FS) computes the total audible energy E for
 %   a signal X given at sample rate FS. The total audible energy is
@@ -7,6 +7,10 @@ function E = estimateAudibleEnergy(x, Fs, FRANGE)
 %
 %   E = ESTIMATEAUDIBLEENERGY(X,FS,[FL,FH]) computes the total audible
 %   energy in the frequency range [FL,FH]. The default is [20,20000].
+%
+%   [E,EVEC,FC] = ESTIMATEAUDIBLEENERGY(...) additionally returns the
+%   vector EVEC of energies in each critical band as well as their
+%   corresponding center frequencies FC.
 %
 %   See also GETGAMMATONEFILTERS.
 
@@ -59,6 +63,7 @@ h = getGammatoneFilters(fc, Fs, FFTLen);
 Hmag = getMagSpec(h,1); % FFTLen-by-length(fc)
 
 X = fft(x,FFTLen,1);
-E = mean(((Hmag.')*(abs(X).^2)));
+Evec = ((Hmag.')*(abs(X).^2));
+E = mean(Evec);
 
 end
