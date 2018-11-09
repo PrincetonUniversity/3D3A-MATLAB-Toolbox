@@ -47,7 +47,7 @@ else
     end
 end
 
-% Next, try to find auditory modeling toolbox
+% Next, try to find AMT
 foundAMT = false;
 if exist('amt_start','file') == 2
     foundAMT = true;
@@ -57,7 +57,8 @@ else
         addpath(amtDir(1).folder)
         foundAMT = true;
     else
-        warning('Could not find AMToolbox! Some functions may not work.');
+        warning(['Could not find AMT! Please add AMT to the MATLAB'...
+            'search path, otherwise some functions may not work.']);
     end
 end
 
@@ -66,6 +67,15 @@ if foundLTFAT && foundAMT
     amt_start; % Also starts LTFAT
 elseif foundLTFAT && ~foundAMT
     ltfatstart;
+elseif ~foundLTFAT && foundAMT
+    try
+        amt_start; % Might find LTFAT in AMT's thirdparty folder
+    catch ME
+        disp('Found AMT but could not start due to the following error:')
+        messageLines = splitlines(ME.message);
+        indentMessage = compose('\t %s',messageLines);
+        disp(strjoin(indentMessage,'\n'))
+    end
 end
 
 [toolboxDir,~,~] = fileparts(which('start3D3AMATLABToolbox'));
