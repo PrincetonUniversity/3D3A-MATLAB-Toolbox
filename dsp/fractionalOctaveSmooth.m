@@ -13,8 +13,8 @@ function Hsm = fractionalOctaveSmooth(H, varargin)
 %   the smoothing window, either 'rectangular' (default) or 'hanning'.
 %
 %   HS = FRACTIONALOCTAVESMOOTH(H,N,METHOD,WINTYPE,SCALE) performs
-%   smoothing on the specified SCALE, either 'power' (default), 'dB',
-%   'complex', or 'equiv-complex'.
+%   smoothing on the specified SCALE, either 'raw', 'power' (default),
+%   'dB', 'complex', or 'equiv-complex'.
 %
 %   See also COMPUTESMOOTHINGMATRIX.
 
@@ -81,6 +81,8 @@ else
 end
 
 switch(lower(SCALE))
+    case 'raw'
+        Hsm1 = M*H;
     case 'power'
         Hsm1 = sqrt(M*(abs(H).^2));
     case 'db'
