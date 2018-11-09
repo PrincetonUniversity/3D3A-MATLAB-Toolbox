@@ -98,6 +98,6 @@ switch(lower(SCALE))
 end
 
 
-Hsm = [Hsm1; flip(Hsm1(2:end-1,:))];
+Hsm = [Hsm1; flip(conj(Hsm1(2:end-1,:)))];
 
 end
