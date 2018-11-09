@@ -128,9 +128,6 @@ M(1,1) = 1;
 for n = 1:(specLen-1)
     % Window half-width calculation
     m = floor((0.5 * n) / Q);
-    if m < 1
-        m = 1;
-    end
     if m > mMax
         m = mMax;
     end
