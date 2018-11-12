@@ -119,6 +119,7 @@ set(gca,'XScale','log')
 
 [vMat,wVec] = loadGridFile('fliege_36');
 numPW = length(wVec);
+pinvFlag = true; % works for true or false
 
 Lmax = 4;
 Nmax = (Lmax + 1)^2;
@@ -127,9 +128,9 @@ aIndx = 7;
 AMat = zeros(kLen,Nmax);
 AMat(:,aIndx) = 1;
 
-muMat1 = a2mu(AMat,vMat,ambNorm1);
-muMat2 = a2mu(AMat,vMat,ambNorm2);
-muMat3 = a2mu(AMat,vMat,ambNorm3);
+muMat1 = a2mu(AMat,vMat,ambNorm1,pinvFlag,wVec);
+muMat2 = a2mu(AMat,vMat,ambNorm2,pinvFlag,wVec);
+muMat3 = a2mu(AMat,vMat,ambNorm3,pinvFlag,wVec);
 
 AMat1 = mu2a(muMat1,vMat,Lmax,wVec,ambNorm1);
 AMat2 = mu2a(muMat2,vMat,Lmax,wVec,ambNorm2);
