@@ -185,7 +185,7 @@ if nargin < 10 || isempty(broadbandFlag)
 end
 
 [pwGrid, wQList] = loadGridFile(pwGridFile);
-muQList = A2mu(a, pwGrid, ambNorm)*diag(wQList); % Compute plane-wave decomposition
+muQList = a2mu(a, pwGrid, ambNorm, false)*diag(wQList); % Compute plane-wave decomposition
 
 % Break-up plane-wave IRs into wavelets
 [fullpwGrid, pwSourceGains, timeDelays] = prepIRs(pwGrid, muQList, Fs, prepParams);
