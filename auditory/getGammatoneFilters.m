@@ -1,12 +1,12 @@
 function h = getGammatoneFilters(fc, Fs, IRLen)
 %GETGAMMATONEFILTERS Auditory filters that represent human critical bands.
-%   h = GETGAMMATONEFILTERS(fc,Fs,N) computes length N impulse responses of
-%   gammatone filters with center frequencies specified by the vector fc.
+%   H = GETGAMMATONEFILTERS(FC,FS,N) computes length N impulse responses of
+%   gammatone filters with center frequencies specified by the vector FC.
 %   
 %   This function is essentially a wrapper for the gammatonefir function in
-%   the LTFAT toolbox. The output, h, will be an N-by-M matrix of filters,
-%   where M is the number of elements in fc, rather than a length M cell
-%   array.
+%   the LTFAT toolbox. The output, H, will be an N-by-M matrix of filters,
+%   where M is the number of elements in FC, rather than the length M cell
+%   array returned by gammatonefir.
 %   
 %   Needs LTFAT toolbox.
 %
