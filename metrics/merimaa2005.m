@@ -72,7 +72,7 @@ if ~isempty(indx)
 end
 
 F = sqrt(dot(temp,temp,2));
-E = abs(W).^2 + dot(Xp,Xp,2)/2;
+E = abs(W).^2 + real(dot(Xp,Xp,2))/2; % this dot product is real anyways, but sometimes MATLAB returns a complex double
 D = 1 - sqrt(2)*F./E;
 
 end
