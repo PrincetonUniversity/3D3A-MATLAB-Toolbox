@@ -2,6 +2,11 @@ function val = sphericalBesselJ(n,x)
 %SPHERICALBESSELJ Spherical Bessel function.
 %   J = SPHERICALBESSELJ(N,X) returns the value J of the spherical Bessel
 %   function of the first kind for order N and with argument X.
+%
+%   N and X may be matrices, in which case they must have the same size or
+%   else one must be a scalar.
+%
+%   See also BESSELJ.
 
 %   ==============================================================================
 %   This file is part of the 3D3A MATLAB Toolbox.
@@ -37,6 +42,10 @@ function val = sphericalBesselJ(n,x)
 coeff = sqrt(pi./(2*x));
 sgn = 2*(x>=0)-1; % Signum-like function; equal to +1 at 0
 val = coeff.*sgn.*besselj(n+0.5,x);
-val(x==0) = +~n; % gives 1 if n==0; gives 0 if n~=0
+if isscalar(n)
+    val(x==0) = +~n; % gives 1 if n==0; gives 0 if n~=0
+else
+    val(x==0) = +~n(x==0);
+end
 
 end
