@@ -1,11 +1,12 @@
-function Y = getAmbYMatrix(r, L, ambNorm)
-%GETAMBYMATRIX Matrix of real-valued spherical harmonics.
-%   Y = GETAMBYMATRIX(R,L,AMBNORM) returns the (L+1)^2-by-SIZE(R,1) matrix
-%   of real-valued spherical harmonics, evaluated in the directions R up to
-%   order L and with normalization convention AMBNORM. By default, N3D
-%   normalization is used.
+function V = getAmbRMatrix(k, L, r, ambNorm)
+%GETAMBRMATRIX Matrix of regular Helmholtz solutions.
+%   V = GETAMBRMATRIX(K,L,R,AMBNORM) returns the LENGTH(K)-by-(L+1)^2
+%   matrix V of regular solutions to the 3D Helmholtz equation, evaluated
+%   at a single position R (given in Cartesian coordinates) for angular
+%   wavenumbers K and up to order L, with normalization convention AMBNORM.
+%   By default, N3D normalization is used.
 %
-%   See also AMBSPHERICALHARMONICY.
+%   See also AMBHELMHOLTZSOLUTIONR.
 
 %   ==============================================================================
 %   This file is part of the 3D3A MATLAB Toolbox.
@@ -38,20 +39,20 @@ function Y = getAmbYMatrix(r, L, ambNorm)
 %   SOFTWARE.
 %   ==============================================================================
 
-narginchk(2,3);
+narginchk(3,4);
 
 % Uses N3D normalization by default
-if nargin < 3 || isempty(ambNorm)
+if nargin < 4 || isempty(ambNorm)
     ambNorm = 'N3D';
 end
 
-nRows = size(r,1);
+nRows = length(k);
 N = (L + 1)^2;
 
-Y = zeros(N,nRows);
+V = zeros(nRows,N);
 for n = 0:(N-1)
     [l, m] = getAmbOrder(n);
-    Y(n+1,:) = ambSphericalHarmonicY(l, m, r, ambNorm);
+    V(:,n+1) = ambHelmholtzSolutionR(l, m, shiftdim(k), r, ambNorm);
 end
 
 end

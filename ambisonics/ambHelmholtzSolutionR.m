@@ -64,7 +64,7 @@ end
 
 if (l >= 0) && (abs(m) <= l)
     coeff = 4 * pi * ((-1i)^l);
-    jl = sphericalBesselJ(l,k(:)*(sqrt(dot(r,r,2)).'));
+    jl = sphericalBesselJ(l,shiftdim(k)*(sqrt(dot(r,r,2)).'));
     Ylm = ambSphericalHarmonicY(l,m,r,ambNorm);
     val = coeff * jl * diag(Ylm) / ambNormSquared(l,ambNorm);
 else
