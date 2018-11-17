@@ -1,21 +1,18 @@
-function psi = A2psi(A,k,r,ambNorm)
-%A2PSI Convert ambisonics potentials to acoustic potential.
-%   PSI = A2PSI(A,K,R) computes the acoustic potential PSI at a position R
-%   (given in Cartesian coordinates) due to a spherical Fourier-Bessel
-%   series expansion with coefficients A at angular wavenumbers K. If R is
-%   empty or omitted, the origin [0 0 0] is used.
+function p = a2p(a,Fs,r,ambNorm)
+%A2P Convert ambisonics signals to acoustic pressure.
+%   P = A2P(A,FS,R) computes the acoustic pressure P at a position R (given
+%   in Cartesian coordinates) due to a spherical Fourier-Bessel series
+%   expansion with time-domain signals A at sampling rate FS. If R is empty
+%   or omitted, the origin [0 0 0] is used.
 %   
-%   If K is a vector, A should be a LENGTH(K)-by-(L+1)^2 matrix where L is
-%   the maximum (truncation) order of the expansion. In this case, PSI will
-%   be a LENGTH(K)-by-1 column vector.
+%   A should be a K-by-(L+1)^2 matrix where K is the signal length and L is
+%   the maximum (truncation) order of the expansion. In this case, P will
+%   be a K-by-1 column vector.
 %
-%   PSI = A2PSI(A,K,R,AMBNORM) additionally specifies the ambisonics
+%   P = A2P(A,FS,R,AMBNORM) additionally specifies the ambisonics
 %   normalization convention used. By default, N3D is assumed.
 %
-%   Note: the letter 'A' in A2PSI is capitalized to indicate that
-%   ambisonics potentials, not signals, must be given as the input.
-%
-%   See also GETAMBRMATRIX, AMBHELMHOLTZSOLUTIONR, A2P.
+%   See also A2PSI, GETPOTENTIAL, GETPRESSURE.
 
 %   ==============================================================================
 %   This file is part of the 3D3A MATLAB Toolbox.
@@ -60,10 +57,10 @@ if nargin < 4 || isempty(ambNorm)
     ambNorm = 'N3D';
 end
 
-N = size(A,2);
-L = sqrt(N) - 1;
-
-V = getAmbRMatrix(k,L,r,ambNorm);
-psi = sum(A(1:length(k),:).*V,2);
+FFTLen = size(a,1);
+A = getPotential(a,FFTLen,1);
+k = f2k(getFreqVec(Fs,FFTLen));
+PSI = A2psi(A,k,r,ambNorm);
+p = getPressure(PSI,FFTLen,1,'symmetric');
 
 end
