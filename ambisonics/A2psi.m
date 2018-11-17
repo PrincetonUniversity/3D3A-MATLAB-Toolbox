@@ -2,7 +2,8 @@ function psi = A2psi(A,k,r,ambNorm)
 %A2PSI Convert ambisonics potentials to acoustic potential.
 %   PSI = A2PSI(A,K,R) computes the potential field PSI at a position R
 %   (given in Cartesian coordinates) due to a spherical Fourier-Bessel
-%   series expansion with coefficients A at angular wavenumbers K. 
+%   series expansion with coefficients A at angular wavenumbers K. If R is
+%   empty or omitted, the origin [0 0 0] is used.
 %   
 %   If K is a vector, A should be a LENGTH(K)-by-(L+1)^2 matrix where L is
 %   the maximum (truncation) order of the expansion. In this case, PSI will
@@ -47,7 +48,12 @@ function psi = A2psi(A,k,r,ambNorm)
 %   SOFTWARE.
 %   ==============================================================================
 
-narginchk(3,4);
+narginchk(2,4);
+
+% Renders at the origin by default
+if nargin < 3 || isempty(r)
+    r = [0 0 0];
+end
 
 % Uses N3D normalization by default
 if nargin < 4 || isempty(ambNorm)
