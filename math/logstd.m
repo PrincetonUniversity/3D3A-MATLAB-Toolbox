@@ -1,11 +1,11 @@
-function Y = logmean(Q,F,FRANGE)
-%LOGMEAN Log-scale average of a function.
-%   Y = LOGMEAN(Q,F) computes the log-weighted average of Q, whose values
-%   are specified as a function of F. F should have uniformly (linearly) 
-%   spaced values. Q must have the same number of rows as F.
+function S = logstd(Q,F,FRANGE)
+%LOGSTD Log-scale standard deviation of a function.
+%   S = LOGSTD(Q,F) computes the log-weighted standard deviation of Q,
+%   whose values are specified as a function of F. F should have uniformly
+%   (linearly) spaced values. Q must have the same number of rows as F.
 %
-%   Y = LOGMEAN(Q,F,[FMIN,FMAX]) computes the log-weighted average of Q for
-%   values of F within FMIN and FMAX.
+%   S = LOGSTD(Q,F,[FMIN,FMAX]) computes the log-weighted standard
+%   deviation of Q for values of F within FMIN and FMAX.
 %
 %   See also LOGVAR.
 
@@ -13,7 +13,6 @@ function Y = logmean(Q,F,FRANGE)
 %   This file is part of the 3D3A MATLAB Toolbox.
 %   
 %   Contributing author(s), listed alphabetically by last name:
-%   Rahulram Sridhar <rahulram@princeton.edu>
 %   Joseph G. Tylka <josephgt@princeton.edu>
 %   3D Audio and Applied Acoustics (3D3A) Laboratory
 %   Princeton University, Princeton, New Jersey 08544, USA
@@ -43,27 +42,10 @@ function Y = logmean(Q,F,FRANGE)
 
 narginchk(2,3);
 
-% skip DC (F=0) values
-Q(F==0,:) = [];
-F(F==0) = [];
-
-if nargin==3 && numel(FRANGE)==2
-    [~, F1] = findNearest(F,min(FRANGE));
-    [~, F2] = findNearest(F,max(FRANGE));
-    
-    if F1==F2
-        warning('Only one data point within FRANGE.');
-    end
-    
-    Q = Q(F1:F2,:);
-    F = F(F1:F2);
+if nargin < 3
+    FRANGE = [];
 end
 
-% Old weight calculation:
-% dF = mean(diff(F));
-% W = shiftdim(log((F + dF/2)./(F - dF/2)));
-
-W = shiftdim(1./F);
-Y = (W.'*shiftdim(Q))/sum(W);
+S = sqrt(logvar(Q,F,FRANGE));
 
 end

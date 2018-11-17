@@ -4,8 +4,8 @@ function S = logvar(Q,F,FRANGE)
 %   are specified as a function of F. F should have uniformly (linearly) 
 %   spaced values. Q must have the same number of rows as F.
 %
-%   S = LOGVAR(Q,F,[FMIN, FMAX]) computes the log-weighted variance of Q
-%   for values of F within FMIN and FMAX.
+%   S = LOGVAR(Q,F,[FMIN,FMAX]) computes the log-weighted variance of Q for
+%   values of F within FMIN and FMAX.
 %
 %   See also LOGMEAN.
 
