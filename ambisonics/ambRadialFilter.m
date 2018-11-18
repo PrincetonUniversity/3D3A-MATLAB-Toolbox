@@ -6,6 +6,8 @@ function d = ambRadialFilter(l,k,r)
 %
 %   If K is a vector, D will be a LENGTH(K) vector in the same orientation
 %   as K. R must be a scalar.
+%
+%   See also AMBPOINTSOURCE.
 
 %   ==============================================================================
 %   This file is part of the 3D3A MATLAB Toolbox.

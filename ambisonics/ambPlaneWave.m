@@ -11,6 +11,8 @@ function A = ambPlaneWave(L,s0,k,r,t0,ambNorm)
 %
 %   A = AMBPLANEWAVE(L,S0,K,R,T0,AMBNORM) additionally specifies the
 %   ambisonics normalization convention to use. By default, N3D is used.
+%
+%   See also AMBPOINTSOURCE.
 
 %   ==============================================================================
 %   This file is part of the 3D3A MATLAB Toolbox.
