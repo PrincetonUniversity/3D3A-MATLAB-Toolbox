@@ -45,6 +45,8 @@ function A = ambPointSource(L,s0,k,r,ambNorm,hpfFlag)
 %   SOFTWARE.
 %   ==============================================================================
 
+narginchk(4,6);
+
 % Uses N3D by default
 if nargin < 5 || isempty(ambNorm)
     ambNorm = 'N3D';

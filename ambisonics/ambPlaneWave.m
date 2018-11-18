@@ -45,6 +45,8 @@ function A = ambPlaneWave(L,s0,k,r,t0,ambNorm)
 %   SOFTWARE.
 %   ==============================================================================
 
+narginchk(4,6);
+
 % No delay by default
 if nargin < 5 || isempty(t0)
     t0 = 0;
