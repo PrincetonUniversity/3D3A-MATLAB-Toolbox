@@ -4,8 +4,13 @@ function d = ambRadialFilter(l,k,r)
 %   coding filter D, for angular wavenumber K and order L, for a source
 %   distance R.
 %
-%   If K is a vector, D will be a LENGTH(K) vector in the same orientation
-%   as K. R must be a scalar.
+%   L, K, and R may be matrices, in which case they must all have the same
+%   size or else one or more must be a scalar. In this case, D will have
+%   the same dimensions as the matrices.
+%
+%   Alternatively, K may be a column vector and R may be a row vector, in
+%   which case L must be a scalar or match K or R, and D will be LENGTH(K)-
+%   by-LENGTH(R).
 %
 %   See also AMBPOINTSOURCE.
 
@@ -40,35 +45,64 @@ function d = ambRadialFilter(l,k,r)
 %   SOFTWARE.
 %   ==============================================================================
 
-if ~isscalar(l)
-    error('L must be a scalar.');
+[l,k,kr] = prepInputs(l,k,r);
+d = ((1i.^(l+1)).*k).*sphericalHankelH(l,1,kr);
+d(kr==0) = +~l;
+
 end
 
-if ~isvector(k)
-    error('K must be a vector.');
+function [l,k,kr] = prepInputs(l,k,r)
+
+leqk = all(size(l)==size(k));
+leqr = all(size(l)==size(r));
+keqr = all(size(k)==size(r));
+scalars = [isscalar(l) isscalar(k) isscalar(r)];
+
+if sum(scalars) >= 2 % at least two of l, k, and r are scalars
+    kr = k.*r;
+    return
+end % else, at most one scalar
+
+if isscalar(l) && keqr % l is the only scalar and k and r are the same size
+    kr = k.*r;
+    return
 end
 
-if ~isscalar(r)
-    error('R must be a scalar.');
+if isscalar(k) && leqr % k is the only scalar and l and r are the same size
+    kr = k*r;
+    return
 end
 
-if k(1)==0
-    DIM = find(size(k) ~= 1, 1, 'first');
-    k = k(2:end);
-    dropZero = true;
-    zeroVal = +~l;
-else
-    dropZero = false;
+if isscalar(r) && leqk % r is the only scalar and l and k are the same size
+    kr = k*r;
+    return
 end
 
-d = ((1i^(l+1)).*k).*sphericalHankelH(l,1,k*r);
+if leqk && leqr && keqr % l, k, and r are all the same size
+    kr = k.*r;
+    return
+end
 
-if dropZero
-    if ~isempty(DIM)
-        d = cat(DIM,zeroVal,d);
-    elseif dropZero && isempty(DIM)
-        d = zeroVal;
+if iscolumn(k) && isrow(r) % k*r is a nonscalar matrix
+    kr = k*r;
+    k = repmat(k,1,length(r)); % k has same size as kr
+    
+    % now try to make l the same size as kr
+    if isscalar(l)
+        l = repmat(l,size(kr));
+        return
+    elseif leqk % l is a column vector like k
+        l = repmat(l,1,length(r));
+        return
+    elseif leqr % l is a row vector like r
+        l = repmat(l,length(k),1);
+        return
     end
 end
 
+error(['Could not combine input matrices. '...
+    'Two or more of L, K, and R must be scalars or matrices of the same size. '...
+    'Alternatively, K may be a column-vector and R a row-vector, '...
+    'in which case L must be a scalar or match K or R.']);
+    
 end

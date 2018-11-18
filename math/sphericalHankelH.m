@@ -2,6 +2,11 @@ function val = sphericalHankelH(n,k,x)
 %SPHERICALHANKELH Spherical Hankel function.
 %   H = SPHERICALHANKELH(N,K,X) returns the value H of the spherical Hankel
 %   function of the Kth kind for order N and with argument X.
+%
+%   N, K, and X may be matrices, in which case they must all have the same
+%   size or else one or more must be a scalar.
+%
+%   See also SPHERICALBESSELJ, BESSELJ.
 
 %   ==============================================================================
 %   This file is part of the 3D3A MATLAB Toolbox.
@@ -37,6 +42,6 @@ function val = sphericalHankelH(n,k,x)
 norm = sqrt(pi./(2*x));
 sgn = 2*(x>=0)-1;
 %val = norm.*sgn.*besselh(n+0.5,k,x);
-val = norm.*sgn.*(besselj(n+0.5,x)-((-1)^k).*1i.*bessely(n+0.5,x));
+val = norm.*sgn.*(besselj(n+0.5,x)-((-1).^k).*1i.*bessely(n+0.5,x));
 
 end
