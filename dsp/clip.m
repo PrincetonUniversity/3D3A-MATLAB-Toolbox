@@ -13,7 +13,7 @@ function y = clip(x,xlim,yval)
 %   Note: for xmax > 0, sign(x).*CLIP(abs(x),xmax,ymax) is equivalent to
 %   CLIP(x,[-xmax,xmax],[-ymax,ymax]).
 
-%   ==============================================================================
+%   =======================================================================
 %   This file is part of the 3D3A MATLAB Toolbox.
 %   
 %   Contributing author(s), listed alphabetically by last name:
@@ -42,7 +42,7 @@ function y = clip(x,xlim,yval)
 %   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 %   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 %   SOFTWARE.
-%   ==============================================================================
+%   =======================================================================
 
 % Needs at least 1 input argument
 narginchk(1,3);

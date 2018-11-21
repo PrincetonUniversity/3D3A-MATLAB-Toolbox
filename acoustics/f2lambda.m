@@ -5,7 +5,7 @@ function lambda = f2lambda(f)
 %
 %   See also F2K, K2F, GETSOUNDSPEED.
 
-%   ==============================================================================
+%   =======================================================================
 %   This file is part of the 3D3A MATLAB Toolbox.
 %   
 %   Contributing author(s), listed alphabetically by last name:
@@ -34,7 +34,7 @@ function lambda = f2lambda(f)
 %   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 %   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 %   SOFTWARE.
-%   ==============================================================================
+%   =======================================================================
 
 lambda = getSoundSpeed()./f;
 

@@ -5,7 +5,7 @@ function erb = fc2erb(fc,n)
 %   ERB = FC2ERB(FC,N) uses the Nth order polynomial approximation given by
 %   Moore and Glasberg. Accepts N = 1 or N = 2 only.
 
-%   ==============================================================================
+%   =======================================================================
 %   This file is part of the 3D3A MATLAB Toolbox.
 %   
 %   Contributing author(s), listed alphabetically by last name:
@@ -34,7 +34,7 @@ function erb = fc2erb(fc,n)
 %   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 %   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 %   SOFTWARE.
-%   ==============================================================================
+%   =======================================================================
 
 %   References:
 %     [1] Moore and Glasberg (1983) Suggested formulae for calculating

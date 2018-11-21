@@ -22,7 +22,7 @@ function x = exponentialSineSweep(f1, f2, Fs, T, varargin)
 %           that the specified start frequency F1 and the duration T are
 %           only satisfied approximately for 'phase' type sweeps.
 
-%   ==============================================================================
+%   =======================================================================
 %   This file is part of the 3D3A MATLAB Toolbox.
 %   
 %   Contributing author(s), listed alphabetically by last name:
@@ -51,7 +51,7 @@ function x = exponentialSineSweep(f1, f2, Fs, T, varargin)
 %   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 %   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 %   SOFTWARE.
-%   ==============================================================================
+%   =======================================================================
 
 %   References:
 %     [1] Farina (2000) Simultaneous Measurement of Impulse Response and

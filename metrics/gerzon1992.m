@@ -5,7 +5,7 @@ function [rV, rE] = gerzon1992(R, G)
 %   K frequencies and N sources, G should be an K-by-N matrix and R should
 %   be N-by-3.
 
-%   ==============================================================================
+%   =======================================================================
 %   This file is part of the 3D3A MATLAB Toolbox.
 %   
 %   Contributing author(s), listed alphabetically by last name:
@@ -34,7 +34,7 @@ function [rV, rE] = gerzon1992(R, G)
 %   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 %   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 %   SOFTWARE.
-%   ==============================================================================
+%   =======================================================================
 
 %   References:
 %     [1] Gerzon (1992) General Metatheory of Auditory Localisation.

@@ -22,7 +22,7 @@ function [retFlag, retMsg, retDat] = sendOSCmessage(udps, sendMsg, sendDat, udpr
 %
 %   See also WRITEOSCMESSAGE, READOSCMESSAGE.
 
-%   ==============================================================================
+%   =======================================================================
 %   This file is part of the 3D3A MATLAB Toolbox.
 %   
 %   Contributing author(s), listed alphabetically by last name:
@@ -51,7 +51,7 @@ function [retFlag, retMsg, retDat] = sendOSCmessage(udps, sendMsg, sendDat, udpr
 %   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 %   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 %   SOFTWARE.
-%   ==============================================================================
+%   =======================================================================
 
 if nargin < 7
     waitTime = 0.5;

@@ -5,7 +5,7 @@ function k = f2k(f)
 %
 %   See also K2F, F2LAMBDA, GETSOUNDSPEED.
 
-%   ==============================================================================
+%   =======================================================================
 %   This file is part of the 3D3A MATLAB Toolbox.
 %   
 %   Contributing author(s), listed alphabetically by last name:
@@ -34,7 +34,7 @@ function k = f2k(f)
 %   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 %   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 %   SOFTWARE.
-%   ==============================================================================
+%   =======================================================================
 
 k = 2*pi*f/getSoundSpeed();
 

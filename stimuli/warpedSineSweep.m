@@ -18,7 +18,7 @@ function x = warpedSineSweep(Xmag, Fs, T, varargin)
 %           seconds of zeros before and TPOST seconds of zeros after the
 %           sweep.
 
-%   ==============================================================================
+%   =======================================================================
 %   This file is part of the 3D3A MATLAB Toolbox.
 %   
 %   Contributing author(s), listed alphabetically by last name:
@@ -47,7 +47,7 @@ function x = warpedSineSweep(Xmag, Fs, T, varargin)
 %   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 %   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 %   SOFTWARE.
-%   ==============================================================================
+%   =======================================================================
 
 %   References:
 %     [1] Ochiai and Kaneda (2013) A Recursive Adaptive Method of Impulse

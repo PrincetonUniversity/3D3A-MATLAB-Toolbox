@@ -27,7 +27,7 @@ function onsetMat = thresholdIRs(irData,thp,varargin)
 %                   corresponds to upsampling. Onsets are returned at the
 %                   original sampling rate.
 
-%   ==============================================================================
+%   =======================================================================
 %   This file is part of the 3D3A MATLAB Toolbox.
 %   
 %   Contributing author(s), listed alphabetically by last name:
@@ -57,7 +57,7 @@ function onsetMat = thresholdIRs(irData,thp,varargin)
 %   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 %   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 %   SOFTWARE.
-%   ==============================================================================
+%   =======================================================================
 
 % Needs at least 1 input argument
 narginchk(1,4);

@@ -2,7 +2,7 @@ function c = getSoundSpeed()
 %GETSOUNDSPEED Speed of sound in air.
 %   GETSOUNDSPEED() returns the speed of sound in air, 343 m/s.
 
-%   ==============================================================================
+%   =======================================================================
 %   This file is part of the 3D3A MATLAB Toolbox.
 %   
 %   Contributing author(s), listed alphabetically by last name:
@@ -31,7 +31,7 @@ function c = getSoundSpeed()
 %   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 %   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 %   SOFTWARE.
-%   ==============================================================================
+%   =======================================================================
 
 c = 343;
 

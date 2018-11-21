@@ -9,7 +9,7 @@ function S = normalizeVector(R, DIM)
 %   S = NORMALIZEVECTOR(M, DIM) normalizes the vectors in matrix M along
 %   dimension DIM.
 
-%   ==============================================================================
+%   =======================================================================
 %   This file is part of the 3D3A MATLAB Toolbox.
 %   
 %   Contributing author(s), listed alphabetically by last name:
@@ -38,7 +38,7 @@ function S = normalizeVector(R, DIM)
 %   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 %   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 %   SOFTWARE.
-%   ==============================================================================
+%   =======================================================================
 
 if isvector(R)
     S = R/norm(R);

@@ -8,7 +8,7 @@ function val = sphericalBesselJ(n,x)
 %
 %   See also BESSELJ.
 
-%   ==============================================================================
+%   =======================================================================
 %   This file is part of the 3D3A MATLAB Toolbox.
 %   
 %   Contributing author(s), listed alphabetically by last name:
@@ -37,7 +37,7 @@ function val = sphericalBesselJ(n,x)
 %   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 %   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 %   SOFTWARE.
-%   ==============================================================================
+%   =======================================================================
 
 coeff = sqrt(pi./(2*x));
 sgn = 2*(x>=0)-1; % Signum-like function; equal to +1 at 0
