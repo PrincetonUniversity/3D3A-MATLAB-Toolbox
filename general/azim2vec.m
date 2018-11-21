@@ -12,7 +12,7 @@ function r = azim2vec(az, n)
 %   See also SPH2CART, POL2CART, VEC2AZIM.
 
 %   ==============================================================================
-%   This file is part of the 3D3A MATLAB Toolkit.
+%   This file is part of the 3D3A MATLAB Toolbox.
 %   
 %   Contributing author(s), listed alphabetically by last name:
 %   Joseph G. Tylka <josephgt@princeton.edu>

@@ -4,7 +4,7 @@ function [posMat, wQList] = loadGridFile(matFile)
 %   W for a given grid stored in FILE.
 
 %   ==============================================================================
-%   This file is part of the 3D3A MATLAB Toolkit.
+%   This file is part of the 3D3A MATLAB Toolbox.
 %   
 %   Contributing author(s), listed alphabetically by last name:
 %   Joseph G. Tylka <josephgt@princeton.edu>

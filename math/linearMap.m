@@ -11,7 +11,7 @@ function Y = linearMap(X, XRANGE, YRANGE)
 %   LINEARMAP(X,XMAX,YMAX) is the same as LINEARMAP(X,[0,XMAX],[0,YMAX]).
 
 %   ==============================================================================
-%   This file is part of the 3D3A MATLAB Toolkit.
+%   This file is part of the 3D3A MATLAB Toolbox.
 %   
 %   Contributing author(s), listed alphabetically by last name:
 %   Joseph G. Tylka <josephgt@princeton.edu>

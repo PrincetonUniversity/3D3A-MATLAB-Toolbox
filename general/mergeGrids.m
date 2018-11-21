@@ -17,7 +17,7 @@ function [r, a, indx] = mergeGrids(r1, r2, thresh)
 %   See also FINDNEAREST, UNIQUE.
 
 %   ==============================================================================
-%   This file is part of the 3D3A MATLAB Toolkit.
+%   This file is part of the 3D3A MATLAB Toolbox.
 %   
 %   Contributing author(s), listed alphabetically by last name:
 %   Joseph G. Tylka <josephgt@princeton.edu>

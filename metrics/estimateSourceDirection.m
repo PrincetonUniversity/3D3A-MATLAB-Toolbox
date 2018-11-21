@@ -14,7 +14,7 @@ function s = estimateSourceDirection(A_rec, ambNorm, angleBin, force2D)
 %   the estimated source direction to be in the horizontal plane.
 
 %   ==============================================================================
-%   This file is part of the 3D3A MATLAB Toolkit.
+%   This file is part of the 3D3A MATLAB Toolbox.
 %   
 %   Contributing author(s), listed alphabetically by last name:
 %   Joseph G. Tylka <josephgt@princeton.edu>
