@@ -9,7 +9,6 @@ function [az,ITD,ILD,fVec] = wrap_may2011(bIn,fS,varargin)
 %       1. the raw frequency-dependent azimuth estimate (see out.azimuth in
 %       AMT v0.9.9 documentation of MAY2011.)
 %       2. the mean of the above raw estimates
-%       3. the mode of the above raw estimates
 %   All azimuth values are specified in degrees and follow the conventions
 %   of the CIPIC interaural coordinate system. The output ITD and ILD are 
 %   also structures consisting of:
@@ -21,12 +20,19 @@ function [az,ITD,ILD,fVec] = wrap_may2011(bIn,fS,varargin)
 %   (i.e. negative azimuth) - see page 3 of May et al. [1]. A vector of 
 %   frequencies in Hz, fVec, at which the raw azimuth, ITD and ILD 
 %   estimates are calculated is also provided. An alternative way to 
-%   specify this command is: WRAP_MAY2011(bIn,fS,'ss').
+%   specify this command is: WRAP_MAY2011(bIn,fS,'bInType','ss').
 %
-%   ___ = WRAP_MAY2011(...,'imp') indicates that bIn consists of binaural 
-%   impulse responses. In this case, steady-state binaural signals are 
-%   generated internally by convolving each channel in bIn with a pink 
+%   ___ = WRAP_MAY2011(...,'bInType','imp') indicates that bIn consists of 
+%   binaural impulse responses. In this case, steady-state binaural signals 
+%   are generated internally by convolving each channel in bIn with a pink 
 %   noise signal.
+%
+%   ___ = WRAP_MAY2011(...,'stimType',TYPE) indicates the type of stimulus
+%   signal to use to generate steady-state binaural signals when 'bInType'
+%   is specified as 'imp'. The following may be specified for TYPE:
+%       1. 'pink-noise' - pink noise signal (default)
+%       2. 'ess' - exponential sine sweep signal
+%   This command is only applicable when 'bInType' is set to 'imp'.
 %
 %   Needs: Auditory Modeling Toolbox (AMT).
 %
@@ -68,7 +74,7 @@ function [az,ITD,ILD,fVec] = wrap_may2011(bIn,fS,varargin)
 %       [1]. May et al. (2011) - A Probabilistic Model for Robust 
 %       Localization Based on a Binaural Auditory Front-End.
 
-narginchk(2,3);
+narginchk(2,6);
 
 if exist('amt_version','file') ~= 2
     error('The Auditory Modeling Toolbox must be in the MATLAB path.');
@@ -79,26 +85,37 @@ end
 % not work reliably.
 if exist('modeldata.mat','file') ~= 2
     error(['Requires modeldata.mat in /code/auxdata/may2011 within the',...
-        ' Auditory Modeling Toolbox.']);
+        ' Auditory Modeling Toolbox. Download from: ',...
+        'http://www.sofacoustics.org/data/amt-0.9.9/auxdata/may2011/',...
+        'modeldata.mat']);
 end
 
 % Parse and verify inputs
-inputs = parseWRAP_MAY2011Inputs(bIn,fS,varargin);
+inputs = parseWrap_May2011Inputs(bIn,fS,varargin);
 
 % Extract parsed inputs
 bIn = inputs.bIn;
 fS = inputs.fS;
 bInType = inputs.bInType;
-
-irLen = size(bIn,1);
+stimType = inputs.stimType;
+inputLen = ceil(0.2*fS);
 switch lower(bInType)
     case 'imp' % Generate steady-state binaural signal from input IRs
-        pinkNoiseSource = dsp.ColoredNoise(1,irLen,1);
-        stimulus = step(pinkNoiseSource);
-        stimulus = stimulus/max(abs(stimulus));
+        switch lower(stimType)
+            case 'pink-noise'
+                pinkNoiseSource = dsp.ColoredNoise(1,inputLen,1);
+                stimulus = step(pinkNoiseSource);
+                stimulus = stimulus/max(abs(stimulus));
+            case 'ess'
+                stimulus = exponentialSineSweep(1,fS/2,fS,inputLen/fS,...
+                    'type','phase');
+            otherwise
+                error('Invalid TYPE specification for option: stimType.')
+        end
+        
         input = fftConv(bIn,stimulus,'lin');
-    case 'ss' % Assume input binaural signal is steady-state
-        input = bIn;
+    case 'ss' % Assume input binaural signal is steady-state        
+        input = [bIn; zeros(inputLen,2)];
     otherwise
         error(['Unrecognized third input. Only ''ss'' and',...
             ' ''imp'' are accepted.']);
@@ -107,18 +124,17 @@ end
 maxInput = max(max(abs(input)));
 input = input/maxInput;
 out = may2011(input,fS); % Call to function in AMT.
-az.raw = out.azimuth; % Frequency-dependent azimuth estimates.
-az.mean = mean(out.azimuth);
-az.mode = mode(out.azimuth);
+fVec = erbspace(80,5000,32).'; % See page 2 of May et al. [1].
+az.raw = mean(out.azimuth,2,'omitnan'); % Frequency-dependent azimuth.
+az.mean = logmean(az.raw,fVec,[fVec(2),fVec(10)]);
 ITD.raw = out.itd; % Frequency-dependent ITD estimates.
 ITD.mean = mean(out.itd);
 ILD.raw = out.ild; % Frequency-dependent ILD estimates.
 ILD.mean = mean(out.ild);
-fVec = erbspace(80,5000,32).'; % See page 2 of May et al. [1].
 
 end
 
-function inputs = parseWRAP_MAY2011Inputs(bIn,fS,opts)
+function inputs = parseWrap_May2011Inputs(bIn,fS,opts)
 %PARSEWRAP_MAY2011INPUTS Parse and verify inputs for the wrap_may2011 
 %function.
 
@@ -132,8 +148,10 @@ addRequired(p,'fS',@(x)validateattributes(x,{'double'},...
     {'scalar','nonempty','positive','real'},'wrap_may2011','fS',2));
 
 % Optional inputs
-addOptional(p,'bInType','ss',@(x)validateattributes(x,{'char'},...
-    {'scalartext'},'wrap_may2011',''));
+addParameter(p,'bInType','ss',@(x)validateattributes(x,{'char'},...
+    {'scalartext'},'wrap_may2011','type of input signal'));
+addParameter(p,'stimType','pink-noise',@(x)validateattributes(x,...
+    {'char'},{'scalartext'},'wrap_may2011','type of stimulus signal'));
 
 p.CaseSensitive = false;
 p.FunctionName = 'wrap_may2011';
