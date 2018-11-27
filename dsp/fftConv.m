@@ -1,31 +1,26 @@
 function y = fftConv(h,x,varargin)
-%FFTCONV Convolve two CAUSAL signals in the frequency domain.
-%   y = FFTCONV(h,x) convolves h with x in the frequency domain to
-%   produce y. By default, circular convolution is performed. The length of
-%   y is the length of the longer of h and x. If h and x are matrices, they
-%   must have the same number of columns and the convolution is performed 
-%   between corresponding pairs of column vectors. If only one of h or x is
-%   a matrix, then each column of the matrix is convolved with the other 
-%   input (which must not be a matrix). If h and x have different lengths, 
-%   the shorter amongst h and x is zero padded on the right to equal the 
-%   length of the longer prior to convolution. Consequently, h and x must 
-%   both be causal.
+%FFTCONV Convolve two signals in the frequency domain.
+%   y = FFTCONV(h,x) circularly convolves h with x in the frequency domain 
+%   to produce y. If h and x are vectors, they must have the same length, 
+%   and the output, y, will be a column vector with this length. If h and x 
+%   are matrices, they must have the same size and the convolution is 
+%   performed between corresponding pairs of column vectors. If only one of 
+%   h or x is a matrix, then each column of the matrix is convolved with 
+%   the other input (which must be either a vector or a scalar). The output
+%   , y, will then have the same size as h and/or x. This command may also 
+%   be specified as y = FFTCONV(h,x,'circ');
 %
-%   y = FFTCONV(...,TYPE) optionally specifies the type of convolution
-%   to perform. The two options are:
-%       'lin' - linear convolution
-%       'circ' - circular convolution (default)
-%   If 'circ' is specified, the shorter amongst h and x is zero padded on
-%   the right to equal the length of the longer prior to convolution. The
-%   length of y is the length of the longer of h and x.
-%   If 'lin' is specified, the length of y is the length of h plus the
-%   length of x minus 1.
+%   y = FFTCONV(...,'lin') linearly convolves h with x in the frequency 
+%   domain to produce y. h and x need not have the same length in this
+%   case. The length of y is the length of h plus the length of x minus 1.
+%   h and/or x may be matrices as described earlier. Linear convolution is
+%   implemented as circular convolution after h and x have been
+%   sufficiently zero-padded on the right. Consequently, it is assumed that
+%   both h and x are causal.
 %
-%   y = FFTCONV(...,TRUNC) optionally specifies whether the output, y,
-%   should be truncated to have the same length as h or x, if TYPE is 
-%   specified as 'lin'. This option does not affect TYPE = 'circ'. The 
-%   options for TRUNC are:
-%       0 - length of h + length of x - 1 (default)
+%   y = FFTCONV(...,'lin',TRUNC) optionally specifies whether y should be
+%   truncated to have the same length as h or x. The options for TRUNC are:
+%       0 - (length of h) + (length of x) - 1 (default)
 %       1 - length of h
 %       2 - length of x
 %
@@ -66,7 +61,7 @@ function y = fftConv(h,x,varargin)
 narginchk(2,4);
 
 % Parse and verify inputs
-inputs = parseFFTCONVInputs(h,x,varargin);
+inputs = parseFFTConvInputs(h,x,varargin);
 
 % Extract parsed inputs
 h = inputs.h;
@@ -74,7 +69,7 @@ x = inputs.x;
 TYPE = inputs.TYPE;
 TRUNC = inputs.TRUNC;
 
-h = shiftdim(h);
+h = shiftdim(h); % If vector, force to column.
 x = shiftdim(x);
 [hLen,numColsh] = size(h);
 [xLen,numColsx] = size(x);
@@ -98,36 +93,45 @@ if strcmpi(TYPE,'lin')
         case 2
             y = yFull(1:xLen,:);
         otherwise
-            error('Invalid TRUNC specification')
+            error('Invalid TRUNC specification for option: ''lin''.')
     end
 elseif strcmpi(TYPE,'circ')
-    maxLen = max([xLen,hLen]);
-    fftLen = 2^nextpow2(maxLen);
-    y = ifft(fft(h,fftLen).*fft(x,fftLen),fftLen,1,'symmetric');
-    y = y(1:maxLen,:);
+    if hLen == xLen
+        y = ifft(fft(h).*fft(x),'symmetric');
+    else
+        error('h and x must have the same length for option: ''circ''.')
+    end
 else
-    error('Invalid TYPE specification')
+    error(['Invalid specification for type of convolution. Only ',...
+        '''circ'' and ''lin'' are valid.'])
 end
 
 end
 
-function inputs = parseFFTCONVInputs(h,x,opts)
+function inputs = parseFFTConvInputs(h,x,opts)
 %PARSEFFTCONVINPUTS Parse and verify inputs for the fftConv function.
 
 p = inputParser;
 
 % Required inputs
 addRequired(p,'h',@(x)validateattributes(x,{'double'},{'2d','nonempty',...
-    'nonnan','finite','real'},'fftConv','h',1));
+    'nonnan','finite'},'fftConv','h',1));
 addRequired(p,'x',@(x)validateattributes(x,{'double'},{'2d','nonempty',...
-    'nonnan','finite','real'},'fftConv','x',2));
+    'nonnan','finite'},'fftConv','x',2));
 
 % Optional inputs
 addOptional(p,'TYPE','circ',@(x)validateattributes(x,{'char'},...
-    {'scalartext','nonempty'},'fftConv','TYPE'));
-addOptional(p,'TRUNC',0,@(x)validateattributes(x,{'double'},...
-    {'nonempty','nonnan','scalar','finite','integer','nonnegative',...
-    '<=',2},'fftConv','TRUNC'));
+    {'scalartext','nonempty'},'fftConv','type of convolution'));
+if length(opts) > 1
+    if strcmpi(opts{1},'circ')
+        warning('Ignoring TRUNC specification for option: ''circ''')
+    end
+    addOptional(p,'TRUNC',0,@(x)validateattributes(x,{'double'},...
+        {'nonempty','nonnan','scalar','finite','integer','nonnegative',...
+        '<=',2},'fftConv','TRUNC'));
+else
+    addOptional(p,'TRUNC',0); % Not used, so no validation needed.
+end
 
 p.CaseSensitive = false;
 p.FunctionName = 'fftConv';
