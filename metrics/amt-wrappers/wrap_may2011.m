@@ -76,9 +76,14 @@ function [az,ITD,ILD,fVec] = wrap_may2011(bIn,fS,varargin)
 
 narginchk(2,6);
 
-if exist('amt_version','file') ~= 2
+if exist('amt_start','file') ~= 2
     error('The Auditory Modeling Toolbox must be in the MATLAB path.');
 end
+
+% Add auxdata folder in AMT-Toolbox to MATLAB path since amt_start does not
+% do this.
+mainPath = fileparts(which('amt_start.m'));
+addpath(genpath(fullfile(mainPath,'auxdata')));
 
 % The following check is added because the auto-download feature of the
 % Auditory Modeling Toolbox (to download modeldata.mat automatically) does 
@@ -98,7 +103,7 @@ bIn = inputs.bIn;
 fS = inputs.fS;
 bInType = inputs.bInType;
 stimType = inputs.stimType;
-inputLen = ceil(0.2*fS);
+inputLen = ceil(0.021*fS);
 switch lower(bInType)
     case 'imp' % Generate steady-state binaural signal from input IRs
         switch lower(stimType)
