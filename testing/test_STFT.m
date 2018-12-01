@@ -50,7 +50,8 @@ for ww = 1:length(windowNames)
     % be reconstructed.
     
     % Compute window function
-    eval(['windows{ww} = ' windowNames{ww} '(winLen);']);
+    eval(['windows{ww} = ' windowNames{ww} '(winLen+1);']);
+    windows{ww} = windows{ww}(1:winLen);
     
     % Compute STFT
     Y = getForwardSTFT(x, windows{ww}, noverlap, nfft);
