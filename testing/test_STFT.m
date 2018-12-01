@@ -1,12 +1,4 @@
-function Y = getForwardSTFT(x, window, noverlap, nfft)
-%GETFORWARDSTFT Spectrogram using short-time Fourier transform (STFT).
-%   Y = GETFORWARDSTFT(X,WINDOW,NOVERLAP) returns Y, the STFT of a signal
-%   X, using the specified WINDOW vector and overlapping NOVERLAP samples.
-%
-%   Y = GETFORWARDSTFT(X,WINDOW,NOVERLAP,NFFT) computes NFFT-length FFTs at
-%   each time frame. If unspecified, NFFT = LENGTH(WINDOW).
-%
-%   See also SPECTROGRAM, GETINVERSESTFT.
+% Testing forward and inverse STFT
 
 %   =======================================================================
 %   This file is part of the 3D3A MATLAB Toolbox.
@@ -40,16 +32,33 @@ function Y = getForwardSTFT(x, window, noverlap, nfft)
 %   SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 %   =======================================================================
 
-winLen = length(window);
-if nargin < 4
-    nfft = winLen;
+xLen = 1000;
+winLen = 256;
+noverlap = 128;
+nfft = 512;
+
+windowNames = {'rectwin','hann','hamming','blackman'};
+windows = cell(length(windowNames),1);
+z = cell(length(windowNames),1);
+
+figure()
+hold all
+for ww = 1:length(windowNames)
+    % Generate input signal
+    x = [0; randn(xLen-1,1)];
+    % Note: for window functions that start with 0, the first sample cannot
+    % be reconstructed.
+    
+    % Compute window function
+    eval(['windows{ww} = ' windowNames{ww} '(winLen);']);
+    
+    % Compute STFT
+    Y = getForwardSTFT(x, windows{ww}, noverlap, nfft);
+    
+    % Compute inverse STFT
+    z{ww} = getInverseSTFT(Y, windows{ww}, noverlap, nfft);
+    
+    % Plot discrepancy
+    plot(x-z{ww}(1:xLen))
 end
-
-x = shiftdim(x);
-xLen = length(x);
-numTimeFrames = ceil((xLen - noverlap) / (winLen - noverlap));
-xPadLen = winLen + (winLen - noverlap) * (numTimeFrames - 1);
-
-Y = spectrogram([x; zeros(xPadLen - xLen,1)], window, noverlap, nfft, 'twosided'); % NFFT x numTimeFrames
-
-end
+legend(windowNames)
