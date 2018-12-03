@@ -47,9 +47,18 @@ end
 
 x = shiftdim(x);
 xLen = length(x);
-numTimeFrames = ceil((xLen - noverlap) / (winLen - noverlap));
-xPadLen = winLen + (winLen - noverlap) * (numTimeFrames - 1);
+hopLen = winLen - noverlap;
+numPartitions = len2part(xLen + winLen, noverlap, hopLen);
+xPadLen = part2len(numPartitions, winLen, hopLen);
 
-Y = spectrogram([x; zeros(xPadLen - xLen,1)], window, noverlap, nfft, 'twosided'); % NFFT x numTimeFrames
+Y = spectrogram([zeros(hopLen,1); x; zeros(xPadLen - (xLen + hopLen),1)], window, noverlap, nfft, 'twosided'); % NFFT x numTimeFrames
 
+end
+
+function nparts = len2part(len, novlp, hop)
+nparts = ceil((len - novlp) / hop);
+end
+
+function len = part2len(nparts, wlen, hop)
+len = wlen + hop * (nparts - 1);
 end

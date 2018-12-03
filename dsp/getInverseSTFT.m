@@ -46,17 +46,23 @@ if nargin < 4
     nfft = winLen;
 end
 
-nCols = size(Y,2);
-xLen = (nCols - 1)*(winLen - noverlap) + winLen;
+hopLen = winLen - noverlap;
+numPartitions = size(Y,2);
+xLen = part2len(numPartitions, winLen, hopLen);
 xMat = ifft(Y,nfft,1,'symmetric');
 
 x = zeros(xLen,1);
 winSum = zeros(xLen,1);
-for ii = 1:nCols
-    indx = (1:winLen) + ((ii-1)*(winLen-noverlap));
+for ii = 1:numPartitions
+    indx = (1:winLen) + (ii-1)*hopLen;
     x(indx) = x(indx) + window.*xMat(1:winLen,ii);
     winSum(indx) = winSum(indx) + window.^2;
 end
 x = x ./ winSum;
+x = x((hopLen+1):(xLen-noverlap));
 
+end
+
+function len = part2len(nparts, wlen, hop)
+len = wlen + hop * (nparts - 1);
 end
