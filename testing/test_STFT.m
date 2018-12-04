@@ -36,7 +36,7 @@ xLen = 1000;
 winLen = 256;
 noverlap = 128;
 nfft = 512;
-padflag = true;
+padFlag = true;
 
 windowNames = {'rectwin','hann','hamming','blackman'};
 windows = cell(length(windowNames),1);
@@ -46,21 +46,23 @@ figure()
 hold all
 for ww = 1:length(windowNames)
     % Generate input signal
-    x = [0; randn(xLen-1,1)];
-    % Note: for window functions that start with 0, the first sample cannot
-    % be reconstructed.
+    x = randn(xLen,1);
     
     % Compute window function
     eval(['windows{ww} = ' windowNames{ww} '(winLen+1);']);
     windows{ww} = windows{ww}(1:winLen);
     
     % Compute STFT
-    Y = getForwardSTFT(x, windows{ww}, noverlap, nfft, padflag);
+    Y = getForwardSTFT(x, windows{ww}, noverlap, nfft, padFlag);
     
     % Compute inverse STFT
-    z{ww} = getInverseSTFT(Y, windows{ww}, noverlap, nfft, padflag);
+    z{ww} = getInverseSTFT(Y, windows{ww}, noverlap, nfft, padFlag);
     
     % Plot discrepancy
-    plot(x-z{ww}(1:xLen))
+    if padFlag
+        plot(x-z{ww}(1:xLen))
+    else
+        plot(x(1:length(z{ww}))-z{ww})
+    end
 end
 legend(windowNames)
