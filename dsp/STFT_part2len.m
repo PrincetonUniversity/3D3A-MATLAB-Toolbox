@@ -1,12 +1,16 @@
-function Y = getForwardSTFT(x, window, noverlap, nfft, padFlag)
-%GETFORWARDSTFT Spectrogram using short-time Fourier transform (STFT).
-%   Y = GETFORWARDSTFT(X,WINDOW,NOVERLAP) returns Y, the STFT of a signal
-%   X, using the specified WINDOW vector and overlapping NOVERLAP samples.
+function len = STFT_part2len(nparts, partLen, novlp, padFlag)
+%STFT_PART2LEN Combined length of a partitioned signal.
+%   LEN = STFT_PART2LEN(NPARTS,PARTLEN,NOVERLAP) returns the signal length
+%   LEN that will result from combining NPARTS partitions of length PARTLEN
+%   and overlapping by NOVERLAP samples.
 %
-%   Y = GETFORWARDSTFT(X,WINDOW,NOVERLAP,NFFT) computes NFFT-length FFTs at
-%   each time frame. If unspecified, NFFT = LENGTH(WINDOW).
+%   LEN = STFT_PART2LEN(NPARTS,PARTLEN,NOVERLAP,PAD) optionally assumes the
+%   signal was padded before partitioning and returns the non-padded length
+%   if PAD evaluates to true. By default, the signal is not assumed to have
+%   been padded and so this function returns the full length resulting from
+%   recombining all partitions.
 %
-%   See also SPECTROGRAM, GETINVERSESTFT.
+%   See also STFT_LEN2PART, GETFORWARDSTFT, GETINVERSESTFT.
 
 %   =======================================================================
 %   This file is part of the 3D3A MATLAB Toolbox.
@@ -40,23 +44,15 @@ function Y = getForwardSTFT(x, window, noverlap, nfft, padFlag)
 %   SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 %   =======================================================================
 
-winLen = length(window);
-if nargin < 4 || isempty(nfft)
-    nfft = winLen;
-end
-if nargin < 5 || isempty(padFlag)
+if nargin < 4 || isempty(padFlag)
     padFlag = false;
 end
 
-x = shiftdim(x);
-xLen = length(x);
-hopLen = winLen - noverlap;
+hop = partLen - novlp;
 if padFlag
-    numPartitions = STFT_len2part(xLen, winLen, noverlap, padFlag);
-    xPadLen = STFT_part2len(numPartitions, winLen, noverlap, false); % return padded length
-    x = [zeros(hopLen,1); x; zeros(xPadLen - (xLen + hopLen),1)];
+    len = hop * (nparts - 1);
+else
+    len = partLen + hop * (nparts - 1);
 end
-
-Y = spectrogram(x, window, noverlap, nfft, 'twosided'); % NFFT x numPartitions
 
 end

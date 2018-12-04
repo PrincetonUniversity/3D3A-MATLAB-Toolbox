@@ -1,4 +1,4 @@
-function x = getInverseSTFT(Y, window, noverlap, nfft)
+function x = getInverseSTFT(Y, window, noverlap, nfft, padFlag)
 %GETINVERSESTFT Inverse short-time Fourier transform (STFT).
 %   X = GETINVERSESTFT(Y,WINDOW,NOVERLAP) returns X, the inverse STFT of a
 %   spectrogram Y, which was computed using the specified WINDOW vector and
@@ -42,27 +42,28 @@ function x = getInverseSTFT(Y, window, noverlap, nfft)
 %   =======================================================================
 
 winLen = length(window);
-if nargin < 4
+if nargin < 4 || isempty(nfft)
     nfft = winLen;
+end
+if nargin < 5 || isempty(padFlag)
+    padFlag = false;
 end
 
 hopLen = winLen - noverlap;
 numPartitions = size(Y,2);
-xLen = part2len(numPartitions, winLen, hopLen);
+xPadLen = STFT_part2len(numPartitions, winLen, noverlap, false); % return padded length
 xMat = ifft(Y,nfft,1,'symmetric');
 
-x = zeros(xLen,1);
-winSum = zeros(xLen,1);
+x = zeros(xPadLen,1);
+winSum = zeros(xPadLen,1);
 for ii = 1:numPartitions
     indx = (1:winLen) + (ii-1)*hopLen;
     x(indx) = x(indx) + window.*xMat(1:winLen,ii);
     winSum(indx) = winSum(indx) + window.^2;
 end
 x = x ./ winSum;
-x = x((hopLen+1):(xLen-noverlap));
-
+if padFlag
+    x = x((hopLen+1):(xPadLen-noverlap));
 end
 
-function len = part2len(nparts, wlen, hop)
-len = wlen + hop * (nparts - 1);
 end

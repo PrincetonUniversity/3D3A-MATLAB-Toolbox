@@ -36,6 +36,7 @@ xLen = 1000;
 winLen = 256;
 noverlap = 128;
 nfft = 512;
+padflag = true;
 
 windowNames = {'rectwin','hann','hamming','blackman'};
 windows = cell(length(windowNames),1);
@@ -54,10 +55,10 @@ for ww = 1:length(windowNames)
     windows{ww} = windows{ww}(1:winLen);
     
     % Compute STFT
-    Y = getForwardSTFT(x, windows{ww}, noverlap, nfft);
+    Y = getForwardSTFT(x, windows{ww}, noverlap, nfft, padflag);
     
     % Compute inverse STFT
-    z{ww} = getInverseSTFT(Y, windows{ww}, noverlap, nfft);
+    z{ww} = getInverseSTFT(Y, windows{ww}, noverlap, nfft, padflag);
     
     % Plot discrepancy
     plot(x-z{ww}(1:xLen))
