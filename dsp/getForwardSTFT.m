@@ -1,10 +1,13 @@
-function Y = getForwardSTFT(x, window, noverlap, nfft, padFlag)
+function [Y,T] = getForwardSTFT(x, window, noverlap, nfft, padFlag)
 %GETFORWARDSTFT Spectrogram using short-time Fourier transform (STFT).
 %   Y = GETFORWARDSTFT(X,WINDOW,NOVERLAP) returns Y, the STFT of a signal
 %   X, using the specified WINDOW vector and overlapping NOVERLAP samples.
 %
 %   Y = GETFORWARDSTFT(X,WINDOW,NOVERLAP,NFFT) computes NFFT-length FFTs at
 %   each time frame. If unspecified, NFFT = LENGTH(WINDOW).
+%
+%   [Y,T] = GETFORWARDSTFT(...) additionally returns the time position (in
+%   samples) of the center of each partition.
 %
 %   See also SPECTROGRAM, GETINVERSESTFT.
 
@@ -58,5 +61,6 @@ if padFlag
 end
 
 Y = spectrogram(x, window, noverlap, nfft, 'twosided'); % NFFT x numPartitions
+T = ((winLen/2):hopLen:(length(x)-winLen/2)).' - double(padFlag)*hopLen;
 
 end
