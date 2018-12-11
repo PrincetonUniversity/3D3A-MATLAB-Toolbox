@@ -24,7 +24,7 @@ function onsetMat = estimateIROnset(inputIR,varargin)
 %           range [fL,fU], where fL and fU are in Hz.
 %           3.ii. {'phase',fS,[fL,fU],'linearfit'} optionally applies a
 %           linear fit to the unwrapped phase response before computing the
-%           average slope. The fit is also applied over [fL,fU].
+%           slope. The fit is also applied over [fL,fU].
 %       4. {'xcorr'} estimates onset as the sample value corresponding to
 %       the max. absolute value of the cross-correlation spectrum of the
 %       inputIR and its minimum-phase version.
@@ -106,7 +106,7 @@ switch lower(METHOD{1})
         validateattributes(avgRange,{'double'},{'vector','real',...
             'finite','nonnan','nonnegative','numel',2,'<=',fS/2},...
             'estimateIROnset','avgRange for METHOD{1} = ''grpdelay''')
-        [~,onsetMat] = irGrpDelay(inputIR,fS,avgRange);
+        [~,onsetMat] = getGrpDelay(inputIR,fS,avgRange);
     case 'phase'
         if length(METHOD) > 1
             fS = METHOD{2};
@@ -142,7 +142,7 @@ switch lower(METHOD{1})
         else
             fitFlag = 0;
         end
-        phaseSpec = unwrap(angle(fft(inputIR)));
+        phaseSpec = getPhaseSpec(inputIR,'unwrap');
         if fitFlag
             for ii = 1:numIRs
                 fittingLine = polyfit(fVec(fLIndx:fUIndx),...
@@ -161,7 +161,7 @@ switch lower(METHOD{1})
             onsetMat(ii) = lagVec(lagIndex);
         end
     otherwise
-        error('Invalid method specification');
+        error('Invalid method specification.');
 end
 
 end
@@ -172,14 +172,12 @@ function inputs = parseESTIMATEIRONSETInputs(inputIR,opts)
 
 p = inputParser;
 
-% If inputIR is a vector, force it to be a column vector.
-if isvector(inputIR)
-    inputIR = shiftdim(inputIR);
-end
-
 % Required inputs
 addRequired(p,'inputIR',@(x)validateattributes(x,{'double'},{'2d',...
     'nonempty','nonnan','finite','real'},'estimateIROnset','inputIR',1));
+
+% If inputIR is a vector, force it to be a column vector.
+inputIR = shiftdim(inputIR);
 
 % Optional inputs
 addOptional(p,'METHOD',{'threshold',20},@(x)validateattributes(x,...
