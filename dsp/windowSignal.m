@@ -21,8 +21,8 @@ function [hWin,varargout] = windowSignal(h,wLen,varargin)
 %       and last 100*R2 percent of samples equal to parts of a cosine. If
 %       R1 and R2 are not specified, defaults of R1 = 0.25 and R2 = 0.25
 %       are assumed, which corresponds to a Tukey window with R = 0.5. R1
-%       and R2 can take values in the range 0 to 0.5. For more information,
-%       see RAISEDCOSINEWIN.
+%       and R2 can take values in the range 0 to 1 such that R1+R2 <= 1. 
+%       For more information, see RAISEDCOSINEWIN.
 %
 %   ___ = WINDOWSIGNAL(...,'start',wS) optionally specifies the sample 
 %   number at which the window is to be applied to the signal(s) in h. wS
@@ -114,7 +114,6 @@ wType = inputs.wType;
 wS = inputs.start;
 oVec = inputs.offset;
 
-h = shiftdim(h); % If h is a vector, force to a column.
 [hLen,numCols] = size(h);
 oVecMax = max(oVec);
 if wLen > (hLen-wS-oVecMax+1)
@@ -147,7 +146,7 @@ switch lower(wType{1})
     case 'rc'
         if length(wType) > 1
             validateattributes(wType{2},{'double'},{'vector','nonempty',...
-                'real','nonnegative','<=',0.5,'numel',2},'windowSignal',...
+                'real','nonnegative','<=',1,'numel',2},'windowSignal',...
                 'TYPE{2} ','when TYPE{1} = ''rc'' for option: wType');
             R1 = wType{2}(1);
             R2 = wType{2}(2);
@@ -186,7 +185,8 @@ addRequired(p,'h',@(x)validateattributes(x,{'double'},{'2d','nonempty',...
 addRequired(p,'wLen',@(x)validateattributes(x,{'double'},{'scalar',...
     'nonempty','nonnan','finite','positive','integer'},'windowSignal',...
     'wLen',2));
-numCols = size(shiftdim(h),2);
+h = shiftdim(h); % If h is a vector, force to a column.
+numCols = size(h,2);
 
 % Optional inputs
 addParameter(p,'wType',{'rect'},@(x)validateattributes(x,{'cell'},...
