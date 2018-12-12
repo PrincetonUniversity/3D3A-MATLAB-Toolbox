@@ -1,8 +1,8 @@
-function rP = wrap_wierstorf2013(b, Fs, varargin)
+function [rP,AZ] = wrap_wierstorf2013(b,Fs,varargin)
 %WRAP_WIERSTORF2013 Wierstorf's azimuthal binaural localization model.
-%   R = WRAP_WIERSTORF2013(B,FS,...) computes a predicted localization
-%   vector (given in Cartesian coordinates) for binaural signals B at
-%   sampling rate FS. The following additional inputs may also be
+%   rP = WRAP_WIERSTORF2013(b,Fs,...) computes a predicted localization
+%   vector (given in Cartesian coordinates) for binaural signals, b, at
+%   sampling rate Fs. The following additional inputs may also be
 %   specified:
 %
 %   'model'     Localization model to use to estimate azimuth, either
@@ -17,7 +17,12 @@ function rP = wrap_wierstorf2013(b, Fs, varargin)
 %               HRTFs.
 %
 %   NOTE: one of either 'hrtf' or 'lookup' must be specified. If the lookup
-%   table is not provided, the HRTFs will be used to generate a new one.
+%   table is not provided, the HRTFs will be used to generate a new one. If
+%   both hrtfs and a lookup table are provided, the lookup table will be
+%   used.
+%
+%   [rp,AZ] = WRAP_WIERSTORF2013(...) also returns the azimuth estimate in
+%   degrees.
 %
 %   See also WIERSTORF2013_GETLOOKUPTABLE, WIERSTORF2013_ESTIMATEAZIMUTH.
 
@@ -80,14 +85,14 @@ if ~isempty(indx)
     lookupTable = varargin{indx+1};
 elseif ~isempty(hrtfFile)
     % Construct new lookup table from HRTF
-    lookupTable = wierstorf2013_getLookupTable(hrtfFile, modelToUse);
+    lookupTable = wierstorf2013_getLookupTable(hrtfFile,modelToUse);
 else
     error('Must either provide lookup table or specify HRTF.');
 end
 
 if exist('wierstorf2013_estimateazimuth','file') == 2
-    [AZ,~,~,~,~] = wierstorf2013_estimateazimuth(b, lookupTable, 'fs',...
-        Fs, modelToUse, specWeights, 'remove_outlier');
+    [AZ,~,~,~,~] = wierstorf2013_estimateazimuth(b,lookupTable,'fs',...
+        Fs,modelToUse,specWeights,'remove_outlier');
 else
     error('wierstorf2013_estimateazimuth from AMTOOLBOX not found.');
 end

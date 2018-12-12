@@ -1,4 +1,4 @@
-function lookupTable = wierstorf2013_getLookupTable(hrtfFile, modelToUse)
+function lookupTable = wierstorf2013_getLookupTable(hrtfFile,modelToUse)
 %WIERSTORF2013_GETLOOKUPTABLE ITD to azimuth lookup table.
 %   TABLE = WIERSTORF2013_GETLOOKUPTABLE(PATH,MODEL) returns the lookup
 %   TABLE given HRTFs located in the .sofa file at PATH and using the
@@ -59,7 +59,8 @@ HRTFObj.SourcePosition(:,1) = mod(HRTFObj.SourcePosition(:,1)+180,360)-180;
 
 if exist('itd2angle_lookuptable','file') == 2
     % Construct lookup table
-    lookupTable = itd2angle_lookuptable(HRTFObj, HRTFObj.Data.SamplingRate, modelToUse);
+    lookupTable = itd2angle_lookuptable(HRTFObj,...
+        HRTFObj.Data.SamplingRate,modelToUse);
 else
     error('itd2angle_lookuptable from AMTOOLBOX not found.');
 end
