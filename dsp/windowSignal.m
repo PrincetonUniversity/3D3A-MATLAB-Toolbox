@@ -39,6 +39,9 @@ function [hWin,varargout] = windowSignal(h,wLen,varargin)
 %   not specified or contains all zeros. Otherwise, L will be smaller than
 %   wLen by an amount equal to max(oVec).
 %
+%   [___,L,winMat] = WINDOWSIGNAL additionally returns winMat, the windows 
+%   used to window each of the signals in h.
+%
 %   EXAMPLE: 
 %
 %       Suppose a pair of impulse responses, IR1 and IR2, have length N 
@@ -124,9 +127,9 @@ end
 validWLen = wLen-oVecMax;
 
 % Create window vector
-validateattributes(wType{1},{'char'},{'scalartext','nonempty'},...
+validateattributes(wType{1,1},{'char'},{'scalartext','nonempty'},...
     'windowSignal','TYPE{1} for option: wType')
-switch lower(wType{1})
+switch lower(wType{1,1})
     case 'rect'
         wVec = ones(validWLen,1);
     case 'hann'
@@ -135,21 +138,21 @@ switch lower(wType{1})
         wVec = hamming(validWLen);
     case 'tukey'
         if length(wType) > 1
-            validateattributes(wType{2},{'double'},{'scalar','nonempty',...
+            validateattributes(wType{1,2},{'double'},{'scalar','nonempty',...
                 'real','nonnegative','<=',1},'windowSignal',['TYPE{2} ',...
                 'when TYPE{1} = ''tukey'' for option: wType']);
-            R = wType{2};
+            R = wType{1,2};
         else
             R = 0.5;
         end
         wVec = tukeywin(validWLen,R);
     case 'rc'
         if length(wType) > 1
-            validateattributes(wType{2},{'double'},{'vector','nonempty',...
+            validateattributes(wType{1,2},{'double'},{'vector','nonempty',...
                 'real','nonnegative','<=',1,'numel',2},'windowSignal',...
-                'TYPE{2} ','when TYPE{1} = ''rc'' for option: wType');
-            R1 = wType{2}(1);
-            R2 = wType{2}(2);
+                'TYPE{2} when TYPE{1} = ''rc'' for option: wType');
+            R1 = wType{1,2}(1);
+            R2 = wType{1,2}(2);
         else
             R1 = 0.25;
             R2 = 0.25;
@@ -160,15 +163,21 @@ switch lower(wType{1})
 end
 
 hWin = zeros(wLen,numCols);
+winMat = hWin;
 baselineWin = circshift([wVec;zeros(hLen-validWLen,1)],(wS-1));
 for ii = 1:numCols
     currentWin = circshift(baselineWin,oVec(ii));
     hWinFull = h(:,ii).*currentWin;
     hWin(:,ii) = hWinFull(wS:(wS+wLen-1));
+    winMat(:,ii) = currentWin(wS:(wS+wLen-1));
 end
 
-if nargout == 2
+if nargout > 1
     varargout{1} = validWLen;
+end
+
+if nargout > 2
+    varargout{2} = winMat;
 end
 
 end
