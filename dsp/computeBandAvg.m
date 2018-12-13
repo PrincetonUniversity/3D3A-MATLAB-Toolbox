@@ -5,9 +5,9 @@ function [Y, fc] = computeBandAvg(Q,F,B,FRANGE,Fs)
 %   of width B (in octaves) within FMIN and FMAX. F should have uniformly
 %   (linearly) spaced values. Q must have the same number of rows as F.
 %
-%   B may also be specified as 'erb' to use ERB-spaced auditory bands
-%   (implemented as a gammatone filterbank), in which case the sampling
-%   rate Fs must also be specified:
+%   Alternatively, B may be specified as 'erb' to use ERB-spaced auditory
+%   bands (implemented as a gammatone filterbank), in which case the
+%   sampling rate Fs must also be specified:
 %   Y = COMPUTEBANDAVG(Q,F,'erb',[FMIN,FMAX],Fs)
 %   and F must be given as subset of a standard frequency vector.
 %
