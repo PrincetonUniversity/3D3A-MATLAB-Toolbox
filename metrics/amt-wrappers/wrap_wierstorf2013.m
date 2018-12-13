@@ -97,6 +97,6 @@ else
     error('wierstorf2013_estimateazimuth from AMTOOLBOX not found.');
 end
 
-[rP(:,1),rP(:,2),rP(:,3)] = sph2cart(shiftdim(AZ)*pi/180,0,1);
+rP = azim2vec(AZ(:)*pi/180);
 
 end
