@@ -6,7 +6,7 @@ function [ILD, fc, avgILD] = estimateILD(hL,hR,Fs,B,FRANGE)
 %   of the same size.
 %
 %   [ILD,FC] = ESTIMATEILD(HL,HR,FS) returns the frequency vector FC.
-%   corresponding to the rows of ITD, when the sampling rate FS is
+%   corresponding to the rows of ILD, when the sampling rate FS is
 %   specified. If FS is omitted or empty, FC will be a normalized frequency
 %   with 1.0 corresponding to the Nyquist frequency and 2.0 corresponding
 %   to the sampling rate.
