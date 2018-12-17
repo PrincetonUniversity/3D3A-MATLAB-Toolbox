@@ -60,7 +60,7 @@ if isnumeric(B) % Fractional-octave bands
     end
 elseif strcmpi(B,'erb') % ERB-spaced auditory bands
     if exist('erbspacebw','file') == 2
-        fc = erbspacebw(FRANGE(1),FRANGE(2));
+        fc = shiftdim(erbspacebw(FRANGE(1),FRANGE(2)));
         FFTLen = round(Fs/mean(diff(F)));
         
         f = getFreqVec(Fs,FFTLen);

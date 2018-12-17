@@ -51,7 +51,7 @@ else
     error('SOFAload from SOFA API not found.');
 end
 if strcmpi(HRTFObj.SourcePosition_Type,'cartesian')
-    HRTFObj.SourcePosition = sofaC2sofaS(sourcePosition);
+    HRTFObj.SourcePosition = sofaC2sofaS(HRTFObj.SourcePosition);
     HRTFObj.SourcePosition_Type = 'spherical';
     HRTFObj.SourcePosition_Units = 'degree, degree, metre';
 end
