@@ -10,7 +10,10 @@ function hNorm = normalizeSignal(h,varargin)
 %   such that the magnitude at frequency fVal (specified in Hz) is 0 dB. 
 %   The sampling rate, fS, of the signals in H must be specified in Hz. If
 %   fVal is specified as a range of frequencies, fVal = [fL,fU], the 
-%   average magnitude in those frequencies is set to 0 dB.
+%   average magnitude in that frequency range is set to 0 dB. If fVal is
+%   set to inf, then the frequency at which the global maximum magnitude 
+%   exists is identified and normalization is performed such that this 
+%   magnitude is set to 0 dB.
 %
 %   HN = NORMALIZESIGNAL(H,{'f',fVal,'mag',magVal,'fs',fS}) additionally
 %   specifies magVal, the magnitude value (in dB) that the normalized 
@@ -64,6 +67,7 @@ h = inputs.h;
 PARAMS = inputs.PARAMS;
 NTYPE = inputs.NTYPE;
 
+flag = 0;
 hLen = size(h,1);
 if isempty(PARAMS)
     refMag = max(abs(h));
@@ -95,13 +99,20 @@ else
     validateattributes(magVal,{'double'},{'scalar','nonempty','nonnan',...
         'finite','real'},'normalizeSignal','magVal');
     validateattributes(fVal,{'double'},{'2d','nonempty','nonnan',...
-        'finite','real','nonnegative','<=',fS/2},'normalizeSignal','fVal');
+        'finite','real','nonnegative'},'normalizeSignal','fVal');
     
     fVec = getFreqVec(fS,hLen);
     switch length(fVal)
         case 1
-            [~,fLIndx] = min(abs(fVec-fVal));
-            fUIndx = fLIndx;
+            if fVal == inf
+                flag = 1;
+            elseif (fVal < inf) && (fVal > fS/2)
+                error(['fVal must not exceed the Nyquist frequency,',...
+                    ' except when specifying fVal as inf.'])
+            else
+                [~,fLIndx] = min(abs(fVec-fVal));
+                fUIndx = fLIndx;
+            end
         case 2
             if fVal(1) > fVal(2)
                 error('If specifying fVal as [fL,fU], fL must be <= fU.')
@@ -114,6 +125,11 @@ else
     end
     
     hMagdB = getMagSpecdB(h);
+    if flag == 1
+        nyquistIndx = ceil((hLen+1)/2);
+        [~,fLIndx] = max(hMagdB(1:nyquistIndx,:));
+        fUIndx = fLIndx;
+    end
     refMag = db2mag(mean(hMagdB(fLIndx:fUIndx,:)));
 end
 
