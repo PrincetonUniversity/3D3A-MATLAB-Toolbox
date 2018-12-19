@@ -63,6 +63,20 @@ else
     end
 end
 
+% Next, try to start SOFA
+if exist('SOFAstart','file') == 2
+    SOFAstart;
+else
+    sofaDir = dir(fullfile(userpath,'**','SOFAstart.m'));
+    if ~isempty(sofaDir)
+        addpath(sofaDir(1).folder)
+        SOFAstart;
+    else
+        warning(['Could not find SOFA! Please add SOFA to the MATLAB'...
+            'search path, otherwise some functions may not work.']);
+    end
+end
+
 % Start the found toolbox(es)
 if foundLTFAT && foundAMT
     amt_start; % Also starts LTFAT
