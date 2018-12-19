@@ -63,14 +63,15 @@ else
     end
 end
 
-% Next, try to start SOFA
+% Next, try to find SOFA
+foundSOFA = false;
 if exist('SOFAstart','file') == 2
-    SOFAstart;
+    foundSOFA = true;
 else
     sofaDir = dir(fullfile(userpath,'**','SOFAstart.m'));
     if ~isempty(sofaDir)
         addpath(sofaDir(1).folder)
-        SOFAstart;
+        foundSOFA = true;
     else
         warning(['Could not find SOFA! Please add SOFA to the MATLAB'...
             'search path, otherwise some functions may not work.']);
@@ -78,13 +79,16 @@ else
 end
 
 % Start the found toolbox(es)
-if foundLTFAT && foundAMT
-    amt_start; % Also starts LTFAT
-elseif foundLTFAT && ~foundAMT
-    ltfatstart;
-elseif ~foundLTFAT && foundAMT
+if ~foundAMT
+    if foundLTFAT
+        ltfatstart;
+    end
+    if foundSOFA
+        SOFAstart;
+    end
+else
     try
-        amt_start; % Might find LTFAT in AMT's thirdparty folder
+        amt_start; % Might find LTFAT/SOFA in AMT's thirdparty folder
     catch ME
         disp('Found AMT but could not start due to the following error:')
         messageLines = splitlines(ME.message);
