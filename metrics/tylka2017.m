@@ -138,7 +138,13 @@ if indx
 else
     xoFreq = 700;
 end
-[~, xoIndx] = findNearest(fc,xoFreq);
+if xoFreq < fc(1)
+    xoIndx = 0;
+elseif xoFreq > fc(end)
+    xoIndx = length(fc);
+else
+    [~, xoIndx] = findNearest(fc,xoFreq);
+end
 
 % Specific energy vector parameters
 indx = find(strcmpi(varargin,'Energy Parameters'));
@@ -219,8 +225,16 @@ end
 function rC = combineVectors(rV,rE,xoIndx)
 % Combine vector spectra
 
-normFactor = norm(rE(xoIndx,:))/norm(rV(xoIndx,:)); % scale velocity vectors to match magnitude of energy vectors at crossover
-rC = [normFactor*rV(1:xoIndx,:); rE((xoIndx+1):end,:)];
+switch xoIndx
+    case 0
+        rC = rE;
+    case size(rV,1)
+        rC = rV;
+    otherwise
+        % scale velocity vectors to match magnitude of energy vectors at crossover
+        normFactor = norm(rE(xoIndx,:))/norm(rV(xoIndx,:));
+        rC = [normFactor*rV(1:xoIndx,:); rE((xoIndx+1):end,:)];
+end
 
 end
 
