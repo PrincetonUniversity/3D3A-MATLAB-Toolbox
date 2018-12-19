@@ -1,16 +1,21 @@
 function minPhaseIR = makeMinPhaseIR(ir,METHOD)
 %MAKEMINPHASEIR Compute the minimum-phase version of an impulse response. 
 %   minPhaseIR = MAKEMINPHASEIR(ir) computes minPhaseIR, the minimum-phase
-%   version of the input, ir, using MATLAB's built-in 'rceps' function. The
-%   input, ir, may be a vector or matrix. If ir is a matrix, it is assumed
-%   the individual impulse responses are stored as column vectors.
+%   version of the input, ir, using the 'rceps' function in the Signal 
+%   Processing Toolbox. The input, ir, may be a vector or matrix. If ir is 
+%   a matrix, it is assumed the individual impulse responses are stored as 
+%   column vectors.
 % 
 %   ___ = MAKEMINPHASEIR(...,METHOD) optionally specifies the method to
 %   use to compute minPhaseIR. The options are:
-%       (i) 'rceps' - use MATLAB's built-in 'rceps' function (default).
-%       (ii) 'hilb' - use the hilbert transform.
+%       (i) 'rceps' - use the 'rceps' function in the Signal Processing 
+%       Toolbox (default).
+%       (ii) 'hilb' - use the hilbert transform (computed using the
+%       'hilbert' function in the Signal Processing Toolbox).
 %
-%   See also RCEPS.
+%   Needs: Signal Processing Toolbox.
+%
+%   See also RCEPS, HILBERT.
 
 %   =======================================================================
 %   This file is part of the 3D3A MATLAB Toolbox.

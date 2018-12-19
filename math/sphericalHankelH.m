@@ -40,6 +40,8 @@ function val = sphericalHankelH(n,k,x)
 %   SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 %   =======================================================================
 
+narginchk(3,3);
+
 norm = sqrt(pi./(2*x));
 sgn = 2*(x>=0)-1;
 %val = norm.*sgn.*besselh(n+0.5,k,x);

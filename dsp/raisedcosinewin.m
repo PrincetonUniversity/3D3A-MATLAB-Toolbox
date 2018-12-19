@@ -8,6 +8,8 @@ function w = raisedcosinewin(L,r)
 %   cosine. If r1 = r2 = 0.5, a Tukey window is returned. If r is not 
 %   specified, r = [0.5,0.5] is assumed.
 %
+%   Needs: Signal Processing Toolbox.
+%
 %   See also TUKEYWIN.
 
 %   =======================================================================
@@ -57,9 +59,9 @@ if (r(1)+r(2)) > 1
     error('Invalid specification of values for r. sum(r) must be <= 1.')
 end
 
-winVec = tukeywin(2*L,r(1));
+winVec = tukeywin(2*L,r(1)); % From Signal Processing Toolbox
 wStart = winVec(1:L);
-winVec = tukeywin(2*L,r(2));
+winVec = tukeywin(2*L,r(2)); % From Signal Processing Toolbox
 wEnd = winVec(L+1:2*L);
 
 w = min([wStart,wEnd],[],2);

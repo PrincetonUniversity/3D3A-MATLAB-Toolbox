@@ -8,11 +8,12 @@ function [grpDelaySpec,avgGrpDelay] = getGrpDelay(inputIR,fS,AVGRANGE)
 %   the output avgGrpDelay will be a row vector while grpDelaySpec will 
 %   have the same dimensions as inputIR. fS is the sampling rate in Hz.
 %
-%   [grpDelaySpec,avgGrpDelay] = GETGRPDELAY(...,AVGRANGE) optionally
-%   specifies the frequency range over which averaging of grpDelaySpec 
-%   should be performed to compute avgGrpDelay. AVGRANGE must be specified 
-%   as a row vector [w1,w2] containing frequencies specified in Hz such 
-%   that w1 < w2.
+%   ___ = GETGRPDELAY(...,AVGRANGE) optionally specifies the frequency 
+%   range over which averaging of grpDelaySpec should be performed to 
+%   compute avgGrpDelay. AVGRANGE must be specified as a row vector [w1,w2] 
+%   containing frequencies specified in Hz such that w1 < w2.
+%
+%   See also ESTIMATEIRONSET.
 
 %   =======================================================================
 %   This file is part of the 3D3A MATLAB Toolbox.

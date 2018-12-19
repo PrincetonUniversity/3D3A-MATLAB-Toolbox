@@ -26,6 +26,10 @@ function onsetMat = thresholdIRs(irData,thp,varargin)
 %                   corresponds to downsampling, and a value > 1
 %                   corresponds to upsampling. Onsets are returned at the
 %                   original sampling rate.
+%
+%   Needs: Signal Processing Toolbox.
+%
+%   See also ESTIMATEIRONSET.
 
 %   =======================================================================
 %   This file is part of the 3D3A MATLAB Toolbox.
@@ -38,25 +42,26 @@ function onsetMat = thresholdIRs(irData,thp,varargin)
 %   
 %   MIT License
 %   
-%   Copyright (c) 2017 Princeton University
+%   Copyright (c) 2018 Princeton University
 %   
-%   Permission is hereby granted, free of charge, to any person obtaining a copy
-%   of this software and associated documentation files (the "Software"), to deal
-%   in the Software without restriction, including without limitation the rights
-%   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-%   copies of the Software, and to permit persons to whom the Software is
-%   furnished to do so, subject to the following conditions:
+%   Permission is hereby granted, free of charge, to any person obtaining a
+%   copy of this software and associated documentation files (the 
+%   "Software"), to deal in the Software without restriction, including 
+%   without limitation the rights to use, copy, modify, merge, publish, 
+%   distribute, sublicense, and/or sell copies of the Software, and to 
+%   permit persons to whom the Software is furnished to do so, subject to 
+%   the following conditions:
 %   
-%   The above copyright notice and this permission notice shall be included in all
-%   copies or substantial portions of the Software.
+%   The above copyright notice and this permission notice shall be included
+%   in all copies or substantial portions of the Software.
 %   
-%   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-%   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-%   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-%   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-%   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-%   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-%   SOFTWARE.
+%   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+%   OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF 
+%   MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. 
+%   IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY 
+%   CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, 
+%   TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE 
+%   SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 %   =======================================================================
 
 % Needs at least 1 input argument
@@ -72,7 +77,8 @@ array2D = (~iscell(irData) && ismatrix(irData));
 array3D = (~iscell(irData) && ndims(irData)==3);
 cell2D = (iscell(irData) && ismatrix(irData));
 if ~(array2D || array3D || cell2D)
-    error('Input data must be either: a 2D numeric array, a 3D numeric array, or a 2D cell array.');
+    error(['Input data must be either: a 2D numeric array, a 3D',...
+        ' numeric array, or a 2D cell array.']);
 end
     
 % Get array dimensions
@@ -88,7 +94,7 @@ indx = find(strcmpi(varargin,'resample')|strcmpi(varargin,'upsample'),1);
 if ~isempty(indx)
     [p,q] = rat(varargin{indx+1});
     if array2D
-        irData = resample(irData,p,q);
+        irData = resample(irData,p,q); % From Signal Processing Toolbox
     elseif array3D
         tempIR = resample(irData(1,1,:),p,q);
         resampleData = zeros(nRows,nCols,length(tempIR));
@@ -136,8 +142,8 @@ elseif cell2D
     for ii=1:nRows
         for jj=1:nCols
             peakVal = max(abs(irData{ii,jj}));
-            onsetMat(ii,jj) = find(abs(irData{ii,jj}) >= (thp*peakVal),1,...
-                'first')*(q/p);
+            onsetMat(ii,jj) = find(abs(irData{ii,jj}) >= (thp*peakVal),...
+                1,'first')*(q/p);
         end
     end
 end

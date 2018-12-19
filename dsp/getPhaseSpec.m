@@ -19,7 +19,7 @@ function outputSpec = getPhaseSpec(inputIR,TYPE,TOL,DIM)
 %   ___ = GETPHASESPEC(...,DIM) specifies the dimension along which to 
 %   perform spectrum computation.
 %
-%   See also UNWRAP, ANGLE, GETMAGSPEC.
+%   See also UNWRAP, ANGLE, GETMAGSPEC, GETMAGSPECDB.
 
 %   =======================================================================
 %   This file is part of the 3D3A MATLAB Toolbox.

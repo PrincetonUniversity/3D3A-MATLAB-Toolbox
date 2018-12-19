@@ -71,7 +71,9 @@ function [hWin,varargout] = windowSignal(h,wLen,varargin)
 %       follows:
 %           hWin = windowSignal([IR1,IR2],Q,'wType',{'rc'},'start',M1-R+1);
 %
-%   See also TUKEYWIN, RAISEDCOSINEWIN.
+%   Needs: Signal Processing Toolbox.
+%
+%   See also HANN, HAMMING, TUKEYWIN, RAISEDCOSINEWIN.
 
 %   =======================================================================
 %   This file is part of the 3D3A MATLAB Toolbox.
@@ -133,9 +135,9 @@ switch lower(wType{1,1})
     case 'rect'
         wVec = ones(validWLen,1);
     case 'hann'
-        wVec = hann(validWLen);
+        wVec = hann(validWLen); % From Signal Processing Toolbox
     case 'hamm'
-        wVec = hamming(validWLen);
+        wVec = hamming(validWLen); % From Signal Processing Toolbox
     case 'tukey'
         if length(wType) > 1
             validateattributes(wType{1,2},{'double'},{'scalar','nonempty',...
@@ -145,7 +147,7 @@ switch lower(wType{1,1})
         else
             R = 0.5;
         end
-        wVec = tukeywin(validWLen,R);
+        wVec = tukeywin(validWLen,R); % From Signal Processing Toolbox
     case 'rc'
         if length(wType) > 1
             validateattributes(wType{1,2},{'double'},{'vector','nonempty',...

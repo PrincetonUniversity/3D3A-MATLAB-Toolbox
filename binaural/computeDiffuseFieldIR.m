@@ -9,9 +9,9 @@ function hMat_diffuseField = computeDiffuseFieldIR(hMat,METHOD)
 %
 %   hMat_diffuseField = COMPUTEDIFFUSEFIELDIR(hMat,METHOD) optionally
 %   specifies the method by which to compute the diffuse-field IRs. METHOD
-%   must be a cell array with the first element being the MethodName and
-%   following elements being parameters specific to the chosen method. The
-%   following may be specified for METHOD:
+%   must be a cell array with the first element being the name of the 
+%   method and following elements being parameters specific to the chosen 
+%   method. The following may be specified for METHOD:
 %       1. {'avgPS'} - unweighted average of individual power spectra.
 %       2. {'avgMagdB'} - unweighted average of individual magnitude
 %       spectra in dB.
@@ -70,6 +70,7 @@ end
 
 irLen = size(magMat_diffuseField,1);
 hMat_diffuseField = ifft(magMat_diffuseField,'symmetric');
+
 % Make output causal
 hMat_diffuseField = shiftSignal(hMat_diffuseField,irLen/2);
 

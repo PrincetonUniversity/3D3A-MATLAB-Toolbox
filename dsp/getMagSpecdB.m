@@ -8,7 +8,9 @@ function outputSpec = getMagSpecdB(varargin)
 %   outputSpec = GETMAGSPECDB(inputIR,DIM) additionally specifies the 
 %   dimension along which to perform spectrum computation.
 %
-%   See also GETMAGSPEC, GETPHASESPEC, FFT.
+%   Needs: Signal Processing Toolbox and/or Control System Toolbox.
+%
+%   See also GETMAGSPEC, GETPHASESPEC.
 
 %   =======================================================================
 %   This file is part of the 3D3A MATLAB Toolbox.

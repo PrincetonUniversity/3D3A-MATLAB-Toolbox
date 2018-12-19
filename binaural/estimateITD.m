@@ -27,11 +27,10 @@ function ITD = estimateITD(hL,hR,Fs,METHOD,varargin)
 %   the specified sampling rate by thresholding with a threshold of 0.2 
 %   (20% of the absolute maximum of each IR). This is the default.
 %       5. 'xcorrminph' estimates ITD accurate to 1 sample at the specified
-%       sampling rate by first computing the onset of hL and hR by
-%       cross-correlating each with its corresponding minimum-phase
-%       version, and then taking the difference between these computed
-%       onsets. For more on the cross-correlation algorithm, see
-%       ESTIMATEIRONSET.
+%   sampling rate by first computing the onset of hL and hR by 
+%   cross-correlating each with its corresponding minimum-phase version, 
+%   and then taking the difference between these computed onsets. For more 
+%   on the cross-correlation algorithm, see ESTIMATEIRONSET.
 %
 %   ITD = ESTIMATEITD(...,Name1,Value1,...) specifies optional 
 %   comma-separated pairs of Name,Value arguments, where Name is the 
@@ -70,6 +69,8 @@ function ITD = estimateITD(hL,hR,Fs,METHOD,varargin)
 %                   frequency range specified in 'range' (or the default of
 %                   0 to 1500 Hz) prior to estimating ITD using the 'phase 
 %                   delay' approach.
+%
+%   Needs: Signal Processing Toolbox.
 %
 %   See also ESTIMATEIRONSET, THRESHOLDIRS.
 
@@ -126,10 +127,10 @@ if ~isempty(indx)
     cutoff = specCell{1,2}; % cutoff frequency in Hz
     ftype = specCell{1,3}; % filter type; see 'butter' help
     Wn = 2*pi*cutoff/Fs;
-    [b,a] = butter(n,Wn,ftype);
+    [b,a] = butter(n,Wn,ftype); % From Signal Processing Toolbox
     if length(specCell) == 4 && strcmpi(specCell{1,4},'zerophase')
-        hL = filtfilt(b,a,hL);
-        hR = filtfilt(b,a,hR);
+        hL = filtfilt(b,a,hL); % From Signal Processing Toolbox
+        hR = filtfilt(b,a,hR); % From Signal Processing Toolbox
     else
         hL = filter(b,a,hL);
         hR = filter(b,a,hR);
@@ -140,8 +141,8 @@ end
 indx = find(strcmpi(varargin,'resample') | strcmpi(varargin,'upsample'),1);
 if ~isempty(indx)
     [p,q] = rat(varargin{indx+1});
-    hL = resample(hL,p,q);
-    hR = resample(hR,p,q);
+    hL = resample(hL,p,q); % From Signal Processing Toolbox
+    hR = resample(hR,p,q); % From Signal Processing Toolbox
     Fs = Fs*(p/q);
 end
 

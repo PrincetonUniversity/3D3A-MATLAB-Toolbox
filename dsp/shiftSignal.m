@@ -58,6 +58,7 @@ nyqIndx = ceil((signalLen+1)/2);
 output = zeros(signalLen,numCols);
 for ii = 1:numCols
     inputTF = fft(input(:,ii));
+    
     % Apply time shift property of Fourier transform.
     shiftedInput = inputTF(1:nyqIndx).*...
         exp(-1i*(2.0*pi*(0:(nyqIndx-1)).'/signalLen)*shift(ii));

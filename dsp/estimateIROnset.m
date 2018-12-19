@@ -29,7 +29,9 @@ function onsetMat = estimateIROnset(inputIR,varargin)
 %       the max. absolute value of the cross-correlation spectrum of the
 %       inputIR and its minimum-phase version.
 %
-%   See also IRGRPDELAY.
+%   Needs: Signal Processing Toolbox.
+%
+%   See also THRESHOLDIRS, GETGRPDELAY.
 
 %   =======================================================================
 %   This file is part of the 3D3A MATLAB Toolbox.
@@ -161,7 +163,7 @@ switch lower(METHOD{1})
             onsetMat(ii) = lagVec(lagIndex);
         end
     otherwise
-        error('Invalid method specification.');
+        error('Invalid METHOD specification.');
 end
 
 end
