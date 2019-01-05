@@ -51,20 +51,16 @@ if nargin < 3
 end
 
 if exist('erbspacebw','file') == 2
-    fc = shiftdim(erbspacebw(min(FRANGE),max(FRANGE)));
+    B = 'erb';
 else
     warning('erbspacebw from LTFAT not found, using 1/3-octave bands instead.');
-    numfc = round(log2(max(FRANGE)/min(FRANGE))/(1/3));
-    fc = shiftdim(logspace(log10(min(FRANGE)),log10(min(FRANGE)*2^(numfc/3)),numfc));
+    B = 1/3;
 end
 
 FFTLen = size(x,1);
-
-h = getGammatoneFilters(fc, Fs, FFTLen);
-Hmag = getMagSpec(h,1); % FFTLen-by-length(fc)
-
 X = fft(x,FFTLen,1);
-Evec = ((Hmag.')*(abs(X).^2));
+F = getFreqVec(Fs,FFTLen);
+[Evec, fc] = computeBandAvg(abs(X).^2,F,B,FRANGE,Fs);
 E = mean(Evec);
 
 end
