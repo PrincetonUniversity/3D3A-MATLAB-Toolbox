@@ -54,7 +54,7 @@ switch lower(ambNorm)
         Nlm = ((-1)^m)*sqrt((2*l+1).*(2-(~m))).*sqrt(factorial(l-m)./factorial(l+m));
     case 'sn3d' % Not confirmed
         Nlm = ((-1)^m)*sqrt((2-(~m))/(4*pi)).*sqrt(factorial(l-m)./factorial(l+m));
-    case 'n3d' % Eq. (31)
+    case 'n3d' % Eq. (31) of Zotter [1]
         Nlm = ((-1)^m)*sqrt((2*l+1).*(2-(~m))/(4*pi)).*sqrt(factorial(l-m)./factorial(l+m));
     otherwise
         error('Unknown normalization convention.');
