@@ -1,18 +1,21 @@
-function erb = fc2erb(fc,n)
-%FC2ERB Equivalent rectangular bandwidth (ERB) at a center frequency.
-%   ERB = FC2ERB(FC) computes the ERB at center frequency FC, given in Hz.
+function [T,R,L] = computePCTMatrix(P,Q)
+%COMPUTEPCTMATRIX Compute point cloud transformation matrix.
+%   T = COMPUTEPCTMATRIX(P,Q) computes an approximate transformation
+%   matrix, T, that describes the translation and rotation applied to point
+%   cloud P to get to point cloud Q.
 %
-%   ERB = FC2ERB(FC,N) uses the Nth order polynomial approximation given by
-%   Moore and Glasberg. Accepts N = 1 or N = 2 only.
+%   [T,R] = COMPUTEPCTMATRIX(P,Q) additionally returns rotation values as
+%   a 3-element row vector [alpha,beta,gamma] containing yaw (alpha),
+%   pitch (beta), and roll (gamma) values extracted from the T matrix.
 %
-%   See also ERB2FC, F2ERB, ERB2F.
+%   [T,R,L] = COMPUTEPCTMATRIX(P,Q) additionally returns translation values 
+%   as a 3-element row vector [x,y,z] extracted from the T matrix.
 
 %   =======================================================================
 %   This file is part of the 3D3A MATLAB Toolbox.
 %   
 %   Contributing author(s), listed alphabetically by last name:
 %   Rahulram Sridhar <rahulram@princeton.edu>
-%   Joseph G. Tylka <josephgt@princeton.edu>
 %   3D Audio and Applied Acoustics (3D3A) Laboratory
 %   Princeton University, Princeton, New Jersey 08544, USA
 %   
@@ -40,39 +43,34 @@ function erb = fc2erb(fc,n)
 %   SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 %   =======================================================================
 
-%   References:
-%     [1] Moore and Glasberg (1983) Suggested formulae for calculating
-%         auditory-filter bandwidths and excitation patterns.
-%     [2] Glasberg and Moore (1990) Derivation of auditory filter shapes
-%         from notched-noise data.
+narginchk(2,2);
 
-narginchk(1,2);
+validateattributes(P,{'double'},{'2d','nonempty','nonnan','finite',...
+    'real','size',[NaN,3]},'computePCTMatrix','P',1);
+numPts = size(P,1);
+validateattributes(Q,{'double'},{'2d','nonempty','nonnan','finite',...
+    'real','size',[numPts,3]},'computePCTMatrix','Q',2);
 
-if nargin < 2
-    n = 1;
+% Express point clouds in homogeneous coordinates
+
+P_h = [P,ones(numPts,1)];
+Q_h = [Q,ones(numPts,1)];
+
+% Compute optimal (in least-squares sense) T
+
+T = pinv(P_h)*Q_h;
+
+% Estimate translation and rotation values
+
+if nargout > 1
+    alpha = atan2d(T(1,2),T(1,1)); 
+    beta = atan2d(-T(1,3),sqrt((T(1,2))^2+(T(1,1))^2)); 
+    gamma = atan2d(T(2,3),T(3,3)); 
+    R = [gamma,beta,alpha];
 end
 
-fc = fc/1000; % convert Hz to kHz
-
-switch n
-    case 1
-        % The approximation is applicable at moderate sound levels and for
-        % values of fc between 0.1 and 10 kHz.
-        
-        % The following is from the formulas on p. 114 in [2].
-        % erb = 24.7*(4.37*fc + 1);
-        
-        % The following is from the Fortran code on p. 135-137 in [2].
-        c1 = 24.673;
-        c2 = 4.368;
-        erb = c1*(c2*fc+1);
-    case 2
-        % The approximation is based on the results of a number of
-        % published simultaneous masking experiments and is valid from 0.1
-        % to 6.5 kHz.
-        erb = 6.23*(fc.^2) + 93.39*fc + 28.52;
-    otherwise
-        error('No polynomial approximation is known for n = %g',n)
+if nargout > 2
+    L = T(4,1:3);
 end
 
 end

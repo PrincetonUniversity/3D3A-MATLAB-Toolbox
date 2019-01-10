@@ -1,18 +1,16 @@
-function erb = fc2erb(fc,n)
-%FC2ERB Equivalent rectangular bandwidth (ERB) at a center frequency.
-%   ERB = FC2ERB(FC) computes the ERB at center frequency FC, given in Hz.
-%
-%   ERB = FC2ERB(FC,N) uses the Nth order polynomial approximation given by
-%   Moore and Glasberg. Accepts N = 1 or N = 2 only.
-%
-%   See also ERB2FC, F2ERB, ERB2F.
+function out = applyFiltersInSeries(filtMat,in)
+%APPLYFILTERSINSERIES Filter input signal by multiple filters sequentially.
+%   C = APPLYFILTERSINSERIES(A,B) takes an input signal, B, and filters it 
+%   by each FIR filter in A, sequentially, to produce the output, C. The
+%   individual filters in A must be stored as columns. The input B can be a
+%   matrix of multiple signals, each stored as a column. In this case, each
+%   signal in B is filtered by the filters in A.
 
 %   =======================================================================
 %   This file is part of the 3D3A MATLAB Toolbox.
 %   
 %   Contributing author(s), listed alphabetically by last name:
 %   Rahulram Sridhar <rahulram@princeton.edu>
-%   Joseph G. Tylka <josephgt@princeton.edu>
 %   3D Audio and Applied Acoustics (3D3A) Laboratory
 %   Princeton University, Princeton, New Jersey 08544, USA
 %   
@@ -40,39 +38,23 @@ function erb = fc2erb(fc,n)
 %   SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 %   =======================================================================
 
-%   References:
-%     [1] Moore and Glasberg (1983) Suggested formulae for calculating
-%         auditory-filter bandwidths and excitation patterns.
-%     [2] Glasberg and Moore (1990) Derivation of auditory filter shapes
-%         from notched-noise data.
+narginchk(2,2);
 
-narginchk(1,2);
+% Check inputs
+validateattributes(filtMat,{'double'},{'2d','nonempty','nonnan',...
+    'finite'},'applyFiltersInSeries','A',1);
+validateattributes(in,{'double'},{'2d','nonempty','nonnan',...
+    'finite'},'applyFiltersInSeries','B',2);
 
-if nargin < 2
-    n = 1;
-end
-
-fc = fc/1000; % convert Hz to kHz
-
-switch n
-    case 1
-        % The approximation is applicable at moderate sound levels and for
-        % values of fc between 0.1 and 10 kHz.
-        
-        % The following is from the formulas on p. 114 in [2].
-        % erb = 24.7*(4.37*fc + 1);
-        
-        % The following is from the Fortran code on p. 135-137 in [2].
-        c1 = 24.673;
-        c2 = 4.368;
-        erb = c1*(c2*fc+1);
-    case 2
-        % The approximation is based on the results of a number of
-        % published simultaneous masking experiments and is valid from 0.1
-        % to 6.5 kHz.
-        erb = 6.23*(fc.^2) + 93.39*fc + 28.52;
-    otherwise
-        error('No polynomial approximation is known for n = %g',n)
+numFilters = size(filtMat,2);
+numSignals = size(in,2);
+out = zeros(size(in)); % Initialize output matrix
+for ii = 1:numSignals
+    currentSignal = in(:,ii);
+    for jj = 1:numFilters
+        currentSignal = filter(filtMat(:,jj),1,currentSignal);
+    end
+    out(:,ii) = currentSignal;
 end
 
 end

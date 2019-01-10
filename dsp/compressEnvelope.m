@@ -1,18 +1,22 @@
-function erb = fc2erb(fc,n)
-%FC2ERB Equivalent rectangular bandwidth (ERB) at a center frequency.
-%   ERB = FC2ERB(FC) computes the ERB at center frequency FC, given in Hz.
+function b = compressEnvelope(a,C)
+%COMPRESSENVELOPE Compress the envelope of an input signal.
+%   B = COMPRESSENVELOPE(A) compresses the envelope of an input signal, A, 
+%   using the algorithm described by Bernstein et al. [1]. The compression 
+%   applied is typically used to simulate peripheral auditory compression 
+%   by the basilar membrane. If A is a matrix of signals, each column of A
+%   is treated as a separate signal and compressed independently.
 %
-%   ERB = FC2ERB(FC,N) uses the Nth order polynomial approximation given by
-%   Moore and Glasberg. Accepts N = 1 or N = 2 only.
+%   B = COMPRESSENVELOPE(A,C) optionally specifies, C, the compression 
+%   factor to use in the compression algorithm. C can take values between 0 
+%   and 1. The default value is 0.2.
 %
-%   See also ERB2FC, F2ERB, ERB2F.
+%   Needs: Signal Processing Toolbox.
 
 %   =======================================================================
 %   This file is part of the 3D3A MATLAB Toolbox.
 %   
 %   Contributing author(s), listed alphabetically by last name:
 %   Rahulram Sridhar <rahulram@princeton.edu>
-%   Joseph G. Tylka <josephgt@princeton.edu>
 %   3D Audio and Applied Acoustics (3D3A) Laboratory
 %   Princeton University, Princeton, New Jersey 08544, USA
 %   
@@ -40,39 +44,29 @@ function erb = fc2erb(fc,n)
 %   SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 %   =======================================================================
 
-%   References:
-%     [1] Moore and Glasberg (1983) Suggested formulae for calculating
-%         auditory-filter bandwidths and excitation patterns.
-%     [2] Glasberg and Moore (1990) Derivation of auditory filter shapes
-%         from notched-noise data.
+%   Ref:
+%       [1]. Bernstein et al. (1999) - The normalized interaural 
+%       correlation: Accounting for NoS? thresholds obtained with Gaussian 
+%       and ?low-noise? masking noise.
 
 narginchk(1,2);
 
 if nargin < 2
-    n = 1;
+    C = 0.2;
 end
 
-fc = fc/1000; % convert Hz to kHz
+% Check inputs
+validateattributes(a,{'double'},{'2d','nonempty','nonnan','finite'},...
+    'applyPeripheralCompression','A',1);
+validateattributes(C,{'double'},{'scalar','nonempty','nonnan','finite',...
+    'real','nonnegative','<=',1},'applyPeripheralCompression','C',2);
 
-switch n
-    case 1
-        % The approximation is applicable at moderate sound levels and for
-        % values of fc between 0.1 and 10 kHz.
-        
-        % The following is from the formulas on p. 114 in [2].
-        % erb = 24.7*(4.37*fc + 1);
-        
-        % The following is from the Fortran code on p. 135-137 in [2].
-        c1 = 24.673;
-        c2 = 4.368;
-        erb = c1*(c2*fc+1);
-    case 2
-        % The approximation is based on the results of a number of
-        % published simultaneous masking experiments and is valid from 0.1
-        % to 6.5 kHz.
-        erb = 6.23*(fc.^2) + 93.39*fc + 28.52;
-    otherwise
-        error('No polynomial approximation is known for n = %g',n)
-end
+% Compute (upper) Hilbert envelope
+a_mean = mean(a);
+a_hilb = hilbert(a_mean);
+a_e = abs(a_hilb);
+
+% Compute signal with compressed envelope
+b = ((a_e.^(C-1)).*(a-a_mean)) + a_mean;
 
 end
