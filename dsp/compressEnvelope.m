@@ -4,7 +4,10 @@ function b = compressEnvelope(a,C)
 %   using the algorithm described by Bernstein et al. [1]. The compression 
 %   applied is typically used to simulate peripheral auditory compression 
 %   by the basilar membrane. If A is a matrix of signals, each column of A
-%   is treated as a separate signal and compressed independently.
+%   is treated as a separate signal and compressed independently. The
+%   output, B, has the same dimensions as A. If the input signal has a DC 
+%   offset (i.e. non-zero mean), this offset is removed prior to
+%   compression.
 %
 %   B = COMPRESSENVELOPE(A,C) optionally specifies, C, the compression 
 %   factor to use in the compression algorithm. C can take values between 0 
@@ -46,8 +49,8 @@ function b = compressEnvelope(a,C)
 
 %   Ref:
 %       [1]. Bernstein et al. (1999) - The normalized interaural 
-%       correlation: Accounting for NoS? thresholds obtained with Gaussian 
-%       and ?low-noise? masking noise.
+%       correlation: Accounting for NoS thresholds obtained with Gaussian 
+%       and "low-noise" masking noise.
 
 narginchk(1,2);
 
@@ -57,16 +60,34 @@ end
 
 % Check inputs
 validateattributes(a,{'double'},{'2d','nonempty','nonnan','finite'},...
-    'applyPeripheralCompression','A',1);
+    'compressEnvelope','A',1);
 validateattributes(C,{'double'},{'scalar','nonempty','nonnan','finite',...
-    'real','nonnegative','<=',1},'applyPeripheralCompression','C',2);
+    'real','nonnegative','<=',1},'compressEnvelope','C',2);
+
+% Get input characteristics
+flag = false;
+if isrow(a)
+    a = a.';
+    flag = true;
+end
+sigLen = size(a,1);
+
+% Remove DC offset
+a_mean = mean(a);
+a_meanMat = repmat(a_mean,sigLen,1);
+a_zm = a-a_meanMat; % Zero-mean version of input signal(s)
 
 % Compute (upper) Hilbert envelope
-a_mean = mean(a);
-a_hilb = hilbert(a_mean);
+% Note: "envelope" function (introduced in v. R2015b) not used for 
+% backwards compatibility.
+a_hilb = hilbert(a_zm);
 a_e = abs(a_hilb);
 
 % Compute signal with compressed envelope
-b = ((a_e.^(C-1)).*(a-a_mean)) + a_mean;
+b = ((a_e.^(C-1)).*a_zm);
+
+if flag
+    b = b.';
+end
 
 end

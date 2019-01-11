@@ -109,6 +109,10 @@ function ITD = estimateITD(hL,hR,Fs,METHOD,varargin)
 
 narginchk(3,13);
 
+if nargin < 4
+    METHOD = 'thresholding';
+end
+
 validateattributes(hL,{'double'},{'2d','nonempty','nonnan','finite',...
     'real'},'estimateITD','hL',1);
 validateattributes(hR,{'double'},{'2d','nonempty','nonnan','finite',...

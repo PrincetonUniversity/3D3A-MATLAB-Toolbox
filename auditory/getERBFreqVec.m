@@ -6,12 +6,11 @@ function out = getERBFreqVec(fL,fU,varargin)
 %
 %   C = GETERBFREQVEC(A,B,'bw',N) returns a frequency vector, C, containing
 %   frequencies between A and B (both in Hz) with a uniform spacing of N
-%   ERBs. The frequencies in C are also in Hz. A must be <= B. 
+%   ERBs.
 %
 %   C = GETERBFREQVEC(A,B,'numPts',N) returns a frequency vector, C, of 
 %   length N, specifying frequencies between A and B (both in Hz) that are 
-%   uniformly-spaced on the ERB scale. The frequencies in C are also in Hz.
-%   A must be <= B.
+%   uniformly-spaced on the ERB scale.
 
 %   =======================================================================
 %   This file is part of the 3D3A MATLAB Toolbox.
@@ -49,12 +48,13 @@ narginchk(2,4);
 
 % Check inputs
 validateattributes(fL,{'double'},{'scalar','nonempty','nonnan','finite',...
-    'real'},'getERBFreqVec','A',1);
+    'real','nonnegative'},'getERBFreqVec','A',1);
 validateattributes(fU,{'double'},{'scalar','nonempty','nonnan','finite',...
     'real','>=',fL},'getERBFreqVec','B',2);
 
 if ~isempty(varargin) && length(varargin) ~= 2
-    error('Unrecognized input.')
+    error('Invalid input structure. %s can only take 2 or 4 inputs.',...
+        mfilename)
 end
 
 bwFlag = true;
@@ -63,7 +63,7 @@ if ~isempty(indx)
     n = varargin{indx+1};
     validateattributes(n,{'double'},{'scalar','nonempty','nonnan',...
         'finite','integer','positive'},'getERBFreqVec',...
-        'N for input ''numPts''',3);
+        'N for input ''numPts''',4);
     bwFlag = false;
 else
     indx = find(strcmpi(varargin,'bw'),1);
@@ -71,7 +71,7 @@ else
         bw = varargin{indx+1};
         validateattributes(bw,{'double'},{'scalar','nonempty','nonnan',...
             'finite','real','positive'},'getERBFreqVec',...
-            'N for input ''bw''',3);
+            'N for input ''bw''',4);
     else
         bw = 1;
     end
