@@ -50,7 +50,8 @@ f = getFreqVec(Fs, IRLen);
 specLen = 1 + IRLen/2;
 
 Wfc = fc2erb(fc,2); % Salomons, Eq. 5.11
-temp = 4*abs(f(1:specLen)*ones(1,numfc) - ones(specLen,1)*fc)./(ones(specLen,1)*Wfc);
+temp = 4*abs(f(1:specLen)*ones(1,numfc) - ...
+    ones(specLen,1)*fc)./(ones(specLen,1)*Wfc);
 H = (1 + temp).*exp(-temp); % Salomons, Eq. 5.9
 
 h = ifft(H,IRLen,1,'symmetric');

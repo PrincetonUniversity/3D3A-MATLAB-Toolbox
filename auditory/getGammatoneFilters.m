@@ -10,7 +10,7 @@ function h = getGammatoneFilters(fc, Fs, IRLen)
 %   
 %   Needs LTFAT toolbox.
 %
-%   See also GAMMATONEFIR.
+%   See also GAMMATONEFIR, GETPATTERSONFILTERS.
 
 %   =======================================================================
 %   This file is part of the 3D3A MATLAB Toolbox.

@@ -4,7 +4,8 @@ function out = applyFiltersInSeries(filtMat,in)
 %   by each FIR filter in A, sequentially, to produce the output, C. The
 %   individual filters in A must be stored as columns. The input B can be a
 %   matrix of multiple signals, each stored as a column. In this case, each
-%   signal in B is filtered by the filters in A.
+%   signal in B is filtered by the filters in A. The output, C, has the
+%   same dimensions as the input, B.
 
 %   =======================================================================
 %   This file is part of the 3D3A MATLAB Toolbox.
@@ -49,9 +50,9 @@ validateattributes(in,{'double'},{'2d','nonempty','nonnan',...
 numFilters = size(filtMat,2);
 numSignals = size(in,2);
 out = zeros(size(in)); % Initialize output matrix
-for ii = 1:numSignals
+for ii = 1:numSignals % Loop over each input signal
     currentSignal = in(:,ii);
-    for jj = 1:numFilters
+    for jj = 1:numFilters % Apply filters sequentially (i.e. in series)
         currentSignal = filter(filtMat(:,jj),1,currentSignal);
     end
     out(:,ii) = currentSignal;
