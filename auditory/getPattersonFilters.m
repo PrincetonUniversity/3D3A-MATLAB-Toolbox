@@ -45,6 +45,9 @@ function h = getPattersonFilters(fc, Fs, IRLen)
 %     [1] Salomons (1995) Coloration and Binaural Decoloration of Sound due
 %         to Reflections.
 
+if ~isrow(fc)
+    fc = shiftdim(fc).';
+end
 numfc = length(fc);
 f = getFreqVec(Fs, IRLen);
 specLen = 1 + IRLen/2;

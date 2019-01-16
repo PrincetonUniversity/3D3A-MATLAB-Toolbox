@@ -86,7 +86,7 @@ validateattributes(fS,{'double'},{'scalar','nonempty','nonnan','finite',...
     'real','positive'},'faller2004','FS',2);
 
 if nargin < 3
-    C0 = 0.99;
+    C0 = 0.999;
 end
 
 validateattributes(C0,{'double'},{'scalar','nonempty','nonnan','finite',...
@@ -96,8 +96,8 @@ validateattributes(C0,{'double'},{'scalar','nonempty','nonnan','finite',...
 
 % 1. Filter input binaural signal by Patterson's auditory filters with a
 % uniform center frequency spacing of 1 ERB.
-% fC = getERBFreqVec(80,5000);
-fC = [500,2000]; % TODO: Make this an input
+fC = getERBFreqVec(500,2000);
+% fC = [500;2000]; % TODO: Make this an input
 bIn_cbf = applyCBFilter(bIn,fS,fC); % bIn_cbf is a 2-element cell array.
 
 % TODO: 1b. Add internal noise to model (see last para on p. 3077 of [1]).  
@@ -108,11 +108,13 @@ bIn_cbf = applyCBFilter(bIn,fS,fC); % bIn_cbf is a 2-element cell array.
 % corresponding to critical band center frequencies > 500.
 x = bIn_cbf; % Initialize output
 [lpf_num,lpf_den] = butter(4,425/(fS/2));
-for ii = 1:2
-    cs = compressEnvelope(bIn_cbf{ii,1}(:,fC > 500),0.23);
-    cs_hwr = rectifyInput(cs);
-    cs_hwr_sq = cs_hwr.^2;
-    x{ii,1}(:,fC > 500) = filter(lpf_num,lpf_den,cs_hwr_sq);
+if any(fC > 500)
+    for ii = 1:2
+        cs = compressEnvelope(bIn_cbf{ii,1}(:,fC > 500),0.23);
+        cs_hwr = rectifyInput(cs);
+        cs_hwr_sq = cs_hwr.^2;
+        x{ii,1}(:,fC > 500) = filter(lpf_num,lpf_den,cs_hwr_sq);
+    end
 end
 
 % Binaural processor
@@ -157,7 +159,7 @@ end
 tau_final = cell(numCFs,1);
 DL_final = cell(numCFs,1);
 for ii = 1:numCFs
-    validc12 = c12(:,ii) > C0;
+    validc12 = c12(:,ii) >= C0;
     tau_final{ii,1} = tau_s(validc12,ii);
     DL_final{ii,1} = DL(validc12,ii);
 end

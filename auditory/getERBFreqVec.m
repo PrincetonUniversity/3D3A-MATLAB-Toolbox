@@ -88,6 +88,6 @@ else
     erbVec = linspace(fL_erb,fU_erb,n);
 end
 
-out = erb2f(erbVec);
+out = erb2f(erbVec.');
 
 end
