@@ -14,14 +14,14 @@ function [hL,hR] = getSphericalHeadHRIRs(a,S,varargin)
 %
 %   ___ = GETSPHERICALHEADHRIRS(...,Name1,Value1,...) allows optional
 %   specification of the following Name-Value pairs:
-%       1. 'duration',T - duration of the HRIRs in seconds.
-%       2. 'sample rate',fS - sampling rate in Hz.
-%       3. 'left ear position',eL - left ear position specified in SOFA
+%       1. 'T',T - duration of the HRIRs in seconds.
+%       2. 'fS',fS - sampling rate in Hz.
+%       3. 'eL',eL - left ear position specified in SOFA
 %       spherical coordinates as [az,el], in degrees.
-%       4. 'right ear position',eR - right ear position specified in SOFA
+%       4. 'eR',eR - right ear position specified in SOFA
 %       spherical coordinates as [az,el], in degrees.
-%       5. 'source distance',R - source distance in meters.
-%       6. 'order',N - truncation order for truncating the infinite sum to
+%       5. 'R',R - source distance in meters.
+%       6. 'N',N - truncation order for truncating the infinite sum to
 %       have N+1 terms.
 %
 %   Needs: Symbolic Math Toolbox
@@ -112,8 +112,8 @@ numPos = size(S,1);
 mVec = (0:N).';
 thetaL = zeros(numPos,1);
 thetaR = zeros(numPos,1);
-hrtfL = zeros(nyquistIndx,numPos);
-hrtfR = zeros(nyquistIndx,numPos);
+hrtfL = ones(nyquistIndx,numPos);
+hrtfR = ones(nyquistIndx,numPos);
 PL = zeros(length(mVec),numPos);
 PR = zeros(length(mVec),numPos);
 
@@ -125,19 +125,21 @@ for ii = 1:numPos
 end
 
 if R == inf % Following Cooper [2].
-    for ii = 1:nyquistIndx
+    for ii = 2:nyquistIndx
         dh = dSphericalHankelH(mVec,1,mu(ii));
         % conj so that negative phase = delay
         psi = diag(conj((2*mVec+1).*((-1i).^(mVec-1))./dh));
         psiL = sum(psi*PL,1);
         psiR = sum(psi*PR,1);
         % extra exp term to make IRs causal
-        hrtfL(ii,:) = (1/(mu(ii)^2))*exp(-1i*mu(ii))*psiL;
-        hrtfR(ii,:) = (1/(mu(ii)^2))*exp(-1i*mu(ii))*psiR;
+        % hrtfL(ii,:) = (1/(mu(ii)^2))*exp(-1i*mu(ii))*psiL;
+        % hrtfR(ii,:) = (1/(mu(ii)^2))*exp(-1i*mu(ii))*psiR;
+        hrtfL(ii,:) = (1/(mu(ii)^2))*psiL;
+        hrtfR(ii,:) = (1/(mu(ii)^2))*psiR;
     end
 else
     rho = R/a;
-    for ii = 1:nyquistIndx
+    for ii = 2:nyquistIndx
         h = sphericalHankelH(mVec,1,mu(ii)*rho);
         dh = dSphericalHankelH(mVec,1,mu(ii));
         psi = diag(conj(((2*mVec)+1).*(h./dh)));

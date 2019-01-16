@@ -126,7 +126,13 @@ if wLen > (hLen-wS-oVecMax+1)
         'window length is length(h)-wS-max(oVec)+1 = %d samples for ',...
         'the provided inputs.'],wLen,hLen-wS-oVecMax+1)
 end
-validWLen = wLen-oVecMax;
+
+if wLen <= oVecMax
+    validWLen = wLen;
+    wLen = wLen+oVecMax;
+else
+    validWLen = wLen-oVecMax;
+end
 
 % Create window vector
 validateattributes(wType{1,1},{'char'},{'scalartext','nonempty'},...
