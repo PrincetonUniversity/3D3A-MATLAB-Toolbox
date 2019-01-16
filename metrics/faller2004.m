@@ -1,20 +1,42 @@
-function [tau_s,c12,DL] = faller2004(bIn,fS)
+function [tau_final,DL_final,fC,c12] = faller2004(bIn,fS,C0)
 %FALLER2004 Implementation of Faller and Merimaa's binaural localization
 %model.
 %   B = FALLER2004(A,FS) applies Faller and Merimaa's binaural localization
 %   model to the input binaural signal A, which must be an N-by-2 matrix,
 %   where N is the length of the binaural signal. The sampling rate, FS,
-%   must also be specified in Hz. B is matrix of ITD values specified in
-%   seconds.
+%   must also be specified in Hz. B is a 2-element cell array where the
+%   elements correspond to critical band center frequencies of 500 and 2000
+%   Hz. Each element contains a vector of ITD values in seconds and should
+%   contain ITDs of all sources in the sound field. However, binning of ITD 
+%   values corresponding to different sources needs to be performed
+%   externally.
 %
-%   [B,C] = FALLER2004(...) additionally returns the interaural coherence
-%   matrix, C.
+%   [B,D] = FALLER2004(...) additionally returns ILD values in dB. The
+%   storage format for D is identical to that of B. Note that, according to 
+%   Faller and Merimaa [1], due to envelope compression, these ILD 
+%   estimates will be smaller than the level differences between the ear 
+%   input signals by a factor of 4.3478 (equal to 1/0.23, where 0.23 is the 
+%   compression factor).
 %
-%   [B,C,D] = FALLER2004(...) additionally returns the ILD matrix, D. ILD
-%   values are specified in dB. Note that, according to Faller and Merimaa 
-%   [1], due to envelope compression, these ILD estimates will be smaller 
-%   than the level differences between the ear input signals by a factor of
-%   4.3478 (equal to 1/0.23, where 0.23 is the compression factor).
+%   [B,D,FC] = FALLER2004(...) additionally returns the vector of center
+%   frequencies in Hz.
+%
+%   [B,D,FC,C] = FALLER2004(...) additionally returns the interaural
+%   coherence matrix C, which is an N-by-2 matrix with N being the number
+%   of samples in the input binaural signal, and 2 being the number of
+%   critical band center frequencies.
+%
+%   ___ = FALLER2004(A,FS,C0) optionally specifies the interaural coherence 
+%   threshold (a value between 0 and 1) that is used to select "free-field"
+%   ITD and ILD cues from the matrix of values that are computed. The
+%   larger the C0, the closer the selected cues are to the free-field cues
+%   (i.e. cues likely caused by reflections are ignored). However,
+%   according to Faller and Merimaa [1], "there is a strong motivation to 
+%   choose C0 as small as possible while still getting accurate enough 
+%   ITD and/or ILD cues, because this will lead to the cues being selected 
+%   more often, and consequently to a larger proportion of the ear input 
+%   signals contributing to the localization." If C0 is not specified, a
+%   default value of 0.99 is used.
 %
 %   Needs: LTFAT toolbox.
 
@@ -55,7 +77,7 @@ function [tau_s,c12,DL] = faller2004(bIn,fS)
 %       listening situations/ Selection of binaural cues based on 
 %       interaural coherence.
 
-narginchk(2,2);
+narginchk(2,3);
 
 % Check inputs
 validateattributes(bIn,{'double'},{'2d','nonempty','nonnan','finite',...
@@ -63,26 +85,34 @@ validateattributes(bIn,{'double'},{'2d','nonempty','nonnan','finite',...
 validateattributes(fS,{'double'},{'scalar','nonempty','nonnan','finite',...
     'real','positive'},'faller2004','FS',2);
 
+if nargin < 3
+    C0 = 0.99;
+end
+
+validateattributes(C0,{'double'},{'scalar','nonempty','nonnan','finite',...
+    'real','nonnegative','<=',1},'faller2004','C0',3);
+
 % Auditory periphery modeling
 
 % 1. Filter input binaural signal by Patterson's auditory filters with a
 % uniform center frequency spacing of 1 ERB.
 % fC = getERBFreqVec(80,5000);
-fC = [250,500,1000,2000,3000];
+fC = [500,2000]; % TODO: Make this an input
 bIn_cbf = applyCBFilter(bIn,fS,fC); % bIn_cbf is a 2-element cell array.
 
 % TODO: 1b. Add internal noise to model (see last para on p. 3077 of [1]).  
 
 % 2. Apply envelope compression, half-wave rectification, squaring, and
 % low-pass filtering to each signal. The resulting "x" signals correspond
-% to "nerve firing densities".
+% to "nerve firing densities". Apply these steps only to those signals
+% corresponding to critical band center frequencies > 500.
 x = bIn_cbf; % Initialize output
 [lpf_num,lpf_den] = butter(4,425/(fS/2));
 for ii = 1:2
-    cs = compressEnvelope(bIn_cbf{ii,1},0.23);
+    cs = compressEnvelope(bIn_cbf{ii,1}(:,fC > 500),0.23);
     cs_hwr = rectifyInput(cs);
     cs_hwr_sq = cs_hwr.^2;
-    x{ii,1} = filter(lpf_num,lpf_den,cs_hwr_sq);
+    x{ii,1}(:,fC > 500) = filter(lpf_num,lpf_den,cs_hwr_sq);
 end
 
 % Binaural processor
@@ -107,13 +137,29 @@ for ii = 1:numCFs
 end
 tau_s = tau/fS;
 
-% 3. Compute ILD matrix, DL, in dB
+% 3. Compute ILD matrix, DL, in dB and total signal power contributing to
+% ITD, ILD, IC cues
 DL = zeros(sigLen,numCFs);
+p = zeros(sigLen,numCFs);
 for ii = 1:numCFs
     for jj = 1:sigLen
         DL(jj,ii) = mag2db(sqrt(L2{ii,1}(jj,tau(jj,ii)+max(lagVec)+1)./...
             L1{ii,1}(jj,tau(jj,ii)+max(lagVec)+1)));
+        p(jj,ii) = L1{ii,1}(jj,tau(jj,ii)+max(lagVec)+1)+L2{ii,1}(jj,...
+            tau(jj,ii)+max(lagVec)+1);       
     end
+end
+
+% Binaural cue extraction
+
+% TODO: Allow for different C0 to be specified in each critical band
+
+tau_final = cell(numCFs,1);
+DL_final = cell(numCFs,1);
+for ii = 1:numCFs
+    validc12 = c12(:,ii) > C0;
+    tau_final{ii,1} = tau_s(validc12,ii);
+    DL_final{ii,1} = DL(validc12,ii);
 end
 
 end
