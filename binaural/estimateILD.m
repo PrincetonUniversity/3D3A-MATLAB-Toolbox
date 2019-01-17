@@ -84,16 +84,14 @@ else
     end
 end
 
-rawILD = abs(fft(hL,FFTLen,1)./fft(hR,FFTLen,1));
-rawILDdb = mag2db(rawILD);
+rawILD = mag2db(abs(fft(hL,FFTLen,1)./fft(hR,FFTLen,1)));
 if bandAvgFlag
-    [ILDdb, fc] = computeBandAvg(rawILDdb,f,B,FRANGE,Fs);
-    ILD = db2mag(ILDdb);
-    avgILD = db2mag(mean(ILDdb,1));
+    [ILD, fc] = computeBandAvg(rawILD,f,B,FRANGE,Fs);
+    avgILD = mean(ILD,1);
 else
     ILD = rawILD;
     fc = f;
-    avgILD = db2mag(logmean(rawILDdb,f));
+    avgILD = logmean(rawILD,f);
 end
 
 end
