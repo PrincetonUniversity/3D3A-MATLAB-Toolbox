@@ -50,7 +50,7 @@ if ~isrow(fc)
 end
 numfc = length(fc);
 f = getFreqVec(Fs, IRLen);
-specLen = 1 + IRLen/2;
+specLen = ceil((1 + IRLen)/2);
 
 Wfc = fc2erb(fc,2); % Salomons, Eq. 5.11
 temp = 4*abs(f(1:specLen)*ones(1,numfc) - ...

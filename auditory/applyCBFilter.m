@@ -84,7 +84,7 @@ if isempty(fC)
     fC = extra{1,1};
 end
 
-filtLen = n*fS;
+filtLen = round(n*fS);
 switch lower(fType)
     case 'patterson'
         filtMat = getPattersonFilters(fC,fS,filtLen);
