@@ -39,11 +39,17 @@ function val = sphericalBesselJ(n,x)
 %   SOFTWARE.
 %   =======================================================================
 
+if ~(all(size(x)==size(n)) || isscalar(x) || isscalar(n))
+    error('Inputs N and X must be the same size or else one must be a scalar.');
+end
+
 coeff = sqrt(pi./(2*x));
 sgn = 2*(x>=0)-1; % Signum-like function; equal to +1 at 0
 val = coeff.*sgn.*besselj(n+0.5,x);
 if isscalar(n)
     val(x==0) = +~n; % gives 1 if n==0; gives 0 if n~=0
+elseif isscalar(x) && (x==0)
+    val = +~n;
 else
     val(x==0) = +~n(x==0);
 end
