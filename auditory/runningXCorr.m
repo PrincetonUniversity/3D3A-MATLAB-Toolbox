@@ -100,6 +100,6 @@ end
 
 L1 = a11(2:end,:);
 L2 = a22(2:end,:);
-g = a12(2:end,:)./sqrt(L1.*L2);
+g = a12(2:end,:)./sqrt(L1.*L2 + 1e-20); % Small error term to prevent NaNs
 
 end
