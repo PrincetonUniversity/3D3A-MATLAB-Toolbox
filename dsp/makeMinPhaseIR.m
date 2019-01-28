@@ -60,11 +60,15 @@ switch lower(METHOD)
     case 'rceps'
         minPhaseIR = zeros(size(ir));
         numIRs = size(ir,2);
+        tF = fft(ir);
+        tF(tF == 0) = 0 + 1i*eps;
+        ir = ifft(tF,'symmetric');
         for ii = 1:numIRs
             [~,minPhaseIR(:,ii)] = rceps(ir(:,ii));
         end
     case 'hilb'
-        absTF = abs(fft(ir));
+        absTF = getMagSpec(ir);
+        absTF(absTF == 0) = eps;
         argTF = imag(hilbert(log(absTF))); % hilbert operates along columns
         minPhaseTF = absTF.*exp(-1i*argTF);
         minPhaseIR = ifft(minPhaseTF,'symmetric');
