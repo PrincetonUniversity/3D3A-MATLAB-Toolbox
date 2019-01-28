@@ -23,6 +23,9 @@ function [hL,hR] = getSphericalHeadHRIRs(a,S,varargin)
 %       5. 'R',R - source distance in meters.
 %       6. 'N',N - truncation order for truncating the infinite sum to
 %       have N+1 terms.
+%       7. 'makecausal',c - flag to specify whether or not to force output 
+%       IRs to be causal by applying an artificial delay. c can be 
+%       specified as true or false (default).
 %
 %   Needs: Symbolic Math Toolbox
 
@@ -65,7 +68,7 @@ function [hL,hR] = getSphericalHeadHRIRs(a,S,varargin)
 %   Function.
 %       [3]. Morse and Ingard (1968) - Theoretical Acoustics.
 
-narginchk(2,14);
+narginchk(2,16);
 
 % Parse and verify inputs
 inputs = parseGetSphericalHeadHRIRsInputs(a,S,varargin);
@@ -79,6 +82,7 @@ eL = inputs.eL;
 eR = inputs.eR;
 R = inputs.R;
 N = inputs.N;
+cFlag = inputs.makecausal;
 
 % Perform additional checks on inputs
 if fS < 1000
@@ -131,11 +135,15 @@ if R == inf % Following Cooper [2].
         psi = diag(conj((2*mVec+1).*((-1i).^(mVec-1))./dh));
         psiL = sum(psi*PL,1);
         psiR = sum(psi*PR,1);
-        % extra exp term to make IRs causal
-        % hrtfL(ii,:) = (1/(mu(ii)^2))*exp(-1i*mu(ii))*psiL;
-        % hrtfR(ii,:) = (1/(mu(ii)^2))*exp(-1i*mu(ii))*psiR;
-        hrtfL(ii,:) = (1/(mu(ii)^2))*psiL;
-        hrtfR(ii,:) = (1/(mu(ii)^2))*psiR;
+        if cFlag
+            % extra exp term to make IRs causal
+            del = mu(ii)*(c/a)*(irLen/fS)*0.5;
+            hrtfL(ii,:) = (1/(mu(ii)^2))*exp(-1i*del)*psiL;
+            hrtfR(ii,:) = (1/(mu(ii)^2))*exp(-1i*del)*psiR;
+        else
+            hrtfL(ii,:) = (1/(mu(ii)^2))*psiL;
+            hrtfR(ii,:) = (1/(mu(ii)^2))*psiR;
+        end
     end
 else
     rho = R/a;
@@ -145,8 +153,14 @@ else
         psi = diag(conj(((2*mVec)+1).*(h./dh)));
         psiL = sum(psi*PL,1);
         psiR = sum(psi*PR,1);
-        hrtfL(ii,:) = (rho/mu(ii))*exp(-1i*mu(ii)*rho)*psiL;
-        hrtfR(ii,:) = (rho/mu(ii))*exp(-1i*mu(ii)*rho)*psiR;
+        if cFlag
+            % extra exp term to make IRs causal
+            hrtfL(ii,:) = (rho/mu(ii))*exp(-1i*mu(ii)*rho)*psiL;
+            hrtfR(ii,:) = (rho/mu(ii))*exp(-1i*mu(ii)*rho)*psiR;
+        else
+            hrtfL(ii,:) = (rho/mu(ii))*psiL;
+            hrtfR(ii,:) = (rho/mu(ii))*psiR;
+        end
     end
 end
 
@@ -185,11 +199,13 @@ addParameter(p,'eR',[270,0],@(x)validateattributes(x,{'double'},...
     {'vector','nonempty','nonnan','finite','real','numel',2,'>=',-90,...
     '<',360},'getSphericalHeadHRIRs','right ear position, eR'));
 addParameter(p,'R',inf,@(x)validateattributes(x,{'double'},...
-    {'scalar','nonempty','nonnan','finite','real','positive'},...
+    {'scalar','nonempty','nonnan','real','positive'},...
     'getSphericalHeadHRIRs','source distance, R'));
 addParameter(p,'N',50,@(x)validateattributes(x,{'double'},...
     {'scalar','nonempty','nonnan','finite','real','nonnegative',...
     'integer'},'getSphericalHeadHRIRs','order, N'));
+addParameter(p,'makecausal',false,@(x)validateattributes(x,{'logical'},...
+    {'nonempty','nonnan'},'getSphericalHeadHRIRs','causal, c'));
 
 p.CaseSensitive = false;
 p.FunctionName = 'getSphericalHeadHRIRs';
