@@ -131,7 +131,7 @@ if ~isempty(indx)
     n = specCell{1,1}; % filter order; see 'butter' help
     cutoff = specCell{1,2}; % cutoff frequency in Hz
     ftype = specCell{1,3}; % filter type; see 'butter' help
-    Wn = 2*pi*cutoff/Fs;
+    Wn = cutoff/(Fs/2);
     [b,a] = butter(n,Wn,ftype); % From Signal Processing Toolbox
     if length(specCell) == 4 && strcmpi(specCell{1,4},'zerophase')
         hL = filtfilt(b,a,hL); % From Signal Processing Toolbox
