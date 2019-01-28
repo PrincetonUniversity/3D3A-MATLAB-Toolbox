@@ -43,9 +43,10 @@ function ITD = estimateITD(hL,hR,Fs,METHOD,varargin)
 %                   frequency in Hz, filter type} for a Butterworth
 %                   filter. For order and type specifications, see the
 %                   documentation for 'butter'. The three parameters must
-%                   be specified in the order shown above. 'zerophase' is 
-%                   an optional fourth parameter that may be specified to
-%                   design a zero-phase filter.
+%                   be specified in the order shown above. An optional
+%                   fourth parameter may be specified as either 'zerophase'
+%                   to design a zero-phase filter, or 'minphase' to design
+%                   a minimum-phase filter.
 %
 %   'resample'      Resample hL and hR prior to computing ITD. This must
 %                   be a scalar > 0 such that a value in the range (0,1)
@@ -135,6 +136,13 @@ if ~isempty(indx)
     if length(specCell) == 4 && strcmpi(specCell{1,4},'zerophase')
         hL = filtfilt(b,a,hL); % From Signal Processing Toolbox
         hR = filtfilt(b,a,hR); % From Signal Processing Toolbox
+    elseif length(specCell) == 4 && strcmpi(specCell{1,4},'minphase')
+        irLen = size(hL,1);
+        imp = [1;zeros(irLen-1,1)];
+        lpf_imp = filter(b,a,imp);
+        lpf_imp_mp = makeMinPhaseIR(lpf_imp,'hilb');
+        hL = filter(lpf_imp_mp,1,hL);
+        hR = filter(lpf_imp_mp,1,hR);
     else
         hL = filter(b,a,hL);
         hR = filter(b,a,hR);
