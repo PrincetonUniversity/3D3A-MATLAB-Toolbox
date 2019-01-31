@@ -68,7 +68,7 @@ PARAMS = inputs.PARAMS;
 NTYPE = inputs.NTYPE;
 
 flag = 0;
-hLen = size(h,1);
+[hLen,numDirs] = size(h);
 if isempty(PARAMS)
     refMag = max(abs(h));
 else
@@ -129,15 +129,20 @@ else
         nyquistIndx = ceil((hLen+1)/2);
         [~,fLIndx] = max(hMagdB(1:nyquistIndx,:));
         fUIndx = fLIndx;
+        refMag = zeros(1,numDirs);
+        for ii = 1:numDirs
+            refMag(ii) = db2mag(mean(hMagdB(fLIndx(ii):fUIndx(ii),:)));
+        end
+    else
+        refMag = db2mag(mean(hMagdB(fLIndx:fUIndx,:),1));
     end
-    refMag = db2mag(mean(hMagdB(fLIndx:fUIndx,:)));
 end
 
 switch lower(NTYPE)
     case 'global'
-        normVal = 1/max(refMag);
+        normVal = db2mag(magVal)/max(refMag);
     case 'local'
-        normVal = repmat(1./refMag,hLen,1);
+        normVal = repmat(db2mag(magVal)./refMag,hLen,1);
     otherwise
         error('Invalid specification for third input.')
 end
