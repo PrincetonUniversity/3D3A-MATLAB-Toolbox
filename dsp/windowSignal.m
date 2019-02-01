@@ -122,9 +122,8 @@ oVec = inputs.offset;
 [hLen,numCols] = size(h);
 oVecMax = max(oVec);
 if wLen > (hLen-wS-oVecMax+1)
-    error(['The specified wLen is %d samples. The maximum allowable ',...
-        'window length is length(h)-wS-max(oVec)+1 = %d samples for ',...
-        'the provided inputs.'],wLen,hLen-wS-oVecMax+1)
+    h = [h;zeros(wS+oVecMax,numCols)];
+    hLen = size(h,1);
 end
 
 if wLen <= oVecMax
