@@ -104,8 +104,8 @@ else
     stimLen = 2048; % arbitrarily chosen length
     stimPS = ones(stimLen,1);
 end
-[W, fc] = computeBandAvg(stimPS,getFreqVec(Fs,stimLen),bandWidth,avgRange,Fs);
-W = W/sum(W); % normalize
+[stimWeights, fc] = computeBandAvg(stimPS,getFreqVec(Fs,stimLen),bandWidth,avgRange,Fs);
+stimWeights = stimWeights/sum(stimWeights); % normalize
 
 % Specifiy ambisonics normalization
 indx = find(strcmpi(varargin,'AmbNorm'));
@@ -172,15 +172,15 @@ end
 
 switch lower(VECTOR)
     case 'energy'
-        rPVec = compute_rP(a, Fs, VECTOR, alpha_E, pwGridFile_E, prepParams_E, bandWidth, avgRange, ambNorm, broadbandFlag, stimbandFlag, W);
+        rPVec = compute_rP(a, Fs, VECTOR, alpha_E, pwGridFile_E, prepParams_E, bandWidth, avgRange, ambNorm, broadbandFlag, stimbandFlag, stimWeights);
     case 'velocity'
-        rPVec = compute_rP(a, Fs, VECTOR, alpha_V, pwGridFile_V, prepParams_V, bandWidth, avgRange, ambNorm, broadbandFlag, stimbandFlag, W);
+        rPVec = compute_rP(a, Fs, VECTOR, alpha_V, pwGridFile_V, prepParams_V, bandWidth, avgRange, ambNorm, broadbandFlag, stimbandFlag, stimWeights);
     case 'combined'
-        rPE = compute_rP(a, Fs,  'energy' , alpha_E, pwGridFile_E, prepParams_E, bandWidth, avgRange, ambNorm, broadbandFlag, stimbandFlag, W);
-        rPV = compute_rP(a, Fs, 'velocity', alpha_V, pwGridFile_V, prepParams_V, bandWidth, avgRange, ambNorm, broadbandFlag, stimbandFlag, W);
+        rPE = compute_rP(a, Fs,  'energy' , alpha_E, pwGridFile_E, prepParams_E, bandWidth, avgRange, ambNorm, broadbandFlag, stimbandFlag, stimWeights);
+        rPV = compute_rP(a, Fs, 'velocity', alpha_V, pwGridFile_V, prepParams_V, bandWidth, avgRange, ambNorm, broadbandFlag, stimbandFlag, stimWeights);
         rPVec = combineVectors(rPV,rPE,xoIndx);
 end
-rPAvg = W.'*rPVec;
+rPAvg = stimWeights.'*rPVec;
 
 end
 
@@ -201,8 +201,7 @@ muQList = a2mu(a, pwGrid, ambNorm, false)*diag(wQList); % Compute plane-wave dec
 [pwSourceGains, ~] = computeBandAvg(abs(pwSourceGains),getFreqVec(Fs, size(a,1)),bandWidth,avgRange,Fs);
 
 if nargin < 12 || isempty(stimWeights)
-    stimWeights = ones(size(pwSourceGains,1),1);
-    stimWeights = stimWeights/sum(stimWeights);
+    stimWeights = ones(size(pwSourceGains,1),1)/size(pwSourceGains,1);
 end
 
 if broadbandFlag && stimbandFlag
@@ -240,7 +239,6 @@ end
 
 function [allPositions, allGains, allDelays] = prepIRs(sourcePositions, sourceIRs, Fs, params)
 % Break up source IRs into wavelets
-%
 %   [RSo, G, D] = prepIRs(RSi, IR)
 %
 %   The outputs are as follows:
