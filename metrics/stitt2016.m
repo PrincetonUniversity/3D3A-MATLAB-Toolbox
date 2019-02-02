@@ -1,24 +1,36 @@
 function [rE, rV] = stitt2016(sourcePositions, listenerPosition, sourceGains, alpha, timeDelays, sourceType, broadbandGains)
 %STITT2016 Stitt's precedence-effect-based energy vector.
-%   rE = STITT2016(RS, RL, G, ALPHA, T, TYPE, B) returns the
-%   K-by-3 matrix rE of extended energy vectors (specified in Cartesian
-%   coordinates) for K frequencies, as computed by Stitt et al. (citation
-%   below).
+%   RE = STITT2016(RS,RL,G,ALPHA,T,TYPE,B) returns the K-by-3 matrix RE of
+%   precedence-effect-based energy vectors (specified in Cartesian
+%   coordinates) for K frequencies, as computed by Stitt et al. (2016).
 %   
 %   The inputs are as follows:
-%    1) RS is an N-by-3 matrix of source positions (in Cartesian
+%    1) RS is an N-by-3 matrix of source positions (given in Cartesian
 %       coordinates) for the N discrete sources;
-%    2) RL is the 1-by-3 vector specifying the position of the listener;
-%    3) G is a K-by-N matrix of source gains;
+%    2) RL is a 1-by-3 vector specifying the position of the listener;
+%    3) G is a K-by-N matrix of complex-valued source gains, where each row
+%       corresponds to a different frequency;
 %    4) ALPHA is a scalar (0 <= ALPHA <= 1) that specifies the relative
 %       importance of stationary signal energy to transient energy (see
 %       paper for details);
 %    5) T (optional) is an N-by-1 vector of additional time delays to be
 %       added to each source signal;
 %    6) TYPE (optional) is a string specifying the type of sources used
-%       (either 'point' or 'plane'). Note that for plane-wave sources, the
-%       input T must be specified, and that the input RL is ignored;
+%       (either 'point' or 'plane');
 %    7) B (optional) is a 1-by-N matrix of broadband source gains.
+%
+%   Note: if B is specified, then the precedence-effect weights are
+%   computed using B as the source gains such that the resulting weights
+%   are frequency-independent. Otherwise, the precedence-effect weights are
+%   computed on a per-frequency basis.
+%
+%   [RE,RV] = STITT2016(...) additionally returns the K-by-3 matrix RV of
+%   corresponding velocity vectors.
+%
+%   Note: if ALPHA is an array with NUMEL(ALPHA) > 1, then RE and RV are
+%   returned as cell arrays with SIZE(RE) = SIZE(RV) = SIZE(ALPHA).
+%
+%   See also GERZON1992, TYLKA2017.
 
 %   =======================================================================
 %   This file is part of the 3D3A MATLAB Toolbox.
@@ -30,7 +42,7 @@ function [rE, rV] = stitt2016(sourcePositions, listenerPosition, sourceGains, al
 %   
 %   MIT License
 %   
-%   Copyright (c) 2018 Princeton University
+%   Copyright (c) 2019 Princeton University
 %   
 %   Permission is hereby granted, free of charge, to any person obtaining a
 %   copy of this software and associated documentation files (the 
@@ -58,6 +70,8 @@ function [rE, rV] = stitt2016(sourcePositions, listenerPosition, sourceGains, al
 %         Positions.
 %     [2] https://circlesounds.wordpress.com/matlab-code/
 
+narginchk(4,7);
+
 numSources = size(sourceGains,2);
 
 if isempty(listenerPosition)
@@ -65,8 +79,14 @@ if isempty(listenerPosition)
 end
 
 % Assumes point sources by default
-if nargin < 6
+if nargin < 6 || isempty(sourceType)
     sourceType = 'point';
+end
+
+if nargin < 7 || isempty(broadbandGains)
+    broadbandFlag = false;
+else
+    broadbandFlag = true;
 end
 
 switch lower(sourceType)
@@ -78,43 +98,42 @@ switch lower(sourceType)
         sourceDistances = sqrt(sum(relativeSourcePositions.^2,2));
         
         % Compute unit vectors pointing towards each source
-        sourceDirections = normalizeVector(relativeSourcePositions, 2);
+        sourceDirections = normalizeVector(relativeSourcePositions,2);
         
         % Compute time-of-arrival for each source's signal
         arrivalTimes = sourceDistances/getSoundSpeed();
     case {'plane','plane wave','plane-wave'}
-        % Find distances of each source to the origin
-        sourceDistances = sqrt(sum(sourcePositions.^2,2));
-        
-        % Compute unit vectors pointing towards each source
-        sourceDirections = normalizeVector(sourcePositions, 2);
-        
-        % Compute time-of-arrival for each source's signal
-        additionalPathLengths = -dot(sourceDirections,ones(numSources,1)*listenerPosition,2);
-        arrivalTimes = (sourceDistances + additionalPathLengths)/getSoundSpeed();
-        
         % Set all distances to unity to ignore them in the calculation
         sourceDistances = ones(numSources,1);
+        
+        % Compute unit vectors pointing towards each source
+        sourceDirections = normalizeVector(sourcePositions,2);
+        
+        % Compute time-of-arrival for each source's signal
+        if norm(listenerPosition) == 0
+            arrivalTimes = zeros(numSources,1);
+        else
+            additionalPathLengths = -dot(sourceDirections,ones(numSources,1)*listenerPosition,2);
+            arrivalTimes = (additionalPathLengths - min(additionalPathLengths))/getSoundSpeed();
+        end
     otherwise
         error('Unknown source type.');
 end
 
-if nargin < 5
+if nargin < 5 || isempty(timeDelays)
     timeDelays = arrivalTimes;
 else
     % Add in any user-specified additional delays
     timeDelays = timeDelays + arrivalTimes;
 end
 
+% sort signals
 [sortedDelays, sortingOrder] = sort(timeDelays - min(timeDelays));
 sortedDirections = sourceDirections(sortingOrder,:);
 sortedDistances = sourceDistances(sortingOrder);
 sortedGains = sourceGains(:,sortingOrder)*diag(1./sortedDistances);
-
-broadbandFlag = false;
-if nargin >= 7 && ~isempty(broadbandGains)
+if broadbandFlag
     sortedBroadbandGains = broadbandGains(:,sortingOrder)*diag(1./sortedDistances);
-    broadbandFlag = true;
 end
 
 % remove zero-amplitude signals
@@ -131,8 +150,10 @@ sortedDelays = sortedDelays - min(sortedDelays);
 
 % compute perceptual weights
 if broadbandFlag
+    % frequency-independent weights
     wTRThMat = ones(size(sortedGains,1),1) * computePrecedenceWeights(sortedBroadbandGains,sortedDirections,sortedDelays);
 else
+    % frequency-dependent weights
     wTRThMat = computePrecedenceWeights(sortedGains,sortedDirections,sortedDelays);
 %     wTRThMat = zeros(size(sortedGains));
 %     for kk = 1:size(sortedGains,1) % loop over frequency
@@ -154,6 +175,7 @@ for aa = 1:numel(alpha)
     weightedGains = wMat.*sortedGains;
     rVCell{aa} = real(diag(1./sum(weightedGains,2))*weightedGains*sortedDirections);
 end
+
 if numel(alpha) == 1
     rE = rECell{1};
     rV = rVCell{1};
@@ -166,7 +188,6 @@ end
 
 function wTRThMat = computePrecedenceWeights(sortedGains, sortedDirections, sortedDelays)
 %computePrecedenceWeights Precedence-effect weights of Stitt et al. (2016).
-%   
 %   W = computePrecedenceWeights(G, R, T) returns the K-by-N matrix W of
 %   precedence-effect weights, for N discrete sources and K frequencies, as
 %   computed by Stitt et al. (citation below).
