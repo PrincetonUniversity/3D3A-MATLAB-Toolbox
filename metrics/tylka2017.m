@@ -8,12 +8,12 @@ function [rPAvg, rPVec, fc] = tylka2017(a, Fs, VECTOR, varargin)
 %   [...] = TYLKA2017(A,FS,TYPE) computes localization vectors of TYPE
 %   'energy', 'velocity', or 'combined'.
 %
-%   TYLKA2017(A,FS,TYPE,Name1,Value1,Name2,Value2, ...) 
-%   Specifies optional comma-separated pairs of Name,Value arguments, 
-%   where Name is the argument name and Value is the corresponding value. 
-%   Name must appear inside single quotes (' '). You can specify several 
-%   name and value pair arguments in any order as Name1,Value1,...,NameN,
-%   ValueN.  Valid Name,Value arguments are as follows:
+%   [...] = TYLKA2017(A,FS,TYPE,Name1,Value1,Name2,Value2,...) specifies
+%   optional comma-separated pairs of Name,Value arguments, where Name is
+%   the argument name and Value is the corresponding value. Name must
+%   appear inside single quotes (' '). You can specify several name and
+%   value pair arguments in any order as Name1,Value1,...,NameN,ValueN.
+%   Valid Name,Value arguments are as follows:
 %
 %   'Band Average'          Two values: bandwidth (either 'erb' or a scalar
 %                           for a fractional octave bandwidth) and a
@@ -23,12 +23,6 @@ function [rPAvg, rPVec, fc] = tylka2017(a, Fs, VECTOR, varargin)
 %
 %   'AmbNorm'               String specifying the ambisonics normalization
 %                           of signals A.
-%
-%   'Broadband Flag'        Logical flag specifying whether to use
-%                           broadband source gains.
-%
-%   'Stimband Flag'         Logical flag specifying whether to weight
-%                           source gains by the stimulus signal.
 %
 %   'Crossover'             Crossover frequency for the 'combined' vector.
 %
@@ -115,22 +109,6 @@ else
     ambNorm = 'N3D';
 end
 
-% Specifiy broadband gain usage
-indx = find(strcmpi(varargin,'Broadband Flag'));
-if indx
-    broadbandFlag = varargin{indx+1};
-else
-    broadbandFlag = false;
-end
-
-% Specifiy simulus-weighted broadband gain usage
-indx = find(strcmpi(varargin,'Stimband Flag'));
-if indx
-    stimbandFlag = varargin{indx+1};
-else
-    stimbandFlag = false;
-end
-
 % Determine crossover frequency band
 indx = find(strcmpi(varargin,'Crossover'));
 if indx
@@ -172,27 +150,23 @@ end
 
 switch lower(VECTOR)
     case 'energy'
-        rPVec = compute_rP(a, Fs, VECTOR, alpha_E, pwGridFile_E, prepParams_E, bandWidth, avgRange, ambNorm, broadbandFlag, stimbandFlag, stimWeights);
+        rPVec = compute_rP(a, Fs, VECTOR, alpha_E, pwGridFile_E, prepParams_E, bandWidth, avgRange, ambNorm);
     case 'velocity'
-        rPVec = compute_rP(a, Fs, VECTOR, alpha_V, pwGridFile_V, prepParams_V, bandWidth, avgRange, ambNorm, broadbandFlag, stimbandFlag, stimWeights);
+        rPVec = compute_rP(a, Fs, VECTOR, alpha_V, pwGridFile_V, prepParams_V, bandWidth, avgRange, ambNorm);
     case 'combined'
-        rPE = compute_rP(a, Fs,  'energy' , alpha_E, pwGridFile_E, prepParams_E, bandWidth, avgRange, ambNorm, broadbandFlag, stimbandFlag, stimWeights);
-        rPV = compute_rP(a, Fs, 'velocity', alpha_V, pwGridFile_V, prepParams_V, bandWidth, avgRange, ambNorm, broadbandFlag, stimbandFlag, stimWeights);
+        rPE = compute_rP(a, Fs,  'energy' , alpha_E, pwGridFile_E, prepParams_E, bandWidth, avgRange, ambNorm);
+        rPV = compute_rP(a, Fs, 'velocity', alpha_V, pwGridFile_V, prepParams_V, bandWidth, avgRange, ambNorm);
         rPVec = combineVectors(rPV,rPE,xoIndx);
 end
 rPAvg = stimWeights.'*rPVec;
 
 end
 
-function rP = compute_rP(a, Fs, VECTOR, alpha, pwGridFile, prepParams, bandWidth, avgRange, ambNorm, broadbandFlag, stimbandFlag, stimWeights)
+function rP = compute_rP(a, Fs, VECTOR, alpha, pwGridFile, prepParams, bandWidth, avgRange, ambNorm)
 % Compute single vector spectrum
 
-if nargin < 10 || isempty(broadbandFlag)
-    broadbandFlag = false;
-end
-
 [pwGrid, wQList] = loadGridFile(pwGridFile);
-muQList = a2mu(a, pwGrid, ambNorm, false)*diag(wQList); % Compute plane-wave decomposition
+muQList = a2mu(a,pwGrid,ambNorm,false)*diag(wQList); % Compute plane-wave decomposition
 
 % Break-up plane-wave IRs into wavelets
 [fullpwGrid, pwSourceGains, timeDelays] = prepIRs(pwGrid, muQList, Fs, prepParams);
@@ -200,23 +174,11 @@ muQList = a2mu(a, pwGrid, ambNorm, false)*diag(wQList); % Compute plane-wave dec
 % Compute average amplitude in specified frequency bands
 [pwSourceGains, ~] = computeBandAvg(abs(pwSourceGains),getFreqVec(Fs, size(a,1)),bandWidth,avgRange,Fs);
 
-if nargin < 12 || isempty(stimWeights)
-    stimWeights = ones(size(pwSourceGains,1),1)/size(pwSourceGains,1);
-end
-
-if broadbandFlag && stimbandFlag
-    broadbandGains = sqrt((stimWeights.')*(pwSourceGains.^2));
-elseif broadbandFlag && ~stimbandFlag
-    broadbandGains = sqrt(mean(pwSourceGains.^2,1));
-else
-    broadbandGains = [];
-end
-
 switch lower(VECTOR)
     case 'energy'
-        [rP, ~] = stitt2016(fullpwGrid, [], pwSourceGains, alpha, timeDelays, 'plane', broadbandGains);
+        [rP, ~] = stitt2016(fullpwGrid, [], pwSourceGains, alpha, timeDelays, 'plane');
     case 'velocity'
-        [~, rP] = stitt2016(fullpwGrid, [], pwSourceGains, alpha, timeDelays, 'plane', broadbandGains);
+        [~, rP] = stitt2016(fullpwGrid, [], pwSourceGains, alpha, timeDelays, 'plane');
 end
 
 end
