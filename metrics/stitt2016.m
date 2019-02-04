@@ -19,6 +19,22 @@ function [rE, rV] = stitt2016(sourcePositions, listenerPosition, sourceGains, al
 %       (either 'point' or 'plane');
 %    7) B (optional) is a 1-by-N matrix of broadband source gains.
 %
+%   For TYPE = 'point', a point-source model of the sound field is created,
+%   in which the positions of the sources relative to the listener are
+%   computed, as well as the corresponding times-of-flight and directions-
+%   of-arrival. Any additional time delays specified by T are added to the
+%   computed times-of-flight.
+%
+%   For TYPE = 'plane', a plane-wave source model is created, and only the
+%   source directions relative to the origin are retained; the source
+%   distances are ignored. For a listener position not at the origin (i.e.,
+%   NORM(RL)>0), the additional path lengths are computed based on the
+%   directions-of-travel of each plane-wave signal, as well as the
+%   corresponding times-of-arrival. If the listener position is at the
+%   origin (NORM(RL)=0), then the additional time delays T should be
+%   specified. Otherwise, all of the sources will be assumed to arrive
+%   coincidentally, and no precedence effect will be modeled.
+%
 %   Note: if B is specified, then the precedence-effect weights are
 %   computed using B as the source gains such that the resulting weights
 %   are frequency-independent. Otherwise, the precedence-effect weights are
