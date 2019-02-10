@@ -2,8 +2,8 @@ function [y,lag] = xcoh(x1,x2)
 %XCOH Cross-coherence
 %   Y = XCOH(X1,X2) computes the cross-coherence between input signals X1 
 %   and X2 and returns the output in Y.
-%       If X1 and X2 are vectors, they must have the same length ,N. Y will 
-%       be a column vector with length (2*N) - 1.
+%       If X1 and X2 are vectors, they must have the same length, N. Y will 
+%       be a column vector with length (2*N)-1.
 %       If X1 and X2 are matrices, they must have the same dimensions and
 %       the cross-coherence of corresponding columns is evaluated.
 %
@@ -53,10 +53,10 @@ narginchk(2,2);
 
 validateattributes(x1,{'double'},{'2d','finite','nonnan','nonempty'},...
     'xcoh','X1',1)
-x1 = shiftdim(x1);
+x1 = shiftdim(x1); % If vector, force to column
 validateattributes(x2,{'double'},{'2d','finite','nonnan','nonempty'},...
     'xcoh','X2',2)
-x2 = shiftdim(x2);
+x2 = shiftdim(x2); % If vector, force to column
 
 if size(x1) ~= size(x2)
     error(['X1 and X2 must have the same length (if vectors) or',...

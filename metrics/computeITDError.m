@@ -5,7 +5,7 @@ function [err,err_avg,err_std] = computeITDError(test,ref,TYPE,DIM)
 %   of spatial direction) is returned as E along with EM, the average error 
 %   (averaging across all directions). The standard deviation spectrum ES 
 %   is also returned. Inputs A and B must be of the same size and store ITD 
-%   as row vectors.
+%   as row vectors. Note that E = B-A.
 %
 %   [E,EM,ES] = COMPUTEITDERROR(...,TYPE) additionally specifies the type
 %   of error to compute. The options are 'rel' (default) which computes the 

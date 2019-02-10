@@ -11,8 +11,8 @@ function [y,l] = getInterpMax(x,DIM)
 %   Y = GETINTERPMAX(X,DIM) specifies the dimension along which the maximum
 %   should be computed.
 %
-%   [Y,L] = GETINTERPMAX(...) also returns the index/indices corresponding
-%   to the maximum values in vector, L.
+%   [Y,L] = GETINTERPMAX(...) also returns, in L, the index/indices 
+%   corresponding to the maximum values.
 %
 %   See also MAX.
 

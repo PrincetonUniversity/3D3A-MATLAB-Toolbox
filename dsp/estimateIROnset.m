@@ -25,7 +25,7 @@ function onsetMat = estimateIROnset(inputIR,varargin)
 %           3.ii. {'phase',fS,[fL,fU],'linearfit'} optionally applies a
 %           linear fit to the unwrapped phase response before computing the
 %           slope. The fit is also applied over [fL,fU].
-%       4. {'xcorr'} estimates onset as the sample value corresponding to
+%       4. {'mpxc'} estimates onset as the sample value corresponding to
 %       the max. absolute value of the cross-correlation spectrum of the
 %       inputIR and its minimum-phase version.
 %
@@ -154,7 +154,7 @@ switch lower(METHOD{1})
         end
         onsetMat = -fS*mean(diag(1./(2*pi*fVec(fLIndx:fUIndx)))*...
             phaseSpec(fLIndx:fUIndx,:),'omitnan');
-    case 'xcorr'
+    case 'mpxc'
         onsetMat = zeros(1,numIRs);
         minPhaseIR = makeMinPhaseIR(inputIR,'hilb');
         for ii = 1:numIRs
