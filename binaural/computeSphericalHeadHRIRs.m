@@ -1,18 +1,18 @@
-function [hL,hR] = getSphericalHeadHRIRs(a,S,varargin)
-%GETSPHERICALHEADHRIRS HRIRs of a rigid spherical head.
-%   [hL,hR] = GETSPHERICALHEADHRIRS(a,th) returns HRIRs for a spherical 
-%   head of radius a and for a source at direction S. The HRIRs have a 
+function [hL,hR] = computeSphericalHeadHRIRs(a,S,varargin)
+%COMPUTESPHERICALHEADHRIRS HRIRs of a rigid spherical head.
+%   [hL,hR] = COMPUTESPHERICALHEADHRIRS(A,S) returns HRIRs for a spherical 
+%   head of radius A and for a source at direction S. The HRIRs have a 
 %   duration of 0.005 s at a sampling rate of 44100 Hz. The left and right 
-%   "ear" positions are at [90,0,a] and [270,0,a], respectively, when 
+%   "ear" positions are at [90,0,A] and [270,0,A], respectively, when 
 %   specified in SOFA spherical coordinates. The source distance is set to 
 %   infinity. The infinite sum in the analytical formulation (see refs. 
-%   [1-3]) is truncated to 51 terms by default. The head radius should be 
+%   [1-3]) is truncated to 41 terms by default. The head radius should be 
 %   specified in metres. The source direction should be specified in SOFA 
 %   spherical coordinates as [az,el], in degrees. If S is a matrix, HRIRs
 %   are computed for each source direction. S must have dimensions P-by-2,
 %   where P is the number of directions.
 %
-%   ___ = GETSPHERICALHEADHRIRS(...,Name1,Value1,...) allows optional
+%   ___ = COMPUTESPHERICALHEADHRIRS(...,Name1,Value1,...) allows optional
 %   specification of the following Name-Value pairs:
 %       1. 'T',T - duration of the HRIRs in seconds.
 %       2. 'fS',fS - sampling rate in Hz.
@@ -24,8 +24,8 @@ function [hL,hR] = getSphericalHeadHRIRs(a,S,varargin)
 %       6. 'N',N - truncation order for truncating the infinite sum to
 %       have N+1 terms.
 %       7. 'makecausal',c - flag to specify whether or not to force output 
-%       IRs to be causal by applying an artificial delay. c can be 
-%       specified as true or false (default).
+%       IRs to be causal by applying an artificial delay. c can be true or 
+%       false (default).
 %
 %   Needs: Symbolic Math Toolbox
 
@@ -71,7 +71,7 @@ function [hL,hR] = getSphericalHeadHRIRs(a,S,varargin)
 narginchk(2,16);
 
 % Parse and verify inputs
-inputs = parseGetSphericalHeadHRIRsInputs(a,S,varargin);
+inputs = parseComputeSphericalHeadHRIRsInputs(a,S,varargin);
 
 % Extract parsed inputs
 a = inputs.a;
@@ -171,44 +171,44 @@ hR = ifft(hrtfR,irLen,1,'symmetric');
 
 end
 
-function inputs = parseGetSphericalHeadHRIRsInputs(a,S,opts)
-%PARSEGETSPHERICALHEADHRIRSINPUTS Parse and verify inputs for the 
-%getSphericalHeadHRIRs function.
+function inputs = parseComputeSphericalHeadHRIRsInputs(a,S,opts)
+%PARSECOMPUTESPHERICALHEADHRIRSINPUTS Parse and verify inputs for the 
+%computeSphericalHeadHRIRs function.
 
 p = inputParser;
 
 % Required inputs
 addRequired(p,'a',@(x)validateattributes(x,{'double'},{'scalar',...
     'nonempty','nonnan','finite','real','positive'},...
-    'getSphericalHeadHRIRs','a',1));
+    'computeSphericalHeadHRIRs','A',1));
 addRequired(p,'S',@(x)validateattributes(x,{'double'},{'vector',...
     'nonempty','nonnan','finite','real','numel',2,'>=',-90,'<',360},...
-    'getSphericalHeadHRIRs','S',2));
+    'computeSphericalHeadHRIRs','S',2));
 
 % Optional inputs
 addParameter(p,'T',0.005,@(x)validateattributes(x,{'double'},...
     {'scalar','nonempty','nonnan','finite','real','positive'},...
-    'getSphericalHeadHRIRs','duration, T'));
+    'computeSphericalHeadHRIRs','T'));
 addParameter(p,'fS',44100,@(x)validateattributes(x,{'double'},...
-    {'scalar','nonempty','nonnan','finite','real','positive','integer'},...
-    'getSphericalHeadHRIRs','sampling rate, fS'));
+    {'scalar','nonempty','nonnan','finite','real','positive'},...
+    'computeSphericalHeadHRIRs','fS'));
 addParameter(p,'eL',[90,0],@(x)validateattributes(x,{'double'},...
     {'vector','nonempty','nonnan','finite','real','numel',2,'>=',-90,...
-    '<',360},'getSphericalHeadHRIRs','left ear position, eL'));
+    '<',360},'computeSphericalHeadHRIRs','eL'));
 addParameter(p,'eR',[270,0],@(x)validateattributes(x,{'double'},...
     {'vector','nonempty','nonnan','finite','real','numel',2,'>=',-90,...
-    '<',360},'getSphericalHeadHRIRs','right ear position, eR'));
+    '<',360},'computeSphericalHeadHRIRs','eR'));
 addParameter(p,'R',inf,@(x)validateattributes(x,{'double'},...
     {'scalar','nonempty','nonnan','real','positive'},...
-    'getSphericalHeadHRIRs','source distance, R'));
-addParameter(p,'N',50,@(x)validateattributes(x,{'double'},...
-    {'scalar','nonempty','nonnan','finite','real','nonnegative',...
-    'integer'},'getSphericalHeadHRIRs','order, N'));
+    'computeSphericalHeadHRIRs','R'));
+addParameter(p,'N',40,@(x)validateattributes(x,{'double'},...
+    {'scalar','nonempty','nonnan','finite','nonnegative','integer'},...
+    'computeSphericalHeadHRIRs','N'));
 addParameter(p,'makecausal',false,@(x)validateattributes(x,{'logical'},...
-    {'nonempty','nonnan'},'getSphericalHeadHRIRs','causal, c'));
+    {'nonempty','nonnan'},'computeSphericalHeadHRIRs','makecausal, c'));
 
 p.CaseSensitive = false;
-p.FunctionName = 'getSphericalHeadHRIRs';
+p.FunctionName = 'computeSphericalHeadHRIRs';
 
 parse(p,a,S,opts{:});
 
