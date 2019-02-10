@@ -26,7 +26,7 @@ function ITD = estimateITD(hL,hR,Fs,METHOD,varargin)
 %       4. 'thresholding' or 'thresh' estimates ITD accurate to 1 sample at 
 %   the specified sampling rate by thresholding with a threshold of 0.2 
 %   (20% of the absolute maximum of each IR). This is the default.
-%       5. 'xcorrminph' estimates ITD accurate to 1 sample at the specified
+%       5. 'mpxc' estimates ITD accurate to 1 sample at the specified
 %   sampling rate by first computing the onset of hL and hR by 
 %   cross-correlating each with its corresponding minimum-phase version, 
 %   and then taking the difference between these computed onsets. For more 
@@ -132,7 +132,8 @@ if ~isempty(indx)
     cutoff = specCell{1,2}; % cutoff frequency in Hz
     ftype = specCell{1,3}; % filter type; see 'butter' help
     Wn = cutoff/(Fs/2);
-    [b,a] = butter(n,Wn,ftype); % From Signal Processing Toolbox
+    [z,p,k] = butter(n,Wn,ftype); % From Signal Processing Toolbox
+    [b,a] = zp2tf(z,p,k);
     if length(specCell) == 4 && strcmpi(specCell{1,4},'zerophase')
         hL = filtfilt(b,a,hL); % From Signal Processing Toolbox
         hR = filtfilt(b,a,hR); % From Signal Processing Toolbox
@@ -153,8 +154,15 @@ end
 indx = find(strcmpi(varargin,'resample') | strcmpi(varargin,'upsample'),1);
 if ~isempty(indx)
     [p,q] = rat(varargin{indx+1});
-    hL = resample(hL,p,q); % From Signal Processing Toolbox
-    hR = resample(hR,p,q); % From Signal Processing Toolbox
+    [~,aaf] = resample([hL,hR],p,q); % From Signal Processing Toolbox
+    if strcmpi(METHOD,'mpxc')
+        aaf_mp = makeMinPhaseIR(aaf,'hilb');
+        hL = resample(hL,p,q,aaf_mp);
+        hR = resample(hR,p,q,aaf_mp);
+    else
+        hL = resample(hL,p,q,aaf);
+        hR = resample(hR,p,q,aaf);
+    end
     Fs = Fs*(p/q);
 end
 
@@ -206,9 +214,9 @@ switch lower(METHOD)
         dL = estimateIROnset(hL,{'threshold',thp*100});
         dR = estimateIROnset(hR,{'threshold',thp*100});
         d = dL-dR;
-    case {'xcorrminph'}
-        dL = estimateIROnset(hL,{'xcorr'});
-        dR = estimateIROnset(hR,{'xcorr'});
+    case {'mpxc'}
+        dL = estimateIROnset(hL,{'mpxc'});
+        dR = estimateIROnset(hR,{'mpxc'});
         d = dL-dR;
     otherwise
         error('Invalid input for METHOD.')
