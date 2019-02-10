@@ -4,7 +4,7 @@ function ITD = computeSphericalHeadITD(a,sPos,TYPE)
 %   spherical head of radius A (specified in meters), and for sound source
 %   positions, S, specified in SOFA cartesian coordinates, using the
 %   Woodworth and Schlosberg formula (see, for example, Kuhn [1]). S must
-%   be specified as an N-by-3 matrix.
+%   be specified as an N-by-3 matrix. B will contain ITD values in seconds.
 %       If A is a scalar, B will be a row vector of length N.
 %       If A is a vector of length M, B will be an M-by-N matrix.
 %
@@ -65,7 +65,7 @@ validateattributes(TYPE,{'char'},{'scalartext','nonempty'},...
 
 % Reformat inputs
 a = shiftdim(a); % If a is a row vector, force it to be a column.
-sDir = sofaC2cipicI(sPos,'flipAz'); % Convert to interaural coordinates
+sDir = sofaC2cipicI(sPos); % Convert to interaural coordinates
 theta = deg2rad(sDir(:,1)).'; % Row vector of azimuths in radians
 
 % Main calculation
