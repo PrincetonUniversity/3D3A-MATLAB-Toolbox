@@ -1,12 +1,13 @@
-function hNorm = normalizeSignal(h,varargin)
+function [hNorm,normValdB] = normalizeSignal(h,varargin)
 %NORMALIZESIGNAL Normalize a time-domain signal.
-%   HN = NORMALIZESIGNAL(H) normalizes time-domain signals in H such that 
-%   the maximum absolute amplitude of each is 1. If H is a matrix, the
+%   [HN,NV] = NORMALIZESIGNAL(H) normalizes time-domain signals in H such 
+%   that the maximum absolute amplitude of each is 1. If H is a matrix, the
 %   signals must be stored as columns and a 'global' normalization is 
 %   performed (i.e. the max. absolute amplitude across all signals is set 
-%   to 1). The normalized signals in HN are stored as columns.
+%   to 1). The normalized signals in HN are stored as columns. Also
+%   returned is the normalization value, NV, in dB.
 %
-%   HN = NORMALIZESIGNAL(H,{'f',fVal,'fs',fS}) normalizes signals in H 
+%   ___ = NORMALIZESIGNAL(H,{'f',fVal,'fs',fS}) normalizes signals in H 
 %   such that the magnitude at frequency fVal (specified in Hz) is 0 dB. 
 %   The sampling rate, fS, of the signals in H must be specified in Hz. If
 %   fVal is specified as a range of frequencies, fVal = [fL,fU], the 
@@ -15,15 +16,15 @@ function hNorm = normalizeSignal(h,varargin)
 %   exists is identified and normalization is performed such that this 
 %   magnitude is set to 0 dB.
 %
-%   HN = NORMALIZESIGNAL(H,{'f',fVal,'mag',magVal,'fs',fS}) additionally
+%   ___ = NORMALIZESIGNAL(H,{'f',fVal,'mag',magVal,'fs',fS}) additionally
 %   specifies magVal, the magnitude value (in dB) that the normalized 
 %   signals must have at frequency fVal.
 %
-%   HN = NORMALIZESIGNAL(H,{...},'local') performs a 'local' normalization
+%   ___ = NORMALIZESIGNAL(H,{...},'local') performs a 'local' normalization
 %   (i.e. for a matrix of signals, H, the normalization of each signal in H
 %   is performed independently of the other signals in H). If there are no
 %   parameters to specify as the second input, use:
-%       HN = NORMALIZESIGNAL(H,{},'local')
+%       [HN,NV] = NORMALIZESIGNAL(H,{},'local')
 
 %   =======================================================================
 %   This file is part of the 3D3A MATLAB Toolbox.
@@ -99,7 +100,7 @@ else
     validateattributes(magVal,{'double'},{'scalar','nonempty','nonnan',...
         'finite','real'},'normalizeSignal','magVal');
     validateattributes(fVal,{'double'},{'2d','nonempty','nonnan',...
-        'finite','real','nonnegative'},'normalizeSignal','fVal');
+        'nonnegative'},'normalizeSignal','fVal');
     
     fVec = getFreqVec(fS,hLen);
     switch length(fVal)
@@ -148,6 +149,7 @@ switch lower(NTYPE)
 end
 
 hNorm = h.*normVal;
+normValdB = mag2db(normVal);
 
 end
 
