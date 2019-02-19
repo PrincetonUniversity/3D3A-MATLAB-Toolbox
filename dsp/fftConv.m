@@ -1,28 +1,35 @@
 function y = fftConv(h,x,varargin)
 %FFTCONV Convolve two signals in the frequency domain.
-%   y = FFTCONV(h,x) circularly convolves h with x in the frequency domain 
-%   to produce y. If h and x are vectors, they must have the same length, 
-%   and the output, y, will be a column vector with this length. If h and x 
-%   are matrices, they must have the same size and the convolution is 
-%   performed between corresponding pairs of column vectors. If only one of 
-%   h or x is a matrix, then each column of the matrix is convolved with 
-%   the other input (which must be either a vector or a scalar). The output
-%   , y, will then have the same size as h and/or x. This command may also 
-%   be specified as y = FFTCONV(h,x,'circ');
+%   Y = FFTCONV(H,X) circularly convolves H with X in the frequency domain 
+%   to produce Y. 
+%       If H and X are vectors of length N, Y will be a length-N column
+%       vector.
+%       If H and X are matrices of size N-by-M, Y will be an N-by-M matrix
+%       with convolution being performed between corresponding pairs of
+%       column vectors.
+%       If only one of H or X is a matrix of size N-by-M, each column of 
+%       the matrix is convolved with the other input (which must be a
+%       vector of length N) to produce Y with size N-by-M.
+%   This command may also be specified as Y = FFTCONV(H,X,'circ');
 %
-%   y = FFTCONV(...,'lin') linearly convolves h with x in the frequency 
-%   domain to produce y. h and x need not have the same length in this
-%   case. The length of y is the length of h plus the length of x minus 1.
-%   h and/or x may be matrices as described earlier. Linear convolution is
-%   implemented as circular convolution after h and x have been
-%   sufficiently zero-padded on the right. Consequently, it is assumed that
-%   both h and x are causal.
+%   Y = FFTCONV(...,'lin') linearly convolves H with X in the frequency 
+%   domain to produce Y. If the signals in H and X have lengths P and Q,
+%   respectively, then signals in Y will have length P + Q - 1.
+%   Linear convolution is implemented as circular convolution after signals 
+%   in H and X have been sufficiently zero-padded on the right. 
+%   Consequently, it is assumed that both H and X are causal.
 %
-%   y = FFTCONV(...,'lin',TRUNC) optionally specifies whether y should be
-%   truncated to have the same length as h or x. The options for TRUNC are:
-%       0 - (length of h) + (length of x) - 1 (default)
-%       1 - length of h
-%       2 - length of x
+%   Y = FFTCONV(...,'lin',TRUNC) optionally specifies whether signals in Y 
+%   should be truncated to have the same length as signals in H or X. The 
+%   options for TRUNC are provided below:
+%   ---------------------------------------------
+%       TRUNC       Length of signals in Y
+%   =============================================
+%         0               P + Q - 1
+%         1                   P
+%         2                   Q
+%   ---------------------------------------------
+%   where P and Q denote the length of signals in H and X, respectively.
 %
 %   See also FFTDECONV.
 
@@ -78,7 +85,7 @@ if numColsh == 1 && numColsx > 1
 elseif numColsx == 1 && numColsh > 1
     x = repmat(x,1,numColsh);
 elseif numColsx > 1 && numColsh > 1 && numColsh ~= numColsx
-    error(['If h and x are both matrices, they must have the same ',...
+    error(['If H and X are both matrices, they must have the same ',...
         'number of columns.'])
 end
 
@@ -115,9 +122,9 @@ p = inputParser;
 
 % Required inputs
 addRequired(p,'h',@(x)validateattributes(x,{'double'},{'2d','nonempty',...
-    'nonnan','finite'},'fftConv','h',1));
+    'nonnan','finite'},'fftConv','H',1));
 addRequired(p,'x',@(x)validateattributes(x,{'double'},{'2d','nonempty',...
-    'nonnan','finite'},'fftConv','x',2));
+    'nonnan','finite'},'fftConv','X',2));
 
 % Optional inputs
 addOptional(p,'TYPE','circ',@(x)validateattributes(x,{'char'},...
