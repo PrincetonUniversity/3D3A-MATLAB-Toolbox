@@ -13,17 +13,10 @@ function h = fftDeconv(y,x,varargin)
 %   the signals in Y prior to deconvolution. This command may also be
 %   specified as: H = FFTDECONV(Y,X,'circ') or H = FFTDECONV(Y,X,[]).
 %
-%   H = FFTDECONV(Y,X,'padcirc') performs padded circular deconvolution. 
-%   This is the same as circular deconvolution as described above, except 
-%   signals in both X and Y are zero-padded on the right to have lengths 
-%   that are the first power of 2 greater than M+N-1, where M and N are the 
-%   lengths of the signals in X and Y, respectively. The signals in H will
-%   have the same lengths as those in Y prior to zero padding.
-%
 %   H = FFTDECONV(Y,X,'lin') performs linear deconvolution such that X,
-%   when linearly convolved with H, will produce Y. If the lengths of the 
-%   signals in X are M and those in Y are N, where M <= N, then the length
-%   of the signals in H will be N-M+1.
+%   when linearly convolved with H, will produce Y, assuming both X and H 
+%   are causal. If the lengths of the signals in X are M and those in Y are 
+%   N, where M <= N, then the length of the signals in H will be N-M+1.
 %
 %   H = FFTDECONV(...,'reg',TYPE) allows specification of the type of
 %   regularization to perform when inverting X prior to deconvolving out of
@@ -97,6 +90,7 @@ end
 
 if numColsx == 1 && numColsy > 1
     x = repmat(x,1,numColsy);
+    numColsx = numColsy;
 elseif numColsx > 1 && numColsy > 1 && numColsy ~= numColsx
     error(['If y and x are both matrices, they must have the same',...
         ' number of columns'])
@@ -110,11 +104,6 @@ validateattributes(TYPE{1},{'char'},{'scalartext'},'fftDeconv',...
 switch lower(OPT)
     case 'circ'
         x = [x;zeros(yLen-xLen,numColsx)];
-        hLen = yLen;
-    case 'padcirc'
-        padLen = 2^nextpow2(yLen+xLen);
-        y = [y;zeros(padLen-yLen,numColsy)];
-        x = [x;zeros(padLen-xLen,numColsx)];
         hLen = yLen;
     case 'lin'
         x = [x;zeros(yLen-xLen,numColsx)];
