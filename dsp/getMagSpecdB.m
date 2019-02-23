@@ -7,6 +7,9 @@ function outputSpec = getMagSpecdB(varargin)
 %   
 %   outputSpec = GETMAGSPECDB(inputIR,DIM) additionally specifies the 
 %   dimension along which to perform spectrum computation.
+
+%   outputSpec = GETMAGSPECDB(inputIR,DIM,NORM) additionally specifies the 
+%   normalization to use. The default value is 1. See GETMAGSPEC.
 %
 %   Needs: Signal Processing Toolbox and/or Control System Toolbox.
 %

@@ -1,4 +1,4 @@
-function outputSpec = getMagSpec(inputIR,DIM)
+function outputSpec = getMagSpec(inputIR,DIM,NORM)
 %GETMAGSPEC Compute magnitude spectrum.
 %   outputSpec = GETMAGSPEC(inputIR) returns the magnitude spectrum given 
 %   an input impulse response (IR). inputIR may be a matrix of IRs, with 
@@ -7,6 +7,9 @@ function outputSpec = getMagSpec(inputIR,DIM)
 %   
 %   outputSpec = GETMAGSPEC(inputIR,DIM) additionally specifies the 
 %   dimension along which to perform spectrum computation.
+%
+%   outputSpec = GETMAGSPEC(inputIR,DIM,NORM) additionally specifies the 
+%   normalization to use. The default value is 1.
 %
 %   See also GETPHASESPEC, GETMAGSPECDB.
 
@@ -42,18 +45,22 @@ function outputSpec = getMagSpec(inputIR,DIM)
 %   SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 %   =======================================================================
 
-narginchk(1,2);
+narginchk(1,3);
 
 validateattributes(inputIR,{'double'},{'2d','nonempty','nonnan',...
     'finite'},'getMagSpec','inputIR',1)
 
-if nargin < 2
-    outputSpec = abs(fft(inputIR));
+if nargin < 3
+    NORM = 1;
+end
+
+if nargin < 2 || isempty(DIM)
+    outputSpec = abs(fft(inputIR))/NORM;
 else
     validateattributes(DIM,{'double'},{'scalar','nonempty','nonnan',...
         'finite','integer','positive','<=',ndims(inputIR)},'getMagSpec',...
         'DIM',2)
-    outputSpec = abs(fft(inputIR,[],DIM));
+    outputSpec = abs(fft(inputIR,[],DIM))/NORM;
 end
 
 end
