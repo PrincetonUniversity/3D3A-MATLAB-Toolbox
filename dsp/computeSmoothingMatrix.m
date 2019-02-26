@@ -4,7 +4,7 @@ function M = computeSmoothingMatrix(FFTLen, FRAC, METHOD, WINTYPE)
 %   matrix M for smoothing a transfer function of length HLEN with
 %   1/N-octave smoothing, using the specified smoothing METHOD and WINTYPE.
 %
-%   The returned matrix M will be (1+HLEN/2)-by-HLEN.
+%   The returned matrix M will be FLOOR(1+HLEN/2)-by-HLEN.
 %
 %   See also FRACTIONALOCTAVESMOOTH.
 
@@ -48,9 +48,10 @@ function M = computeSmoothingMatrix(FFTLen, FRAC, METHOD, WINTYPE)
 %         Smoothing of Transfer Functions that Preserves Log-Frequency
 %         Symmetry.
 
+specLen = floor(1 + FFTLen/2);
+
 if FRAC == 0
     warning('No smoothing applied.')
-    specLen = 1 + FFTLen/2;
     M = eye(specLen,FFTLen);
     return;
 end
@@ -61,7 +62,6 @@ switch(lower(METHOD))
     case {'hatz','hatziantoniou'}
         M = smoothingMatrix_hatz(FFTLen, FRAC, WINTYPE);
     otherwise
-        specLen = 1 + FFTLen/2;
         M = eye(specLen,FFTLen);
 end
 
@@ -69,7 +69,7 @@ end
 
 function M = smoothingMatrix_tylka(FFTLen, FRAC, WINTYPE)
 
-specLen = 1 + FFTLen/2;
+specLen = floor(1 + FFTLen/2);
 M = zeros(specLen, FFTLen);
 
 M(1,1) = 1;
@@ -84,8 +84,8 @@ for n = 1:(specLen-2)
         nH = specLen - 1;
         nL = floor((n^2)/nH);
     end
-    if fH > (specLen - 1)
-        fH = specLen - 1;
+    if fH > (FFTLen/2)
+        fH = FFTLen/2;
         fL = (n^2)/fH;
     end
     
@@ -119,18 +119,17 @@ end
 
 function M = smoothingMatrix_hatz(FFTLen, FRAC, WINTYPE)
 
-specLen = 1 + FFTLen/2;
+specLen = floor(1 + FFTLen/2);
 M = zeros(specLen, FFTLen);
 
 Q = 1 / (2^(0.5 / FRAC) - 2^(-0.5 / FRAC));
-mMax = (FFTLen/2) - 1;
 
 M(1,1) = 1;
 for n = 1:(specLen-1)
     % Window half-width calculation
     m = floor((0.5 * n) / Q);
-    if m > mMax
-        m = mMax;
+    if m > n
+        m = n;
     end
     
     % Window function computation

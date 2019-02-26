@@ -62,12 +62,6 @@ narginchk(2,5);
 
 H = shiftdim(H);
 FFTLen = size(H,1);
-padFlag = false;
-if mod(FFTLen,2) ~= 0
-    H = [H;H(FFTLen,:)];
-    FFTLen = FFTLen + 1;
-    padFlag = true;
-end
 
 if ~isscalar(varargin{1})
     % Use precomputed smoothing matrix
@@ -108,10 +102,10 @@ switch(lower(SCALE))
         Hsm1 = (Hsm1a.*Hsm1b)./(abs(Hsm1a));
 end
 
-
-Hsm = [Hsm1; flip(conj(Hsm1(2:end-1,:)))];
-if padFlag
-    Hsm = Hsm(1:(FFTLen-1),:);
+if mod(FFTLen,2) % FFTLen is odd
+    Hsm = [Hsm1; flip(conj(Hsm1(2:end,:)))];
+else % FFTLen is even
+    Hsm = [Hsm1; flip(conj(Hsm1(2:end-1,:)))];
 end
 
 end
