@@ -7,7 +7,7 @@ function profileOut = getPiecewiseProfile(params,pLen)
 %   approximate start and end points of a given piece and eps specifies the 
 %   value/height of the piece. w1 and w2 must range from 0 to 1 with w2 > 
 %   w1. The values of w1 and w2 in row i must exceed the corresponding 
-%   values in row j, where i > j. eps must be non-negative. profile is 
+%   values in row j, where i > j. eps must be non-negative. The profile is 
 %   returned as a column vector of length pLen.
 
 %   =======================================================================

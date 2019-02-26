@@ -60,13 +60,21 @@ function Hsm = fractionalOctaveSmooth(H, varargin)
 
 narginchk(2,5);
 
+H = shiftdim(H);
 FFTLen = size(H,1);
+padFlag = false;
+if mod(FFTLen,2) ~= 0
+    H = [H;H(FFTLen,:)];
+    FFTLen = FFTLen + 1;
+    padFlag = true;
+end
 
 if ~isscalar(varargin{1})
     % Use precomputed smoothing matrix
     M = varargin{1};
     if FFTLen ~= size(M,2)
-        error('Size mismatch between input transfer function and smoothing matrix.');
+        error(['Size mismatch between input transfer function and',...
+            ' smoothing matrix.']);
     end
 else
     % Compute smoothing matrix using specified parameters
@@ -102,5 +110,8 @@ end
 
 
 Hsm = [Hsm1; flip(conj(Hsm1(2:end-1,:)))];
+if padFlag
+    Hsm = Hsm(1:(FFTLen-1),:);
+end
 
 end

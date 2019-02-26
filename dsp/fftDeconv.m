@@ -24,8 +24,8 @@ function h = fftDeconv(y,x,varargin)
 %   the COMPUTEINVERSEFILTER function as elements of the cell array. For
 %   example, to use 'gardner1994' with a 'dynRange' of 30, specify TYPE as
 %   follows: {'gardner1994',{'dynRange',30}}. By default, no regularization 
-%   is performed (i.e. TYPE = {'direct'}). If 'circ','padcirc' or 'lin' is
-%   not specified as a third input, specify the third input as [] before
+%   is performed (i.e. TYPE = {'direct'}). If 'circ' or 'lin' is not
+%   specified as a third input, specify the third input as [] before
 %   specifying 'reg' and TYPE.
 %
 %   See also FFTCONV, COMPUTEINVERSEFILTER.
@@ -85,17 +85,17 @@ x = shiftdim(x);
 [xLen,numColsx] = size(x);
 
 if xLen > yLen
-    error('The length of x cannot exceed that of y.')
+    error('The length of X cannot exceed that of Y.')
 end
 
 if numColsx == 1 && numColsy > 1
     x = repmat(x,1,numColsy);
     numColsx = numColsy;
 elseif numColsx > 1 && numColsy > 1 && numColsy ~= numColsx
-    error(['If y and x are both matrices, they must have the same',...
+    error(['If Y and X are both matrices, they must have the same',...
         ' number of columns'])
 elseif numColsy == 1 && numColsx > 1
-    error('If y is a vector, x cannot be a matrix.')
+    error('If Y is a vector, X cannot be a matrix.')
 end
 
 validateattributes(TYPE{1},{'char'},{'scalartext'},'fftDeconv',...
