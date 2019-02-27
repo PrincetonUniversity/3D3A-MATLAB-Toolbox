@@ -4,8 +4,6 @@ function Hsm = fractionalOctaveSmooth(H, varargin)
 %   transfer function HS given the raw transfer function H. If H is a
 %   matrix, the smoothing operation is carried out along its columns.
 %
-%   HS = FRACTIONALOCTAVESMOOTH(H,M) uses a precomputed smoothing matrix M.
-%
 %   HS = FRACTIONALOCTAVESMOOTH(H,N,METHOD) specifies the smoothing METHOD
 %   to be used. By default, 'tylka' is assumed.
 %
@@ -15,6 +13,11 @@ function Hsm = fractionalOctaveSmooth(H, varargin)
 %   HS = FRACTIONALOCTAVESMOOTH(H,N,METHOD,WINTYPE,SCALE) performs
 %   smoothing on the specified SCALE, either 'raw', 'power' (default),
 %   'dB', 'complex', or 'equiv-complex'.
+%
+%   HS = FRACTIONALOCTAVESMOOTH(H,M) uses a precomputed smoothing matrix M.
+%
+%   HS = FRACTIONALOCTAVESMOOTH(H,M,SCALE) additionally specifies the
+%   smoothing SCALE for smoothing with a precomputed smoothing matrix M.
 %
 %   See also COMPUTESMOOTHINGMATRIX.
 
@@ -69,6 +72,11 @@ if ~isscalar(varargin{1})
     if FFTLen ~= size(M,2)
         error(['Size mismatch between input transfer function and',...
             ' smoothing matrix.']);
+    end
+    if numel(varargin) > 1
+        SCALE = varargin{2};
+    else
+        SCALE = 'power';
     end
 else
     % Compute smoothing matrix using specified parameters
