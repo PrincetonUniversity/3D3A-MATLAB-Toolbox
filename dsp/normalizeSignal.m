@@ -7,18 +7,21 @@ function [hNorm,normValdB] = normalizeSignal(h,varargin)
 %   to 1). The normalized signals in HN are stored as columns. Also
 %   returned is the normalization value, NV, in dB.
 %
-%   ___ = NORMALIZESIGNAL(H,{'f',fVal,'fs',fS}) normalizes signals in H 
+%   ___ = NORMALIZESIGNAL(H,{'f',fVal,'fs',fS}) performs normalization
 %   such that the magnitude at frequency fVal (specified in Hz) is 0 dB. 
-%   The sampling rate, fS, of the signals in H must be specified in Hz. If
-%   fVal is specified as a range of frequencies, fVal = [fL,fU], the 
-%   average magnitude in that frequency range is set to 0 dB. If fVal is
-%   set to inf, then the frequency at which the global maximum magnitude 
-%   exists is identified and normalization is performed such that this 
-%   magnitude is set to 0 dB.
+%   The sampling rate, fS, of the signals in H must be specified in Hz.
+%       If fVal is specified as a range of frequencies, fVal = [fL,fU], the 
+%       average magnitude in that frequency range is set to 0 dB. 
+%       If fVal is set to inf, then the frequency at which the global 
+%       maximum magnitude exists is identified and normalization is 
+%       performed such that this magnitude is set to 0 dB.
+%       If fVal is specified as {inf,[fL,fU]}, then the search for the
+%       global maximum magnitude (as described above) is performed within
+%       the frequency range [fL,fU].
 %
 %   ___ = NORMALIZESIGNAL(H,{'f',fVal,'mag',magVal,'fs',fS}) additionally
 %   specifies magVal, the magnitude value (in dB) that the normalized 
-%   signals must have at frequency fVal.
+%   signals must have for any given fVal specification.
 %
 %   ___ = NORMALIZESIGNAL(H,{...},'local') performs a 'local' normalization
 %   (i.e. for a matrix of signals, H, the normalization of each signal in H
@@ -72,10 +75,11 @@ flag = 0;
 [hLen,numDirs] = size(h);
 if isempty(PARAMS)
     refMag = max(abs(h));
+    magVal = 0;
 else
     indx = find(strcmpi(PARAMS,'f'));
     if isempty(indx)
-        error('''f'' must be specified in cell array input.')
+        error('''f'' must be specified as part of the second input.')
     else
         fVal = PARAMS{indx+1};
     end
@@ -89,7 +93,7 @@ else
     
     indx = find(strcmpi(PARAMS,'fs'));
     if isempty(indx)
-        error('''fs'' must be specified in cell array input.')
+        error('''fs'' must be specified as part of the second input.')
     else
         fS = PARAMS{indx+1};
     end
@@ -99,14 +103,16 @@ else
         'finite','real','positive'},'normalizeSignal','fs');
     validateattributes(magVal,{'double'},{'scalar','nonempty','nonnan',...
         'finite','real'},'normalizeSignal','magVal');
-    validateattributes(fVal,{'double'},{'2d','nonempty','nonnan',...
-        'nonnegative'},'normalizeSignal','fVal');
+    validateattributes(fVal,{'double','cell'},{'2d','nonempty'},...
+        'normalizeSignal','fVal');
     
     fVec = getFreqVec(fS,hLen);
     switch length(fVal)
         case 1
             if fVal == inf
                 flag = 1;
+                fLIndx = 1;
+                fUIndx = ceil((hLen+1)/2);
             elseif (fVal < inf) && (fVal > fS/2)
                 error(['fVal must not exceed the Nyquist frequency,',...
                     ' except when specifying fVal as inf.'])
@@ -115,27 +121,36 @@ else
                 fUIndx = fLIndx;
             end
         case 2
-            if fVal(1) > fVal(2)
-                error('If specifying fVal as [fL,fU], fL must be <= fU.')
+            if iscell(fVal)
+                flag = 1;
+                if fVal{1} == inf
+                    [~,fLIndx] = min(abs(fVec-fVal{2}(1)));
+                    [~,fUIndx] = min(abs(fVec-fVal{2}(2)));
+                else
+                    error('If fVal is a cell array, fVal{1} must be inf.')
+                end
             else
-                [~,fLIndx] = min(abs(fVec-fVal(1)));
-                [~,fUIndx] = min(abs(fVec-fVal(2)));
+                if fVal(1) > fVal(2)
+                    error('If fVal = [fL,fU], fL must be <= fU.')
+                else
+                    [~,fLIndx] = min(abs(fVec-fVal(1)));
+                    [~,fUIndx] = min(abs(fVec-fVal(2)));
+                end
             end
         otherwise
-            error('fVal can only either be a scalar or 2-element vector.')
+            error('fVal can only either be a scalar or 2-element array.')
     end
     
     hMagdB = getMagSpecdB(h);
+    hMagdB_crop = hMagdB(fLIndx:fUIndx,:);
     if flag == 1
-        nyquistIndx = ceil((hLen+1)/2);
-        [~,fLIndx] = max(hMagdB(1:nyquistIndx,:));
-        fUIndx = fLIndx;
+        [~,fIndx] = max(hMagdB_crop);
         refMag = zeros(1,numDirs);
         for ii = 1:numDirs
-            refMag(ii) = db2mag(mean(hMagdB(fLIndx(ii):fUIndx(ii),:)));
+            refMag(ii) = db2mag(mean(hMagdB_crop(fIndx(ii),:)));
         end
     else
-        refMag = db2mag(mean(hMagdB(fLIndx:fUIndx,:),1));
+        refMag = db2mag(mean(hMagdB_crop,1));
     end
 end
 
