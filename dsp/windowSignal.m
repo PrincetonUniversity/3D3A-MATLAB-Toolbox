@@ -1,13 +1,16 @@
 function [hWin,varargout] = windowSignal(h,wLen,varargin)
 %WINDOWSIGNAL Window a signal.
-%   hWin = WINDOWSIGNAL(h,wLen) applies a rectangular window of length wLen 
-%   (specified in samples) to the signal(s) in h. The window is applied  
-%   starting at sample 1 for all signals in h. If h is a matrix, the 
-%   individual signals must be stored as columns. hWin contains the 
-%   windowed signals stored as column vectors. The length of the signals in 
-%   hWin are equal to wLen.
+%   B = WINDOWSIGNAL(A,L) applies a rectangular window of length L samples 
+%   to the signal(s) in A. The window is applied starting at sample 1 for 
+%   all signals in A.
+%       If A is a vector, B will be a column vector.
+%       If A is a matrix, the individual signals must be stored as columns. 
+%       B will then contain the windowed signals stored as column vectors. 
+%   The length of the signals in B are equal to L. If L exceeds the length 
+%   of the signals in A, the signals in A are first zero-padded on the 
+%   right prior to windowing.
 %
-%   ___ = WINDOWSIGNAL(...,'wType',TYPE) optionally specifies the type of
+%   B = WINDOWSIGNAL(...,'wType',TYPE) optionally specifies the type of
 %   window to apply. The following may be specified for TYPE (which must be
 %   a cell array):
 %       1. {'rect'} - rectangular window (default)
@@ -24,23 +27,22 @@ function [hWin,varargout] = windowSignal(h,wLen,varargin)
 %       and R2 can take values in the range 0 to 1 such that R1+R2 <= 1. 
 %       For more information, see RAISEDCOSINEWIN.
 %
-%   ___ = WINDOWSIGNAL(...,'start',wS) optionally specifies the sample 
-%   number at which the window is to be applied to the signal(s) in h. wS
-%   must be a positive integer.
+%   B = WINDOWSIGNAL(...,'start',S) optionally specifies the sample number
+%   at which the window is to be applied to the signal(s) in A. S must be a 
+%   positive integer.
 %
-%   ___ = WINDOWSIGNAL(...,'offset',oVec) optionally specifies additional
-%   sample amounts by which the window is offset prior to being applied to 
-%   the signal(s) in h. oVec must be a vector with length equal to the 
-%   number of columns in h. The elements of oVec must be non-negative
-%   integers.
+%   B = WINDOWSIGNAL(...,'offset',O) optionally specifies additional sample
+%   amounts by which the window is offset prior to being applied to the 
+%   signal(s) in A. O must be a vector with length equal to the number of 
+%   columns in A. The elements of O must be non-negative integers.
 %
-%   [___,L] = WINDOWSIGNAL optionally returns the actual length of the
-%   window used to window the signals in h. L will equal wLen if oVec is
-%   not specified or contains all zeros. Otherwise, L will be smaller than
-%   wLen by an amount equal to max(oVec).
+%   [B,H] = WINDOWSIGNAL optionally returns the matrix of padded input
+%   signals to which the windows are applied. If L does not exceed the
+%   length of the signals in A, then H = A.
 %
-%   [___,L,winMat] = WINDOWSIGNAL additionally returns winMat, the windows 
-%   used to window each of the signals in h.
+%   [B,H,W] = WINDOWSIGNAL additionally returns W, the matrix of 
+%   appropriately positioned windows used to window each of the signals in 
+%   A. W will have the same dimensions as H.
 %
 %   EXAMPLE: 
 %
@@ -49,11 +51,11 @@ function [hWin,varargout] = windowSignal(h,wLen,varargin)
 %       numbers M1 and M2, respectively, where M2-M1 = P > 0. Therefore, 
 %       the "tail" of IR2 is shorter than that of IR1 by P samples, and 
 %       each IR has an effective length of N-M1 (for IR1) and N-M2 (for 
-%       IR2). To window both IRs to have a new length of Q, where Q < 
-%       (N-M2), it may be desirable to apply the window such that the 
-%       following conditions are satisfied:
+%       IR2). To window both IRs to have a new length of Q, it may be 
+%       desirable to apply the window such that the following conditions 
+%       are satisfied:
 %           (i) The window begins R < min([M1,M2]) samples before the main 
-%           impulse for both IR1 and IR2. Note: a naive application of such
+%           impulse for BOTH IR1 and IR2. Note: A naive application of such
 %           a window will eliminate any relative delay between the two IRs.
 %           (ii) The relative delay of P samples between IR1 and IR2 must
 %           be preserved.
@@ -62,14 +64,17 @@ function [hWin,varargout] = windowSignal(h,wLen,varargin)
 %       call to the WINDOWSIGNAL function as follows (assuming IR1 and IR2
 %       are each column vectors, and the window is a raised-cosine window 
 %       with default window parameters):
-%           [hWin,L] = windowSignal([IR1,IR2],Q,'wType',{'rc'},'start',...
+%           [B,H,W] = windowSignal([IR1,IR2],Q,'wType',{'rc'},'start',...
 %               M1-R+1,'offset',[0,P]);
-%       In this case, the effective window length, L = Q-P.
+%       Also, the command plot([H,W]) will allow visualization of the
+%       windowing operation.
 %
-%       To window the two IRs while meeting only condition (ii) above and
-%       requiring L = Q, specify the call to the WINDOWSIGNAL function as
-%       follows:
-%           hWin = windowSignal([IR1,IR2],Q,'wType',{'rc'},'start',M1-R+1);
+%       To window the two IRs while meeting only condition (ii) above, 
+%       specify the call to the WINDOWSIGNAL function as follows:
+%           [B,H,W] = windowSignal([IR1,IR2],Q,'wType',{'rc'},'start',...
+%               M1-R+1);
+%       In this case, the pre-onset delay and the lengths of the "tails" 
+%       for IR1 and IR2, after windowing, will be different.
 %
 %   Needs: Signal Processing Toolbox.
 %
@@ -110,7 +115,7 @@ function [hWin,varargout] = windowSignal(h,wLen,varargin)
 narginchk(2,8);
 
 % Parse and verify inputs
-inputs = parseWindowSignalInputs(h,wLen,varargin);
+[inputs,extras] = parseWindowSignalInputs(h,wLen,varargin);
 
 % Extract parsed inputs
 h = inputs.h;
@@ -118,19 +123,17 @@ wLen = inputs.wLen;
 wType = inputs.wType;
 wS = inputs.start;
 oVec = inputs.offset;
+hLen = extras{1,1};
+numCols = extras{2,1};
 
-[hLen,numCols] = size(h);
 oVecMax = max(oVec);
-if wLen > (hLen-wS-oVecMax+1)
-    h = [h;zeros(wS+oVecMax,numCols)];
+% Compute maximum window length possible if input, h, is not zero-padded on
+% the right.
+noPadMaxWinLen = hLen-(wS+oVecMax-1);
+% Zero pad input on the right as needed.
+if wLen > noPadMaxWinLen
+    h = [h;zeros(wLen-noPadMaxWinLen,numCols)];
     hLen = size(h,1);
-end
-
-if wLen <= oVecMax
-    validWLen = wLen;
-    wLen = wLen+oVecMax;
-else
-    validWLen = wLen-oVecMax;
 end
 
 % Create window vector
@@ -138,11 +141,11 @@ validateattributes(wType{1,1},{'char'},{'scalartext','nonempty'},...
     'windowSignal','TYPE{1} for option: wType')
 switch lower(wType{1,1})
     case 'rect'
-        wVec = ones(validWLen,1);
+        wVec = ones(wLen,1);
     case 'hann'
-        wVec = hann(validWLen); % From Signal Processing Toolbox
+        wVec = hann(wLen); % From Signal Processing Toolbox
     case 'hamm'
-        wVec = hamming(validWLen); % From Signal Processing Toolbox
+        wVec = hamming(wLen); % From Signal Processing Toolbox
     case 'tukey'
         if length(wType) > 1
             validateattributes(wType{1,2},{'double'},{'scalar','nonempty',...
@@ -152,7 +155,7 @@ switch lower(wType{1,1})
         else
             R = 0.5;
         end
-        wVec = tukeywin(validWLen,R); % From Signal Processing Toolbox
+        wVec = tukeywin(wLen,R); % From Signal Processing Toolbox
     case 'rc'
         if length(wType) > 1
             validateattributes(wType{1,2},{'double'},{'vector','nonempty',...
@@ -164,23 +167,25 @@ switch lower(wType{1,1})
             R1 = 0.25;
             R2 = 0.25;
         end
-        wVec = raisedcosinewin(validWLen,[R1,R2]);
+        wVec = raisedcosinewin(wLen,[R1,R2]);
     otherwise
         error('Invalid TYPE specification for option: wType.')
 end
 
 hWin = zeros(wLen,numCols);
-winMat = hWin;
-baselineWin = circshift([wVec;zeros(hLen-validWLen,1)],(wS-1));
+hPadMat = h;
+winMat = zeros(hLen,numCols);
+padWinVec = [wVec;zeros(hLen-wLen,1)];
 for ii = 1:numCols
-    currentWin = circshift(baselineWin,oVec(ii));
+    currentSPos = wS+oVec(ii);
+    currentWin = shiftSignal(padWinVec,currentSPos-1);
     hWinFull = h(:,ii).*currentWin;
-    hWin(:,ii) = hWinFull(wS:(wS+wLen-1));
-    winMat(:,ii) = currentWin(wS:(wS+wLen-1));
+    hWin(:,ii) = hWinFull(currentSPos:(currentSPos+wLen-1));
+    winMat(:,ii) = currentWin;
 end
 
 if nargout > 1
-    varargout{1} = validWLen;
+    varargout{1} = hPadMat;
 end
 
 if nargout > 2
@@ -189,7 +194,7 @@ end
 
 end
 
-function inputs = parseWindowSignalInputs(h,wLen,opts)
+function [inputs,extras] = parseWindowSignalInputs(h,wLen,opts)
 %PARSEWINDOWSIGNALINPUTS Parse and verify inputs to the windowSignal
 %function.
 
@@ -197,22 +202,26 @@ p = inputParser;
 
 % Required inputs
 addRequired(p,'h',@(x)validateattributes(x,{'double'},{'2d','nonempty',...
-    'nonnan','finite'},'windowSignal','h',1));
+    'nonnan','finite'},'windowSignal','A',1));
+h = shiftdim(h); % If h is a vector, force to a column.
+[hLen,numCols] = size(h);
 addRequired(p,'wLen',@(x)validateattributes(x,{'double'},{'scalar',...
     'nonempty','nonnan','finite','positive','integer'},'windowSignal',...
-    'wLen',2));
-h = shiftdim(h); % If h is a vector, force to a column.
-numCols = size(h,2);
+    'L',2));
 
 % Optional inputs
 addParameter(p,'wType',{'rect'},@(x)validateattributes(x,{'cell'},...
     {'nonempty','vector'},'windowSignal','TYPE for option: wType'));
 addParameter(p,'start',1,@(x)validateattributes(x,{'double'},...
     {'scalar','nonempty','nonnan','finite','positive','integer'},...
-    'windowSignal','wS for option: start'));
+    'windowSignal','S for option: start'));
 addParameter(p,'offset',zeros(1,numCols),@(x)validateattributes(x,...
     {'double'},{'vector','nonempty','nonnan','finite','nonnegative',...
-    'integer','numel',numCols},'windowSignal','oVec for option: offset'));
+    'integer','numel',numCols},'windowSignal','O for option: offset'));
+
+% Extra outputs
+extras{1,1} = hLen;
+extras{2,1} = numCols;
 
 p.CaseSensitive = false;
 p.FunctionName = 'windowSignal';
