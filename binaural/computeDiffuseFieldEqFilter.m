@@ -9,7 +9,7 @@ function fIR = computeDiffuseFieldEqFilter(h,fS,FILTERLEN)
 %   COMPUTEDIFFUSEFIELDIR.
 %
 %   fIR = COMPUTEDIFFUSEFIELDEQFILTER(...,FILTERLEN) optionally specifies
-%   the desired length of fIR in ms.
+%   the desired length of fIR in samples.
 %
 %   See also COMPUTEDIFFUSEFIELDIR.
 
@@ -48,14 +48,14 @@ function fIR = computeDiffuseFieldEqFilter(h,fS,FILTERLEN)
 narginchk(2,3);
 
 if nargin < 3
-    FILTERLEN = 5; % Default fIR length in milliseconds.
+    FILTERLEN = size(h,1); % Default fIR length in samples.
 end
 
 w1 = 500/(fS/2);
 w2 = 15000/(fS/2);
-eqFilterIR = computeInverseFilter(h,'gardner1994','avgRange',[w1,w2]);
+eqFilterIR = computeInverseFilter(h,'gardner1994',{'avgRange',[w1,w2]});
 
 fIR = makeMinPhaseIR(eqFilterIR,'hilb');
-fIR = windowSignal(fIR,FILTERLEN,{'rc',[0,0.5]});
+fIR = windowSignal(fIR,FILTERLEN,'wType',{'rc',[0,0.5]});
 
 end
