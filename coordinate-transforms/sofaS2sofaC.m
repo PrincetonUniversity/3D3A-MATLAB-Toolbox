@@ -74,11 +74,6 @@ else
     error('2 inputs provided when either 1 or 3 inputs are required.')
 end
 
-if (max(az) >= 360) || (min(az) < 0)
-    warning(['One or more az values are outside the range [0,360). ',...
-        'Calculation is unaffected.'])
-end
-
 if (max(el) > 90) || (min(el) < -90)
     error('One or more el values are outside the range [-90,90].')
 end

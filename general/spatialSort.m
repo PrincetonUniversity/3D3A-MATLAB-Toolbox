@@ -5,7 +5,8 @@ function [dataOut,posOut,sI] = spatialSort(dataIn,posIn,varargin)
 %   the columns of X. Sorted versions of X and P are returned in Y and Q, 
 %   respectively. X must have as many columns as rows in P. Sort indices 
 %   are returned in I. The sorting of X amounts to a re-ordering of the 
-%   columns of X only, since each column in X corresponds to a row in P.
+%   columns of X only, since each column in X corresponds to a row in P. X
+%   may be a vector, matrix, or cell array. P may be a vector or matrix.
 %
 %   ___ = SPATIALSORT(...,DIM) optionally specifies the sorting order. For 
 %   example, DIM = [2,1] sorts the rows of P, first in ascending order of
@@ -25,7 +26,7 @@ function [dataOut,posOut,sI] = spatialSort(dataIn,posIn,varargin)
 %       3. [sA,sB,sI] = spatialSort(A,B,[2,3,1],2);
 %       4. [sA,sB,sI] = spatialSort(A,B,[],1); (Assumes DIM = 1)
 %
-%   See also SORTROWS, ROUND.
+%   See also SORTROWS.
 
 %   =======================================================================
 %   This file is part of the 3D3A MATLAB Toolbox.
@@ -74,10 +75,8 @@ if isempty(DIM)
     DIM = 1;
 end
 
-% Main computation begins
 [posOut,sI] = sortrows(round(posIn,ROUND),DIM);
 dataOut = dataIn(:,sI);
-% Main computation ends
 
 end
 
