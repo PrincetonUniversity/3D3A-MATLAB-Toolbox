@@ -1,17 +1,19 @@
-function [grpDelaySpec,avgGrpDelay] = getGrpDelay(inputIR,fS,AVGRANGE)
-%GETGRPDELAY Compute the group delay of a transfer function given its 
-%impulse response.
-%   [grpDelaySpec,avgGrpDelay] = GETGRPDELAY(inputIR,fS) computes the group 
-%   delay of the transfer function with impulse response given in inputIR. 
-%   The outputs are specified in samples. inputIR may be a vector or 
-%   matrix. If inputIR is a matrix, the IRs must be stored as columns and 
-%   the output avgGrpDelay will be a row vector while grpDelaySpec will 
-%   have the same dimensions as inputIR. fS is the sampling rate in Hz.
+function [grpDelaySpec,avgGrpDelay] = getGrpDelay(inputIR,Fs,AVGRANGE)
+%GETGRPDELAY Compute group delay from impulse response (IR).
+%   [S,M] = GETGRPDELAY(A,Fs) computes the group delay of the transfer 
+%   function with impulse response, A, and returns the group delay
+%   spectrum, S, and the average group delay, M.
+%       If A is a vector, S will be a column vector with the same length as 
+%       A and M will be a scalar.
+%       If A is a matrix with dimensions P-by-N, S will be a matrix with 
+%       dimensions P-by-N and M will be a row vector of length N.
+%   The group delay values in S and M are specified in samples. The
+%   sampling rate, Fs, must be specified in Hz.
 %
 %   ___ = GETGRPDELAY(...,AVGRANGE) optionally specifies the frequency 
-%   range over which averaging of grpDelaySpec should be performed to 
-%   compute avgGrpDelay. AVGRANGE must be specified as a row vector [w1,w2] 
-%   containing frequencies specified in Hz such that w1 < w2.
+%   range over which averaging of S should be performed to compute M. 
+%   AVGRANGE must be specified as a row vector [w1,w2] containing 
+%   frequencies specified in Hz such that w1 < w2.
 %
 %   See also ESTIMATEIRONSET.
 
@@ -54,13 +56,18 @@ function [grpDelaySpec,avgGrpDelay] = getGrpDelay(inputIR,fS,AVGRANGE)
 narginchk(2,3);
 
 inputIR = shiftdim(inputIR);
-FFTLen = size(inputIR,1);
+irLen = size(inputIR,1);
 
 if nargin < 3
-    AVGRANGE = [0,fS/2];
+    AVGRANGE = [0,Fs/2];
 end
 
-freqVec = getFreqVec(fS,FFTLen);
+if AVGRANGE(1) >= AVGRANGE(2)
+    error(['When AVGRANGE is specified as [w1,w2], w2 must be greater',...
+        ' than w1.'])
+end
+
+freqVec = getFreqVec(Fs,irLen);
 [~,lIndx] = min(abs(freqVec-AVGRANGE(1)));
 [~,hIndx] = min(abs(freqVec-AVGRANGE(2)));
 
@@ -72,9 +79,9 @@ skipIndxs = (abs(inputTF) < minmag);
 inputTF(skipIndxs) = 1;
 
 % See [1] for theory behind following calculation.
-grpDelaySpec = real(fft(diag(0:FFTLen-1)*inputIR)./inputTF);
+grpDelaySpec = real(fft(diag(0:irLen-1)*inputIR)./inputTF);
 
-% Replace samples where calculation would have "blown up" by 0.
+% Replace samples where above calculation would have "blown up" by 0.
 grpDelaySpec(skipIndxs) = 0;
 
 % Compute average group delay.

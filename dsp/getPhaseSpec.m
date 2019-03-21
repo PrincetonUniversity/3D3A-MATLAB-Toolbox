@@ -1,23 +1,23 @@
 function outputSpec = getPhaseSpec(inputIR,TYPE,TOL,DIM)
 %GETPHASESPEC Compute phase spectrum.
-%   outputSpec = GETPHASESPEC(inputIR) returns the principal value phase
-%   spectrum given an input impulse response (IR). inputIR may be a matrix 
-%   of IRs, with the IRs stored as columns. outputSpec has the same 
-%   dimensions as inputIR.
+%   S = GETPHASESPEC(X) returns the principal value phase spectrum, S, 
+%   given an input impulse response (IR), X. If X is a matrix of IRs, the 
+%   IRs must be stored as columns. S will have the same dimensions as X.
+%   All phase values are specified in radians.
 %   
-%   ___ = GETPHASESPEC(...,TYPE) additionally allows specification of the 
-%   type of phase spectrum desired. The options are 'pv' for the principal 
-%   value phase (default) and 'unwrap' for unwrapped phase. If 'unwrap' is 
-%   specified, a tolerance of pi is used for unwrapping the principal value 
-%   phase spectrum.
+%   S = GETPHASESPEC(X,TYPE) additionally allows specification of the type
+%   of phase spectrum that is computed. The options are 'pv' for the 
+%   principal value phase (default) and 'unwrap' for unwrapped phase. If 
+%   'unwrap' is specified, a tolerance of pi is used for unwrapping the 
+%   principal value phase spectrum.
 %
-%   ___ = GETPHASESPEC(...,'unwrap',TOL) additionally allows specification 
-%   of a custom tolerance for unwrapping the principal value phase 
-%   spectrum. tol must be specified in radians. See UNWRAP for more 
-%   information.
+%   S = GETPHASESPEC(X,'unwrap',TOL) additionally allows specification of a
+%   custom tolerance for unwrapping the principal value phase spectrum. TOL 
+%   must be specified in radians. See UNWRAP for more information.
 %
-%   ___ = GETPHASESPEC(...,DIM) specifies the dimension along which to 
-%   perform spectrum computation.
+%   S = GETPHASESPEC(...,DIM) specifies the dimension along which to
+%   compute S. TYPE and/or TOL may be specified as [] to use their default 
+%   values.
 %
 %   See also UNWRAP, ANGLE, GETMAGSPEC, GETMAGSPECDB.
 
@@ -56,7 +56,7 @@ function outputSpec = getPhaseSpec(inputIR,TYPE,TOL,DIM)
 narginchk(1,4);
 
 validateattributes(inputIR,{'double'},{'2d','nonempty','nonnan',...
-    'finite'},'getPhaseSpec','inputIR',1)
+    'finite'},'getPhaseSpec','X',1)
 
 if nargin < 4
     if isvector(inputIR)
@@ -67,7 +67,7 @@ if nargin < 4
 end
 validateattributes(DIM,{'double'},{'scalar','nonempty','nonnan',...
     'finite','integer','positive','<=',ndims(inputIR)},'getPhaseSpec',...
-    'DIM')
+    'DIM',4)
 
 if nargin < 3 || isempty(TOL)
     TOL = pi;
@@ -77,14 +77,14 @@ if nargin < 2 || isempty(TYPE)
     TYPE = 'pv';
 end
 validateattributes(TYPE,{'char'},{'scalartext','nonempty'},...
-    'getPhaseSpec','TYPE')
+    'getPhaseSpec','TYPE',2)
 
 switch lower(TYPE)
     case 'pv'
         outputSpec = angle(fft(inputIR,[],DIM));
     case 'unwrap'
         validateattributes(TOL,{'double'},{'scalar','nonempty','nonnan',...
-            'finite','real'},'getPhaseSpec','DIM')
+            'finite','real'},'getPhaseSpec','DIM',3)
         outputSpec = unwrap(angle(fft(inputIR,[],DIM)),TOL,DIM);
     otherwise
         error('Invalid TYPE specification.');

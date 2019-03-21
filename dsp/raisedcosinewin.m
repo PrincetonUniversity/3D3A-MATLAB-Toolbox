@@ -5,8 +5,8 @@ function w = raisedcosinewin(L,r)
 %   of which can take values in the range 0 to 1 provided (r1+r2) <= 1. The 
 %   resulting window is a rectangular window where the first 100*r1 and 
 %   last 100*r2 percent of the samples of the window equal parts of a 
-%   cosine. If r1 = r2 = 0.5, a Tukey window is returned. If r is not 
-%   specified, r = [0.5,0.5] is assumed.
+%   cosine. If r1 = r2, a Tukey window is returned. If r is not specified, 
+%   r = [0.5,0.5] is assumed.
 %
 %   Needs: Signal Processing Toolbox.
 %

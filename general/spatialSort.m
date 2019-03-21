@@ -1,26 +1,24 @@
 function [dataOut,posOut,sI] = spatialSort(dataIn,posIn,varargin)
 %SPATIALSORT Sort spatial data based on corresponding position data.
-%   [dataOut,posOut,sI] = SPATIALSORT(dataIn,posIn) sorts the rows of posIn 
-%   such that the elements in its first column are in ascending order, and 
-%   correspondingly sorts the columns of dataIn. Sorted versions of dataIn
-%   and posIn are returned in dataOut and posOut, respectively. dataIn must 
-%   have as many columns as rows in posIn. Sort indices are returned in sI. 
-%   The sorting of dataIn amounts to a re-ordering of the columns of dataIn 
-%   only, since each column in dataIn corresponds to a row in posIn.
+%   [Y,Q,I] = SPATIALSORT(X,P) sorts the rows of P such that the elements 
+%   in its first column are in ascending order, and correspondingly sorts 
+%   the columns of X. Sorted versions of X and P are returned in Y and Q, 
+%   respectively. X must have as many columns as rows in P. Sort indices 
+%   are returned in I. The sorting of X amounts to a re-ordering of the 
+%   columns of X only, since each column in X corresponds to a row in P.
 %
 %   ___ = SPATIALSORT(...,DIM) optionally specifies the sorting order. For 
-%   example, DIM = [2,1] sorts the rows of posIn, first in ascending order
-%   of the elements in column 2, and then those in column 1. The default 
-%   value of DIM is 1. For more information, see the COL option in the 
-%   function SORTROWS.
+%   example, DIM = [2,1] sorts the rows of P, first in ascending order of
+%   the elements in column 2, and then those in column 1. The default value 
+%   of DIM is 1. For more information, see the COL option in SORTROWS.
 %
-%   ___ = SPATIALSORT(...,ROUND) additionally specifies the number of 
-%   digits to round data in posIn prior to sorting. The default value is 
-%   3. For more information, see the function ROUND.
+%   ___ = SPATIALSORT(...,ROUND) additionally specifies the number of
+%   digits to round data in P prior to sorting. The default value is 3. For 
+%   more information, see the function ROUND.
 %
 %   EXAMPLES OF VALID SYNTAX:
 %   
-%   Here, A is an N-by-M matrix and B is a M-by-P matrix with P >= 3.
+%   Here, A is an N-by-M matrix and B is an M-by-P matrix with P >= 3.
 %
 %       1. [sA,sB,sI] = spatialSort(A,B); (Assumes DIM = 1)
 %       2. [sA,sB,sI] = spatialSort(A,B,[2,1]);
@@ -64,7 +62,7 @@ function [dataOut,posOut,sI] = spatialSort(dataIn,posIn,varargin)
 narginchk(2,4);
 
 % Parse and verify inputs
-inputs = parseSPATIALSORTInputs(dataIn,posIn,varargin);
+inputs = parseSpatialSortInputs(dataIn,posIn,varargin);
 
 % Extract parsed inputs
 dataIn = inputs.dataIn;
@@ -83,7 +81,7 @@ dataOut = dataIn(:,sI);
 
 end
 
-function inputs = parseSPATIALSORTInputs(dataIn,posIn,opts)
+function inputs = parseSpatialSortInputs(dataIn,posIn,opts)
 %PARSESPATIALSORTINPUTS Parse and verify inputs for the spatialSort
 %function.
 
@@ -91,10 +89,10 @@ p = inputParser;
 
 % Required inputs
 addRequired(p,'dataIn',@(x)validateattributes(x,{'double','cell'},{'2d',...
-    'nonempty'},'spatialSort','dataIn',1));
+    'nonempty'},'spatialSort','X',1));
 addRequired(p,'posIn',@(x)validateattributes(x,{'double'},{'2d',...
     'nonempty','nonnan','finite','size',[size(dataIn,2),NaN]},...
-    'spatialSort','posIn',2));
+    'spatialSort','P',2));
 
 % Optional inputs
 addOptional(p,'DIM',1,@(x)validateattributes(x,{'double'},{'2d',...

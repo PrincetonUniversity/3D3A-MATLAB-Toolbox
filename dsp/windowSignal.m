@@ -16,10 +16,10 @@ function [hWin,varargout] = windowSignal(h,wLen,varargin)
 %       1. {'rect'} - rectangular window (default)
 %       2. {'hann'} - hanning window
 %       3. {'hamm'} - hamming window
-%       4. {'tukey',R} - tukey window with the first 100*R/2 percent of
-%       samples equal to parts of a cosine. If R is not specified, a
-%       default of 0.5 is assumed. R can take values in the range 0 to 1. 
-%       For more information, see TUKEYWIN.
+%       4. {'tukey',R} - tukey window with the first and last 100*R/2 
+%       percent of samples equal to parts of a cosine. If R is not 
+%       specified, a default of 0.5 is assumed. R can take values in the 
+%       range 0 to 1. For more information, see TUKEYWIN.
 %       5. {'rc',[R1,R2]} - raised-cosine window with the first 100*R1
 %       and last 100*R2 percent of samples equal to parts of a cosine. If
 %       R1 and R2 are not specified, defaults of R1 = 0.25 and R2 = 0.25

@@ -75,7 +75,8 @@ else
 end
 
 if (max(az) >= 360) || (min(az) < 0)
-    warning('One or more az values are outside the range [0,360).')
+    warning(['One or more az values are outside the range [0,360). ',...
+        'Calculation is unaffected.'])
 end
 
 if (max(el) > 90) || (min(el) < -90)

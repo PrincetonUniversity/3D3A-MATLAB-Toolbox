@@ -1,13 +1,15 @@
 function minPhaseIR = makeMinPhaseIR(ir,METHOD)
 %MAKEMINPHASEIR Compute the minimum-phase version of an impulse response. 
-%   minPhaseIR = MAKEMINPHASEIR(ir) computes minPhaseIR, the minimum-phase
-%   version of the input, ir, using the 'rceps' function in the Signal 
-%   Processing Toolbox. The input, ir, may be a vector or matrix. If ir is 
-%   a matrix, it is assumed the individual impulse responses are stored as 
-%   column vectors.
+%   Y = MAKEMINPHASEIR(X) computes Y, the minimum-phase version of the 
+%   input, X, using the 'rceps' function in the Signal Processing Toolbox.
+%       If X is a vector, Y will be a column vector with the same length as
+%       X.
+%       If X is a matrix with dimensions N-by-M, individual impulse 
+%       responses must be stored as columns. Y will then be a matrix with
+%       dimensions N-by-M.
 % 
-%   ___ = MAKEMINPHASEIR(...,METHOD) optionally specifies the method to
-%   use to compute minPhaseIR. The options are:
+%   Y = MAKEMINPHASEIR(X,METHOD) optionally specifies the method to use
+%   when computing Y. The options are:
 %       (i) 'rceps' - use the 'rceps' function in the Signal Processing 
 %       Toolbox (default).
 %       (ii) 'hilb' - use the hilbert transform (computed using the
@@ -62,7 +64,7 @@ switch lower(METHOD)
         numIRs = size(ir,2);
         tF = fft(ir);
         tF(tF == 0) = 0 + 1i*eps;
-        ir = ifft(tF,'symmetric');
+        ir = ifft(tF,'symmetric'); % rceps only works with real IRs
         for ii = 1:numIRs
             [~,minPhaseIR(:,ii)] = rceps(ir(:,ii));
         end
@@ -72,6 +74,8 @@ switch lower(METHOD)
         argTF = imag(hilbert(log(absTF))); % hilbert operates along columns
         minPhaseTF = absTF.*exp(-1i*argTF);
         minPhaseIR = ifft(minPhaseTF,'symmetric');
+    otherwise
+        error('Invalid METHOD specification.')
 end
 
 end
