@@ -44,7 +44,7 @@ function AN = computeVectorNorm(A,P,DIM)
 narginchk(1,3);
 
 if nargin < 3
-    DIM = 1;
+    DIM = find(size(A) > 1,1);
 end
 
 if nargin < 2 || isempty(P)

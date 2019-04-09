@@ -1,6 +1,6 @@
 function ITD = computeSphericalHeadITD(a,sPos,TYPE)
-%COMPUTESPHERICALHEADITD ITD for a spherical head computed analytically.
-%   B = COMPUTESPHERICALHEADITD(A,S) computes ITD analytically for a rigid
+%COMPUTESPHERICALHEADITD Analytically computed ITD for a spherical head.
+%   B = COMPUTESPHERICALHEADITD(A,S) analytically computes ITD for a rigid
 %   spherical head of radius A (specified in meters), and for sound source
 %   positions, S, specified in SOFA cartesian coordinates, using the
 %   Woodworth and Schlosberg formula (see, for example, Kuhn [1]). S must
