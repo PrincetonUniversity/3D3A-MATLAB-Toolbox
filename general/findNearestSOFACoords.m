@@ -1,24 +1,26 @@
 function [indx,err] = findNearestSOFACoords(posMat,target,COORDSYS,DIST)
-%FINDNEARESTSOFACOORDS Find the nearest specified coordinates from given 
-%set of SOFA coordinates and return the corresponding index.
-%   [indx,err] = FINDNEARESTSOFACOORDS(posMat,target) finds the coordinates
-%   in posMat to which target is nearest (in an l2 sense) and returns the
-%   corresponding index along with the error. posMat must be an N-by-3 
-%   matrix specifying positions in SOFA cartesian coordinates. target must 
-%   be a vector of length 3 specifying the target position in SOFA 
-%   cartesian coordinates.
+%FINDNEARESTSOFACOORDS Find row index of SOFA coordinates nearest to a
+%given target set of coordinates.
+%   [I,E] = FINDNEARESTSOFACOORDS(P,T) finds the coordinates in P to which 
+%   the target, T, is nearest (in an l2 sense) and returns the 
+%   corresponding row index, I, and distance, E. P must be an N-by-3 matrix
+%   specifying positions in SOFA cartesian coordinates. T must be a vector
+%   of length 3 specifying the target position in SOFA cartesian 
+%   coordinates.
 %
-%   [indx,err] = FINDNEARESTSOFACOORDS(...,COORDSYS) optionally specifies 
-%   the coordinate system used to specify target. posMat must always be in 
-%   SOFA cartesian coordinates. Options for COORDSYS are:
+%   [I,E] = FINDNEARESTSOFACOORDS(...,CSYS) optionally specifies the
+%   coordinate system used to specify T. P must always be in SOFA cartesian
+%   coordinates. Options for CSYS are:
 %       1. 'SOFAc' (default) - SOFA cartesian coordinates
 %       2. 'SOFAs' - SOFA spherical coordinates
 %       3. 'CIPICi' - CIPIC interaural coordinates
 %
-%   [indx,err] = FINDNEARESTSOFACOORDS(...,DISTSPEC) optionally specifies 
+%   [I,E] = FINDNEARESTSOFACOORDS(...,DISTSPEC) optionally specifies 
 %   whether or not the distance from the origin should be considered when
 %   determining the nearest point. The two options are: 'on' and 'off'
 %   (default).
+%
+%   See also FINDNEAREST.
 
 %   =======================================================================
 %   This file is part of the 3D3A MATLAB Toolbox.
@@ -30,7 +32,7 @@ function [indx,err] = findNearestSOFACoords(posMat,target,COORDSYS,DIST)
 %   
 %   MIT License
 %   
-%   Copyright (c) 2018 Princeton University
+%   Copyright (c) 2019 Princeton University
 %   
 %   Permission is hereby granted, free of charge, to any person obtaining a
 %   copy of this software and associated documentation files (the 
@@ -64,7 +66,7 @@ end
 
 [numRows,numCols] = size(posMat);
 if numCols ~= length(target) || numCols ~= 3
-    error('posMat must be N-by-3 and target 1-by-3')
+    error('P must be N-by-3 and T must be 1-by-3')
 else
     target = reshape(target,[1,3]);
 end
@@ -75,10 +77,9 @@ switch lower(COORDSYS)
     case 'sofas'
         targetC = sofaS2sofaC(target);
     case 'cipici'
-        [x,y,z] = cipic2sofaC(target(1),target(2),target(3));
-        targetC = [x,y,z];
+        targetC = cipicI2sofaC(target);
     otherwise
-        error('Invalid specification for COORDSYS.')
+        error('Invalid specification for CSYS.')
 end
 
 if strcmpi(DIST,'off')
@@ -91,4 +92,3 @@ distVec = sqrt(sum((posMat-ones(numRows,1)*targetC).^2,2));
 [err,indx] = min(distVec);
 
 end
-
