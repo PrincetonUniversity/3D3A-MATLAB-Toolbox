@@ -1,16 +1,18 @@
-function [hL,hR] = computeSphericalHeadHRIRs(a,S,varargin)
+function [hL,hR,NVec] = computeSphericalHeadHRIRs(a,S,varargin)
 %COMPUTESPHERICALHEADHRIRS HRIRs of a rigid spherical head.
-%   [hL,hR] = COMPUTESPHERICALHEADHRIRS(A,S) returns HRIRs for a spherical 
-%   head of radius A and for a source at direction S. The HRIRs have a 
-%   duration of 0.005 s at a sampling rate of 44100 Hz. The left and right 
-%   "ear" positions are at [90,0,A] and [270,0,A], respectively, when 
+%   [hL,hR,NVec] = COMPUTESPHERICALHEADHRIRS(A,S) returns HRIRs for a 
+%   spherical head of radius A and for a source at direction S. The HRIRs 
+%   have a duration of 0.005 s at a sampling rate of 44100 Hz. The left and 
+%   right "ear" positions are at [90,0,A] and [270,0,A], respectively, when 
 %   specified in SOFA spherical coordinates. The source distance is set to 
 %   infinity. The infinite sum in the analytical formulation (see refs. 
 %   [1-3]) is truncated to 41 terms by default. The head radius should be 
 %   specified in metres. The source direction should be specified in SOFA 
 %   spherical coordinates as [az,el], in degrees. If S is a matrix, HRIRs
 %   are computed for each source direction. S must have dimensions P-by-2,
-%   where P is the number of directions.
+%   where P is the number of directions. Also returned is NVec, a vector of
+%   truncation orders used at each frequency up to the Nyquist frequency. 
+%   NVec is useful when the optional flag 'autoselectN' is set to true.
 %
 %   ___ = COMPUTESPHERICALHEADHRIRS(...,Name1,Value1,...) allows optional
 %   specification of the following Name-Value pairs:
@@ -25,6 +27,12 @@ function [hL,hR] = computeSphericalHeadHRIRs(a,S,varargin)
 %       have N+1 terms.
 %       7. 'makecausal',c - flag to specify whether or not to force output 
 %       IRs to be causal by applying an artificial delay. c can be true or 
+%       false (default).
+%       8. 'autoselectN',f - flag to specify whether or not to autoselect
+%       the truncation order for each frequency subject to a maximum value
+%       of N, where N is input by the user separately (see option 6 above).
+%       The autoselection algorithm chooses the highest order that produces
+%       a change in the computed HRTF at that frequency. f can be true or 
 %       false (default).
 %
 %   Needs: Symbolic Math Toolbox
@@ -68,7 +76,7 @@ function [hL,hR] = computeSphericalHeadHRIRs(a,S,varargin)
 %   Function.
 %       [3]. Morse and Ingard (1968) - Theoretical Acoustics.
 
-narginchk(2,16);
+narginchk(2,18);
 
 % Parse and verify inputs
 inputs = parseComputeSphericalHeadHRIRsInputs(a,S,varargin);
@@ -83,6 +91,7 @@ eR = inputs.eR;
 R = inputs.R;
 N = inputs.N;
 cFlag = inputs.makecausal;
+fFlag = inputs.autoselectN;
 
 % Perform additional checks on inputs
 if fS < 1000
@@ -120,6 +129,7 @@ hrtfL = ones(nyquistIndx,numPos);
 hrtfR = ones(nyquistIndx,numPos);
 PL = zeros(length(mVec),numPos);
 PR = zeros(length(mVec),numPos);
+NVec = zeros(nyquistIndx,1);
 
 for ii = 1:numPos
     thetaL(ii) = getCentralAngle([xS(ii),yS(ii),zS(ii)],[xEL,yEL,zEL]);
@@ -133,8 +143,23 @@ if R == inf % Following Cooper [2].
         dh = dSphericalHankelH(mVec,1,mu(ii));
         % conj so that negative phase = delay
         psi = diag(conj((2*mVec+1).*((-1i).^(mVec-1))./dh));
-        psiL = sum(psi*PL,1);
-        psiR = sum(psi*PR,1);
+        psiPL = psi*PL;
+        psiPR = psi*PR;
+        if fFlag
+            changeVec = diff(cumsum(psiPL));
+            nonNaNIndxs = find(~isnan(changeVec));
+            lastNonZeroChange = find(changeVec(nonNaNIndxs),1,'last');
+            maxNL = nonNaNIndxs(lastNonZeroChange);
+            changeVec = diff(cumsum(psiPR));
+            nonNaNIndxs = find(~isnan(changeVec));
+            lastNonZeroChange = find(changeVec(nonNaNIndxs),1,'last');
+            maxNR = nonNaNIndxs(lastNonZeroChange);
+            NVec(ii) = min([max([maxNL,maxNR]),N]);
+        else
+            NVec(ii) = N;
+        end
+        psiL = sum(psiPL(1:(NVec(ii)+1)),1);
+        psiR = sum(psiPR(1:(NVec(ii)+1)),1);
         if cFlag
             % extra exp term to make IRs causal
             del = mu(ii)*(c/a)*(irLen/fS)*0.5;
@@ -151,8 +176,23 @@ else
         h = sphericalHankelH(mVec,1,mu(ii)*rho);
         dh = dSphericalHankelH(mVec,1,mu(ii));
         psi = diag(conj(((2*mVec)+1).*(h./dh)));
-        psiL = sum(psi*PL,1);
-        psiR = sum(psi*PR,1);
+        psiPL = psi*PL;
+        psiPR = psi*PR;
+        if fFlag
+            changeVec = diff(cumsum(psiPL));
+            nonNaNIndxs = find(~isnan(changeVec));
+            lastNonZeroChange = find(changeVec(nonNaNIndxs),1,'last');
+            maxNL = nonNaNIndxs(lastNonZeroChange);
+            changeVec = diff(cumsum(psiPR));
+            nonNaNIndxs = find(~isnan(changeVec));
+            lastNonZeroChange = find(changeVec(nonNaNIndxs),1,'last');
+            maxNR = nonNaNIndxs(lastNonZeroChange);
+            NVec(ii) = min([max([maxNL,maxNR]),N]);
+        else
+            NVec(ii) = N;
+        end
+        psiL = sum(psiPL(1:(NVec(ii)+1)),1);
+        psiR = sum(psiPR(1:(NVec(ii)+1)),1);
         if cFlag
             % extra exp term to make IRs causal
             hrtfL(ii,:) = (rho/mu(ii))*exp(-1i*mu(ii)*rho)*psiL;
@@ -206,6 +246,9 @@ addParameter(p,'N',40,@(x)validateattributes(x,{'double'},...
     'computeSphericalHeadHRIRs','N'));
 addParameter(p,'makecausal',false,@(x)validateattributes(x,{'logical'},...
     {'nonempty','nonnan'},'computeSphericalHeadHRIRs','makecausal, c'));
+addParameter(p,'autoselectN',false,@(x)validateattributes(x,...
+    {'logical'},{'nonempty','nonnan'},'computeSphericalHeadHRIRs',...
+    'autoselectN, f'));
 
 p.CaseSensitive = false;
 p.FunctionName = 'computeSphericalHeadHRIRs';
