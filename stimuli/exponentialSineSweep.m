@@ -79,15 +79,15 @@ else
 end
 
 % Check for sweep method
-indx = find(strcmpi(varargin,'method'),1,'first');
+indx = find(strcmpi(varargin,'type'),1,'first');
 if isempty(indx)
-    METHOD = 'standard';
+    TYPE = 'standard';
 else
-    METHOD = varargin{indx+1};
+    TYPE = varargin{indx+1};
 end
 
 % Compute sweep
-switch lower(METHOD)
+switch lower(TYPE)
     case {'standard','farina'}
         w1 = 2*pi*f1/Fs;
         w2 = 2*pi*f2/Fs;
