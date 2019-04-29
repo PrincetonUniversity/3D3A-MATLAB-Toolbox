@@ -21,7 +21,7 @@ function hInv = computeInverseFilter(h,varargin)
 %   ___ = COMPUTEINVERSEFILTER(h,'piecewise',PARAMS) specifies parameters 
 %   for regularization. PARAMS specifies the regularization frequency range 
 %   and regularization value for each "piece" of the piecewise 
-%   regularization function as a 3x1 row vector [w1,w2,eps]. Multiple 
+%   regularization function as a 1x3 row vector [w1,w2,eps]. Multiple 
 %   "pieces" are specified as separate rows with eps being the amount of 
 %   regularization applied in the range [w1,w2]. w1 and w2 are normalized 
 %   frequencies with 0 corresponding to DC and 1 the Nyquist frequency. If 
@@ -149,8 +149,9 @@ switch lower(TYPE)
         H = fft(h);
         nyqIndx = ceil((hLen+1)/2);
         pProfileHalf = getPiecewiseProfile(PARAMS,nyqIndx);
+        lastFlipIndx = hLen-nyqIndx+1;
         pProfile = repmat([pProfileHalf;...
-            flipud(pProfileHalf(2:(end-1),1))],1,numChs);
+            flipud(pProfileHalf(2:lastFlipIndx,1))],1,numChs);
         hInv = ifft(conj(H)./((conj(H).*H)+pProfile),'symmetric');
     case 'profile'
         H = fft(h);
