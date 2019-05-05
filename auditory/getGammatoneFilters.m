@@ -1,14 +1,20 @@
-function h = getGammatoneFilters(fc, Fs, IRLen)
+function h = getGammatoneFilters(fc,Fs,IRLen,fType)
 %GETGAMMATONEFILTERS Auditory filters that represent human critical bands.
-%   H = GETGAMMATONEFILTERS(FC,FS,N) computes length N impulse responses of
-%   gammatone filters with center frequencies specified by the vector FC.
+%   H = GETGAMMATONEFILTERS(FC,FS,N) or H = GETGAMMATONEFILTERS(FC,FS,N,...
+%   'complex') computes length N impulse responses of gammatone filters 
+%   with center frequencies specified by the vector FC. By default, the 
+%   impulse responses (IRs) are complex-valued. To generate real-valued 
+%   IRs, see below. 
+%
+%   H = GETGAMMATONEFILTERS(FC,FS,N,'real') generates real-valued IRs
+%   instead. The returned IRs are causal.
 %   
-%   This function is essentially a wrapper for the gammatonefir function in
-%   the LTFAT toolbox. The output, H, will be an N-by-M matrix of filters,
-%   where M is the number of elements in FC, rather than the length M cell
-%   array returned by gammatonefir.
+%   Note: This function is essentially a wrapper for the gammatonefir 
+%   function in the LTFAT toolbox. The output, H, will be an N-by-M matrix 
+%   of filters, where M is the number of elements in FC, rather than the 
+%   length M cell array returned by gammatonefir.
 %   
-%   Needs LTFAT toolbox.
+%   Needs: LTFAT toolbox.
 %
 %   See also GAMMATONEFIR, GETPATTERSONFILTERS.
 
@@ -16,6 +22,7 @@ function h = getGammatoneFilters(fc, Fs, IRLen)
 %   This file is part of the 3D3A MATLAB Toolbox.
 %   
 %   Contributing author(s), listed alphabetically by last name:
+%   Rahulram Sridhar <rahulram@princeton.edu>
 %   Joseph G. Tylka <josephgt@princeton.edu>
 %   3D Audio and Applied Acoustics (3D3A) Laboratory
 %   Princeton University, Princeton, New Jersey 08544, USA
@@ -44,31 +51,29 @@ function h = getGammatoneFilters(fc, Fs, IRLen)
 %   SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 %   =======================================================================
 
+narginchk(3,4);
+
+if nargin < 4
+    fType = 'complex';
+end
+
+validateattributes(fType,{'char'},{'scalartext','nonempty'},...
+    'getGammatoneFilters','type of impulse response',4);
+
+switch lower(fType)
+    case 'real'
+        hcell = gammatonefir(fc,Fs,IRLen,'real');
+    case 'complex'
+        hcell = gammatonefir(fc,Fs,IRLen);
+    otherwise
+        error('The fourth input may be ''real'' or ''complex'' only.')
+end
+
 numfc = length(fc);
-h = zeros(IRLen, numfc);
-
-hcell = gammatonefir(fc, Fs, IRLen);
-
+h = zeros(IRLen,numfc);
 for ii = 1:numfc
     tempLen = length(hcell{ii}.h);
     h(1:tempLen,ii) = hcell{ii}.h;
 end
-
-% % Example plot of gammatone filters
-%
-% Fs = 96000;
-% N = 4096;
-% fc = erbspacebw(200,16000);
-% h = getGammatoneFilters(fc, Fs, N);
-% f = getFreqVec(Fs, N);
-% Hmag = mag2db(abs(fft(h,N,1)));
-% figure()
-% hold all
-% for ii = 1:length(fc)
-% plot(f, Hmag(:,ii));
-% end
-% set(gca,'XScale','log')
-% xlim([fc(1)/1.5, fc(end)*1.5])
-% hold off
 
 end
