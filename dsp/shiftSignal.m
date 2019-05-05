@@ -1,12 +1,13 @@
-function output = shiftSignal(input,shift)
-%SHIFTSIGNAL Shifts a signal in time.
-%   output = SHIFTSIGNAL(input,shift) shifts a signal specified by the 
-%   sample amount specified in shift. Fractional samples may be specified. 
-%   Negative values of shift correspond to advancement in time (i.e. 'left'
-%   shift). input may be a vector or 2D matrix. If input is a matrix, the 
-%   signals must be specified as the columns of the matrix. shift can be a 
-%   scalar or vector (if input is a matrix), with the length of shift equal
-%   to the number of columns in input.
+function out = shiftSignal(x,s)
+%SHIFTSIGNAL Shift a signal in time.
+%   Y = SHIFTSIGNAL(X,S) shifts a signal, X, by S samples. S must be
+%   real-valued (fractional samples are allowed). Negative values of S 
+%   correspond to advancement in time (i.e. 'left' shift). X may be a 
+%   vector or 2D matrix. If X is a matrix, individual signals must be 
+%   specified as the columns of the matrix. 
+%       If X is a vector, S must be a scalar.
+%       If X is a matrix, S may be either a scalar or vector. The length of
+%       the vector must equal the number of columns in X.
 
 %   =======================================================================
 %   This file is part of the 3D3A MATLAB Toolbox.
@@ -18,7 +19,7 @@ function output = shiftSignal(input,shift)
 %   
 %   MIT License
 %   
-%   Copyright (c) 2018 Princeton University
+%   Copyright (c) 2019 Princeton University
 %   
 %   Permission is hereby granted, free of charge, to any person obtaining a
 %   copy of this software and associated documentation files (the 
@@ -42,27 +43,37 @@ function output = shiftSignal(input,shift)
 
 narginchk(2,2);
 
-input = shiftdim(input);
-[signalLen,numCols] = size(input);
+% Validate inputs
+validateattributes(x,{'double'},{'2d','nonempty','nonnan','finite'},...
+    'shiftSignal','X',1)
+validateattributes(s,{'double'},{'vector','nonempty','nonnan','finite',...
+    'real'},'shiftSignal','S',2)
 
-if isscalar(shift)
-    shift = shift*ones(numCols,1);
+x = shiftdim(x);
+[xLen,numCols] = size(x);
+
+if isscalar(s)
+    s = s*ones(numCols,1);
 else
-    shift = shiftdim(shift);
-    if length(shift) ~= numCols
-        error('Length of shift must equal number of columns in input.')
+    s = shiftdim(s);
+    if length(s) ~= numCols
+        error('Length of S must equal number of columns in X.')
     end
 end
 
-nyqIndx = ceil((signalLen+1)/2);
-output = zeros(signalLen,numCols);
+nyqIndx = ceil((xLen+1)/2);
+out = zeros(xLen,numCols);
 for ii = 1:numCols
-    inputTF = fft(input(:,ii));
+    X = fft(x(:,ii));
     
-    % Apply time shift property of Fourier transform.
-    shiftedInput = inputTF(1:nyqIndx).*...
-        exp(-1i*(2.0*pi*(0:(nyqIndx-1)).'/signalLen)*shift(ii));
-    output(:,ii) = ifft(shiftedInput,signalLen,1,'symmetric');
+    % Apply time shift property of Fourier transform to shift signal.
+    if isreal(x(:,ii))
+        Xs = X(1:nyqIndx).*exp(-1i*(2.0*pi*(0:(nyqIndx-1)).'/xLen)*s(ii));
+        out(:,ii) = ifft(Xs,xLen,1,'symmetric');
+    else
+        Xs = X.*exp(-1i*(2.0*pi*(0:(xLen-1)).'/xLen)*s(ii));
+        out(:,ii) = ifft(Xs,xLen,1);
+    end
 end
 
 end
