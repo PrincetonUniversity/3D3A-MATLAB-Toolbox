@@ -11,6 +11,8 @@ function out = getERBFreqVec(fL,fU,varargin)
 %   C = GETERBFREQVEC(A,B,'numPts',N) returns a frequency vector, C, of 
 %   length N, specifying frequencies between A and B (both in Hz) that are 
 %   uniformly-spaced on the ERB scale.
+%
+%   See also F2ERB, ERB2F.
 
 %   =======================================================================
 %   This file is part of the 3D3A MATLAB Toolbox.
@@ -57,7 +59,6 @@ if ~isempty(varargin) && length(varargin) ~= 2
         mfilename)
 end
 
-bwFlag = true;
 indx = find(strcmpi(varargin,'numPts'),1);
 if ~isempty(indx)
     n = varargin{indx+1};
@@ -75,6 +76,7 @@ else
     else
         bw = 1;
     end
+    bwFlag = true;
 end
 
 fL_erb = f2erb(fL); % Frequency, in ERB units, corresponding to fL.

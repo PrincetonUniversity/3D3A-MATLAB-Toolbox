@@ -15,22 +15,24 @@ function out = applyCBFilter(in,fS,varargin)
 %   number of elements in the cell array is equal to the number of input
 %   signal(s) in A.
 %
-%   B = APPLYCBFILTER(...,FC) optionally specifies a vector of center 
+%   B = APPLYCBFILTER(A,FS,FC) optionally specifies a vector of center 
 %   frequencies in Hz.
 %
-%   B = APPLYCBFILTER(...,FC,N) optionally specifies the length, N, of the
+%   B = APPLYCBFILTER(A,FS,FC,N) optionally specifies the length, N, of the
 %   auditory band filters to use. N must be specified in seconds. The
 %   default length of the filters is equal to the length of the input
-%   signal(s) in A.
+%   signal(s) in A. To use the default FC, specify FC as [].
 %
-%   B = APPLYCBFILTER(...,FTYPE) optionally specifies the type of auditory
-%   band filter to use. FTYPE can take the following inputs:
+%   B = APPLYCBFILTER(A,FS,FC,N,FTYPE) optionally specifies the type of 
+%   auditory band filter to use. FTYPE can take the following inputs:
 %       1. 'Patterson' - Patterson's auditory filters (default)
 %       2. 'Gammatone' - Gammatone filters (requires LTFAT toolbox)
+%   To use the default N, specify N as [].
 %
-%   B = APPLYCBFILTER(...,'sequential') sequentially filters the input
-%   signal through each critical band. This produces an output signal, B,
-%   that has the same dimensions as the input signal(s), A.
+%   B = APPLYCBFILTER(A,FS,FC,N,FTYPE,'sequential') sequentially filters 
+%   the input signal through each critical band. This produces an output 
+%   signal, B, that has the same dimensions as the input signal(s), A. To
+%   use the default FTYPE, specify FTYPE as ''.
 %
 %   See also GETGAMMATONEFILTERS, GETPATTERSONFILTERS,
 %   APPLYFILTERSINSERIES.
@@ -84,12 +86,20 @@ if isempty(fC)
     fC = extra{1,1};
 end
 
+if isempty(n)
+    n = extra{2,1};
+end
+
+if isempty(fType)
+    fType = extra{3,1};
+end
+
 filtLen = round(n*fS);
 switch lower(fType)
     case 'patterson'
-        filtMat = getPattersonFilters(fC,fS,filtLen);
+        filtMat = getPattersonFilters(fC,fS,filtLen,'causal');
     case 'gammatone'
-        filtMat = getGammatoneFilters(fC,fS,filtLen);
+        filtMat = getGammatoneFilters(fC,fS,filtLen,'real');
     otherwise
         error('Unrecognized input for FTYPE.')
 end
@@ -141,18 +151,22 @@ end
 
 % Optional inputs
 fCVec = getERBFreqVec(200,16000);
-addOptional(p,'fC',fCVec,@(x)validateattributes(x,{'double'},{'vector',...
-    'nonnan','finite','real','nonnegative'},'applyCBFilter','FC',3));
+addOptional(p,'fC',fCVec,@(x)validateattributes(x,{'double'},{'nonnan',...
+    'finite','real','nonnegative'},'applyCBFilter','FC',3));
 irLen = size(in,1);
-addOptional(p,'n',irLen/fS,@(x)validateattributes(x,{'double'},{...
-    'scalar','nonnan','finite','real','positive'},'applyCBFilter','N',4));
+n_d = irLen/fS;
+addOptional(p,'n',n_d,@(x)validateattributes(x,{'double'},{...
+    'nonnan','finite','real','positive'},'applyCBFilter','N',4));
+fType_d = 'Patterson';
 addOptional(p,'fType','Patterson',@(x)validateattributes(x,{'char'},{...
-    'scalartext','nonempty'},'applyCBFilter','FTYPE',5));
+    'scalartext'},'applyCBFilter','FTYPE',5));
 addParameter(p,'METHOD','default',@(x)validateattributes(x,{'char'},{...
     'scalartext','nonempty'},'applyCBFilter'));
 
 % Return additional variables that may be used in main function
 extra{1,1} = fCVec;
+extra{2,1} = n_d;
+extra{3,1} = fType_d;
 
 p.CaseSensitive = false;
 p.FunctionName = 'applyCBFilter';

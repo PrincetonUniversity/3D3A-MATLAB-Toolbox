@@ -7,13 +7,13 @@ function [g,L1,L2,m] = runningXCorr(x1,x2,fS,T)
 %   By default, m takes values -M:1:M, where M = floor(FS/1000). The
 %   output, G, is normalized to have values between 0 and 1.
 %
-%   G = RUNNINGXCORR(...,T) optionally specifies the time constant, in 
+%   G = RUNNINGXCORR(X1,X2,FS,T) optionally specifies the time constant, in 
 %   seconds, of the exponentially-decaying estimation window used to 
 %   compute the running cross-correlation. The default value is 0.01. T can
-%   take values in the range 1/fS to infinity (specified as inf).
+%   take values in the range 1/FS to infinity (specified as inf).
 %
 %   [G,L1,L2] = RUNNINGXCORR(...) additionally returns autocorrelation 
-%   matrices, L1 and L2, corresponding to inputs x1 and x2, respectively.
+%   matrices, L1 and L2, corresponding to inputs X1 and X2, respectively.
 %
 %   [G,L1,L2,M] = RUNNINGXCORR(...) additionally returns the lag vector, M.
 
@@ -100,6 +100,6 @@ end
 
 L1 = a11(2:end,:);
 L2 = a22(2:end,:);
-g = a12(2:end,:)./sqrt(L1.*L2 + 1e-20); % Small error term to prevent NaNs
+g = a12(2:end,:)./sqrt(L1.*L2 + eps); % Small error term to prevent NaNs
 
 end
