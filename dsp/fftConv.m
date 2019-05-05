@@ -12,11 +12,20 @@ function y = fftConv(h,x,varargin)
 %       vector of length N) to produce Y with size N-by-M.
 %   This command may also be specified as Y = FFTCONV(H,X,'circ');
 %
+%   Y = FFTCONV(...,'padcirc') circularly convolves H with X in the 
+%   frequency domain to produce Y, after padding H or X with trailing zeros
+%   if needed. If the signals in H and X have lengths P and Q,
+%   respectively, and
+%       P < Q, then the signals in H are padded with Q-P trailing zeros.
+%       P > Q, then the signals in X are padded with P-Q trailing zeros.
+%       P = Q, then the output is the same as calling the function with the
+%       'circ' option (see above).
+%
 %   Y = FFTCONV(...,'lin') linearly convolves H with X in the frequency 
 %   domain to produce Y. If the signals in H and X have lengths P and Q,
 %   respectively, then signals in Y will have length P + Q - 1.
 %   Linear convolution is implemented as circular convolution after signals 
-%   in H and X have been sufficiently zero-padded on the right. 
+%   in H and X have been sufficiently padded with trailing zeros.
 %   Consequently, it is assumed that both H and X are causal.
 %
 %   Y = FFTCONV(...,'lin',TRUNC) optionally specifies whether signals in Y 
@@ -43,7 +52,7 @@ function y = fftConv(h,x,varargin)
 %   
 %   MIT License
 %   
-%   Copyright (c) 2018 Princeton University
+%   Copyright (c) 2019 Princeton University
 %   
 %   Permission is hereby granted, free of charge, to any person obtaining a
 %   copy of this software and associated documentation files (the 
@@ -82,35 +91,53 @@ x = shiftdim(x);
 [xLen,numColsx] = size(x);
 if numColsh == 1 && numColsx > 1
     h = repmat(h,1,numColsx);
+    numColsh = numColsx;
 elseif numColsx == 1 && numColsh > 1
     x = repmat(x,1,numColsh);
+    numColsx = numColsh;
 elseif numColsx > 1 && numColsh > 1 && numColsh ~= numColsx
     error(['If H and X are both matrices, they must have the same ',...
         'number of columns.'])
 end
 
-if strcmpi(TYPE,'lin')
-    fftLen = 2^nextpow2(hLen+xLen-1);
-    yFull = ifft(fft(h,fftLen).*fft(x,fftLen),fftLen,1,'symmetric');
-    switch TRUNC
-        case 0
-            y = yFull(1:(hLen+xLen-1),:);
-        case 1
-            y = yFull(1:hLen,:);
-        case 2
-            y = yFull(1:xLen,:);
-        otherwise
-            error('Invalid TRUNC specification for option: ''lin''.')
-    end
-elseif strcmpi(TYPE,'circ')
-    if hLen == xLen
-        y = ifft(fft(h).*fft(x),'symmetric');
-    else
-        error('h and x must have the same length for option: ''circ''.')
-    end
-else
-    error(['Invalid specification for type of convolution. Only ',...
-        '''circ'' and ''lin'' are valid.'])
+switch lower(TYPE)
+    case 'circ'
+        if hLen == xLen
+            y = ifft(fft(h).*fft(x),'symmetric');
+        else
+            error(['If only H and X are specified as inputs, or the',...
+                ' type of convolution is specified as ''circ'', ',...
+                'then H and X must have the same length. If H and X ',...
+                'have different lengths, specify ''padcirc'' instead.'])
+        end
+    case 'padcirc'
+        if hLen < xLen
+            padLen = xLen-hLen;
+            y = ifft(fft([h;zeros(padLen,numColsh)]).*fft(x),...
+                'symmetric');
+        elseif hLen > xLen
+            padLen = hLen-xLen;
+            y = ifft(fft(h).*fft([x;zeros(padLen,numColsx)]),...
+                'symmetric');
+        else
+            y = ifft(fft(h).*fft(x),'symmetric');
+        end
+    case 'lin'
+        fftLen = 2^nextpow2(hLen+xLen-1);
+        yFull = ifft(fft(h,fftLen).*fft(x,fftLen),fftLen,1,'symmetric');
+        switch TRUNC
+            case 0
+                y = yFull(1:(hLen+xLen-1),:);
+            case 1
+                y = yFull(1:hLen,:);
+            case 2
+                y = yFull(1:xLen,:);
+            otherwise
+                error('Invalid TRUNC specification.')
+        end
+    otherwise
+        error(['Invalid specification for type of convolution. Only ',...
+            '''circ'', ''padcirc'', and ''lin'' are valid.'])
 end
 
 end
