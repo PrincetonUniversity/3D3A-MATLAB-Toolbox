@@ -1,10 +1,11 @@
-function posMat = makePosMat(uniquePosVecs)
+function posMat = makePosMat(uPosVecs)
 %MAKEPOSMAT Construct a matrix of position coordinate groups.
-%   posMat = MAKEPOSMAT(uniquePosVecs) takes a cell array of vectors of 
-%   unique coordinates and exports a matrix of grouped coordinates. 
-%   uniquePosVecs must be a cell array of length N, with each element being
-%   a scalar, or vector of length M_i, i = 1,2,...,N. posMat is then a
-%   P-by-N matrix, where P = prod(Q), with Q = [M_1,M_2,...,M_N].
+%   GP = MAKEPOSMAT(UP) takes a cell array of vectors of unique coordinates 
+%   and exports a matrix of grouped (pairs, triples, etc.) coordinates. UP
+%   must be a cell array of length N, with each element being either a
+%   scalar or vector. If the elements in UP have lengths M_i, where 
+%   i = 1,2,...,N, then GP will be a Q-by-N matrix, where Q = M_1*M_2*...
+%   M_(N-1)*M_N.
 %
 %   EXAMPLE:
 %
@@ -22,7 +23,7 @@ function posMat = makePosMat(uniquePosVecs)
 %   
 %   MIT License
 %   
-%   Copyright (c) 2018 Princeton University
+%   Copyright (c) 2019 Princeton University
 %   
 %   Permission is hereby granted, free of charge, to any person obtaining a
 %   copy of this software and associated documentation files (the 
@@ -47,17 +48,16 @@ function posMat = makePosMat(uniquePosVecs)
 narginchk(1,1);
 
 % Validate input
-validateattributes(uniquePosVecs,{'cell'},{'nonempty'},'makePosMat',...
-    'uniquePosVecs',1)
+validateattributes(uPosVecs,{'cell'},{'nonempty'},'makePosMat','UP',1)
 
-% Main computation begins
-N = length(uniquePosVecs); % Count number of unique vectors
+fprintf('Generating position matrix...');
 
+N = length(uPosVecs); % Count number of unique position vectors
 if N == 1
-    posMat = shiftdim(uniquePosVecs{1});
+    posMat = shiftdim(uPosVecs{1});
 else
     % 1: Compute length of each unique vector in uniquePosVecs
-    Q = shiftdim(cellfun(@length,uniquePosVecs));
+    Q = shiftdim(cellfun(@length,uPosVecs));
     % 2: Compute product of vector lengths to set size of posMat
     P = prod(Q);
     posMat = zeros(P,N);
@@ -66,11 +66,11 @@ else
     repCount = 1; % Required # of repetitions of each element in currentVec
     for ii = 1:N
         partitionVec = zeros(cumProdVec(ii),1);
-        currentVec = uniquePosVecs{N-ii+1};
+        currentVec = uPosVecs{N-ii+1};
         
         % Check if each element in uniquePosVecs is a scalar or vector
         validateattributes(currentVec,{'double'},{'vector','nonempty',...
-            'finite','nonnan'},'makePosMat','uniquePosVecs{ii}',1)
+            'finite','nonnan'},'makePosMat',['UP{',num2str(ii),'}'],1)
         
         indx = 1;
         for jj = 1:repCount:cumProdVec(ii)
@@ -83,6 +83,7 @@ else
         posMat(:,(N-ii+1)) = repmat(partitionVec,numPartitions,1);
     end
 end
-% Main computation ends
+
+fprintf('done!\n');
 
 end

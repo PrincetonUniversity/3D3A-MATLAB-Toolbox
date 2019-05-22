@@ -3,7 +3,7 @@ function f = getFreqVec(Fs,K)
 %   F = GETFREQVEC(FS,K) returns a length K column-vector of linearly-
 %   spaced frequencies ranging from 0 to (FS - DF), where DF = FS/K.
 %
-%   See also GETTIMEVEC.
+%   See also GETTIMEVEC, GETERBFREQVEC, GETLOGFREQVEC.
 
 %   =======================================================================
 %   This file is part of the 3D3A MATLAB Toolbox.
