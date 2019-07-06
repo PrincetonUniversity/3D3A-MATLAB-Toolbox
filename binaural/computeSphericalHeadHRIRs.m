@@ -1,4 +1,5 @@
-function [hL,hR,NMatL,NMatR] = computeSphericalHeadHRIRs(a,S,varargin)
+function [hL,hR,NMatL,NMatR,varargout] = computeSphericalHeadHRIRs(a,S,...
+    varargin)
 %COMPUTESPHERICALHEADHRIRS HRIRs of a rigid spherical head.
 %   [hL,hR,NMatL,NMatR] = COMPUTESPHERICALHEADHRIRS(A,S) returns HRIRs for  
 %   a spherical head of radius A and for a source at direction S. The HRIRs 
@@ -42,6 +43,12 @@ function [hL,hR,NMatL,NMatR] = computeSphericalHeadHRIRs(a,S,varargin)
 %       round the differences between successive partial sums when 
 %       determing N. If p is specified as inf (default), no rounding
 %       (beyond intrinsic numerical precision constraints) is performed.
+%
+%   [___,dTL,dTR] = COMPUTESPHERICALHEADHRIRS(...) optionally returns
+%   matrices of threshold values (one for each ear) used in the algorithm 
+%   by Duda and Martens [1]. The matrices have N+1 columns and give the
+%   threshold value for each successive value of N as a function of 
+%   frequency.
 %
 %   Needs: Symbolic Math Toolbox, MATLAB R2014b or later.
 
@@ -156,6 +163,8 @@ for ii = 1:numPos
     PR(:,ii) = legendreP(mVec,cosd(thetaR(ii)));
 end
 
+dTL = cell(nyquistIndx,1);
+dTR = cell(nyquistIndx,1);
 if R == inf % Source at infinity. Following Cooper [2].
     for ii = 2:nyquistIndx
         % Progress
@@ -168,6 +177,9 @@ if R == inf % Source at infinity. Following Cooper [2].
         psi = diag(conj((2*mVec+1).*((-1i).^(mVec-1))./dh));
         psiPL = psi*PL;
         psiPR = psi*PR;
+        
+        dTL{ii,1} = (psiPL./cumsum(psiPL)).';
+        dTR{ii,1} = (psiPR./cumsum(psiPR)).';
         if nFlag % Auto-select N if true
             if pres ~= inf
                 changeVecL = round(diff(cumsum(psiPL)),pres);
@@ -231,6 +243,9 @@ else
         psi = diag(conj(((2*mVec)+1).*(h./dh)));
         psiPL = psi*PL;
         psiPR = psi*PR;
+        
+        dTL{ii,1} = (psiPL./cumsum(psiPL)).';
+        dTR{ii,1} = (psiPR./cumsum(psiPR)).';
         if nFlag
             if pres ~= inf
                 changeVecL = round(diff(cumsum(psiPL)),pres);
@@ -280,6 +295,11 @@ end
 
 hL = ifft(hrtfL,irLen,1,'symmetric');
 hR = ifft(hrtfR,irLen,1,'symmetric');
+
+if nargout > 4
+    varargout{1} = dTL;
+    varargout{2} = dTR;
+end
 
 fprintf(clearProgress);
 fprintf('%5.1f%%\n',100);
