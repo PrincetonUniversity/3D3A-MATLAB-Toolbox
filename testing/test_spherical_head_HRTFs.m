@@ -42,29 +42,85 @@ eL = [90,0]; % Left ear direction
 eR = [270,0]; % Right ear direction
 
 % Source parameters
-azVec = (0:10:350).';
+azVec = (0:50:350).';
 elVec = 0;
-sourceDirs = makePosMat({azVec,elVec,1});
 rhoVec = [1.25;1.5;2;4;8;inf]; % See Fig. 3 in Duda and Martens [1].
 rVec = a*rhoVec; % Source distance
 rVecLen = length(rVec);
 
 % DSP parameters
-T = 0.02; % Duration of HRIRs in seconds
-Fs = 96000;
-N = 150; % Max. truncation order
+T = 0.005; % Duration of HRIRs in seconds
+Fs = 44100;
+method = {'exact',0};
 
-%% Compute HRIRs
+%% Pre-compute source position and direction matrices
 
+sourceDirs = makePosMat({azVec,elVec,1});
+sourcePositions = sofaS2sofaC(sourceDirs);
+sourcePositions = unique(round(sourcePositions,6),'rows','stable');
+sourceDirs = sofaC2sofaS(sourcePositions);
+% Update numDirs after removing duplicate directions
+numDirs = size(sourceDirs,1);
+
+%% Perform other pre-computation tasks
+
+irLen = 2^nextpow2(T * Fs);
+fVec = getFreqVec(Fs,irLen);
+nyquistIndx = ceil((irLen+1)/2);
+
+% Compute angles of incidence from source position data
+fprintf('Computing angle(s) of incidence...')
+S = sourceDirs(:,1:2);
+numPos = size(S,1);
+[xS,yS,zS] = sofaS2sofaC(S(:,1),S(:,2),ones(numPos,1));
+% Compute left and right HRTFs if both ear positions are specified
+[xEL,yEL,zEL] = sofaS2sofaC(eL(1),eL(2),1);
+[xER,yER,zER] = sofaS2sofaC(eR(1),eR(2),1);
+theta{1} = getCentralAngle([xS,yS,zS],repmat([xEL,yEL,zEL],numPos,1));
+theta{2} = getCentralAngle([xS,yS,zS],repmat([xER,yER,zER],numPos,1));
+fprintf('done!\n')
+
+%% Compute spherical head HRTFs
+
+numEars = numel(theta);
+h = cell(numEars,1);
+N = cell(numEars,1);
+TH = cell(numEars,1);
 hL = cell(rVecLen,1);
 hR = cell(rVecLen,1);
 NMatL = cell(rVecLen,1);
 NMatR = cell(rVecLen,1);
-for ii = 1:rVecLen
-    [hL{ii,1},hR{ii,1},NMatL{ii,1},NMatR{ii,1}] = ...
-        computeSphericalHeadHRIRs(a,sourceDirs(:,1:2),'T',T,'fS',Fs,...
-        'eL',eL,'eR',eR,'R',rVec(ii),'N',N,'autoselectN',true,'P',inf);
+pL1 = 100/rVecLen;
+pL2 = pL1/numEars;
+pL3 = pL2/numPos;
+pL4 = pL3/nyquistIndx;
+clearProgress = repmat('\b',1,6);
+fprintf('Computing spherical head HRTFs...%5.1f%%',0);
+for ll = 1:rVecLen
+    for ii = 1:numEars
+        H = zeros(nyquistIndx,numPos);
+        N{ii,1} = zeros(nyquistIndx,numPos);
+        TH{ii,1} = cell(nyquistIndx,numPos);
+        for jj = 1:numPos
+            for kk = 1:nyquistIndx
+                % Progress
+                fprintf(clearProgress);
+                fprintf('%5.1f%%',((ll-1)*pL1 + (ii-1)*pL2 + ...
+                    (jj-1)*pL3) + (kk-1)*pL4);
+                [H(kk,jj),N{ii,1}(kk,jj),TH{ii,1}{kk,jj}] = ...
+                    computeSphereHRTF(a,rVec(ll),theta{ii}(jj),fVec(kk),...
+                    method);
+            end
+        end
+        h{ii,1} = ifft(H,irLen,1,'symmetric');
+    end
+    hL{ll,1} = h{1,1};
+    hR{ll,1} = h{2,1};
+    NMatL{ll,1} = N{1,1};
+    NMatR{ll,1} = N{2,1};
 end
+fprintf(clearProgress);
+fprintf('%5.1f%%\n',100);
 
 %% Initialize plot variables
 
@@ -82,16 +138,16 @@ numPlotAngles = length(plotAngles);
 plotIndxVec = zeros(numPlotAngles,1);
 legendLabels = cell(numPlotAngles,1);
 for ii = 1:numPlotAngles
-    plotIndxVec(ii) = find(aoiVec == plotAngles(ii));
+    plotIndxVec(ii) = find(round(aoiVec) == plotAngles(ii));
     legendLabels{ii,1} = num2str(aoiVec(plotIndxVec(ii),1));
 end
 HL = getMagSpecdB(hL{rVecLen,1});
 
 figure();
 semilogx(muVec(1:(nyqIndx-1)),HL(1:(nyqIndx-1),plotIndxVec));
-xlabel('Normalized frequency, $\mu$')
+xlabel('Normalized frequency, $\mu$','Interpreter','latex')
 ylabel('Response (dB)')
-legend(legendLabels,'Location','southwest')
+legend(legendLabels,'Location','southwest','Interpreter','latex')
 
 ax = gca;
 ax.XLim = [0.1,100];
@@ -117,8 +173,8 @@ end
 
 figure();
 semilogx(muVec(1:(nyqIndx-1)),HL(1:(nyqIndx-1),:));
-xlabel('Normalized frequency, $\mu$')
-ylabel('Response (dB)')
+xlabel('Normalized frequency, $\mu$','Interpreter','latex')
+ylabel('Response (dB)','Interpreter','latex')
 legend(legendLabels,'Location','southwest')
 
 ax = gca;
