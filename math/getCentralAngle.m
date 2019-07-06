@@ -39,6 +39,6 @@ function t = getCentralAngle(a,b)
 
 narginchk(2,2);
 
-t = mod(atan2d(computeVectorNorm(cross(a,b),[],2),dot(a,b)),360);
+t = mod(atan2d(computeVectorNorm(cross(a,b,2),[],2),dot(a,b,2)),360);
 
 end
