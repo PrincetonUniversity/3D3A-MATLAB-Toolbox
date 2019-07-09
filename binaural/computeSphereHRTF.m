@@ -271,7 +271,7 @@ else
                     [~,~,lF] = evaluateConvergence(psiPS_older,...
                         psiP_old,psiPS_old,psiP,psiPS,thVal,methodFlag);
                 end
-                H = (1/mu^2)*psiPS;
+                H = (1/mu^2)*psiPS_older;
             else
                 mr = mu*rho;
                 hn = zeros(3,1); % Init. hn to store 3 most recent terms
@@ -324,7 +324,7 @@ else
                     [~,~,lF] = evaluateConvergence(psiPS_older,psiP_old,...
                         psiPS_old,psiP,psiPS,thVal,methodFlag);
                 end
-                H = -(rho/mu)*exp(-1i*mu*rho)*psiPS;
+                H = -(rho/mu)*exp(-1i*mu*rho)*psiPS_older;
             end
             % Compute output order, N
             if methodFlag == 4
@@ -339,15 +339,16 @@ else
                 if isempty(lastNonZeroChange)
                     N = 0;
                 else
-                    N = nonNanIndxs(lastNonZeroChange)+1;
+                    N = nonNanIndxs(lastNonZeroChange);
                 end
+                [H,~,thVec] = computeSphereHRTF(a,r,theta,f,{'fixedn',N});
             else
                 N = m-1;
-            end
-            % Compute equivalent thresholds
-            for ii = 1:2
-                [thVec(ii),~,~] = evaluateConvergence(psiPS_older,...
-                    psiP_old,psiPS_old,psiP,psiPS,0,ii); % 0 - dummy value
+                % Compute equivalent thresholds
+                for ii = 1:2
+                    [thVec(ii),~,~] = evaluateConvergence(psiPS_older,...
+                        psiP_old,psiPS_old,psiP,psiPS,0,ii); % 0 - dummy
+                end
             end
         otherwise
             error('Invalid METHOD specification.')
@@ -421,7 +422,7 @@ switch methodFlag
         io = imag(old);
         rn = real(new);
         in = imag(new);
-        if pres ~= inf
+        if TH ~= inf
             ro = round(ro,TH);
             io = round(io,TH);
             rn = round(rn,TH);
@@ -433,7 +434,7 @@ switch methodFlag
     case 4 % exact
         old = 0; % dummy value
         new = 0; % dummy value
-        lF = ~isnan(psiP);
+        lF = ~isnan(psiP_old);
     otherwise
         error('Invalid methodFlag value.')
 end

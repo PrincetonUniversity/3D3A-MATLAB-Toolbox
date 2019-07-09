@@ -37,12 +37,12 @@
 %   a spherical head model.
 
 % Head parameters
-a = 0.0875; % Head radius in m
+a = 0.09; % Head radius in m
 eL = [90,0]; % Left ear direction
 eR = [270,0]; % Right ear direction
 
 % Source parameters
-azVec = (0:50:350).';
+azVec = (0:10:350).';
 elVec = 0;
 rhoVec = [1.25;1.5;2;4;8;inf]; % See Fig. 3 in Duda and Martens [1].
 rVec = a*rhoVec; % Source distance
@@ -51,7 +51,12 @@ rVecLen = length(rVec);
 % DSP parameters
 T = 0.005; % Duration of HRIRs in seconds
 Fs = 44100;
-method = {'exact',0};
+% Comment/uncomment the code below to test the different methods
+% method = {'exact',inf};
+% method = {'sridharchoueiri2019',3};
+method = {'cooperbauck1980',0.001};
+% method = {'dudamartens1998',0.001};
+% method = {'fixedn',60};
 
 %% Pre-compute source position and direction matrices
 
@@ -90,6 +95,8 @@ hL = cell(rVecLen,1);
 hR = cell(rVecLen,1);
 NMatL = cell(rVecLen,1);
 NMatR = cell(rVecLen,1);
+threshL = cell(rVecLen,1);
+threshR = cell(rVecLen,1);
 pL1 = 100/rVecLen;
 pL2 = pL1/numEars;
 pL3 = pL2/numPos;
@@ -118,6 +125,8 @@ for ll = 1:rVecLen
     hR{ll,1} = h{2,1};
     NMatL{ll,1} = N{1,1};
     NMatR{ll,1} = N{2,1};
+    threshL{ll,1} = TH{1,1};
+    threshR{ll,1} = TH{2,1};
 end
 fprintf(clearProgress);
 fprintf('%5.1f%%\n',100);
@@ -186,3 +195,31 @@ ax.GridLineStyle = ':';
 ax.XMinorGrid = 'on';
 ax.YMinorGrid = 'off';
 ax.MinorGridLineStyle = ':';
+
+%% Verify that returned order, N, is correct by using retured order, N, and
+% the 'fixedn' method to compute thresholds which may then be compared to
+% the input threshold. Corresponding pairs of threshold values should
+% match. This test is for all methods except 'fixedn'.
+
+thresh_test = cell(rVecLen,1);
+pL1 = 100/rVecLen;
+pL2 = pL1/numPos;
+pL3 = pL2/nyquistIndx;
+clearProgress = repmat('\b',1,6);
+fprintf('Performing verification...%5.1f%%',0);
+for ll = 1:rVecLen
+    thresh_test{ll,1} = cell(nyquistIndx,numPos);
+    for jj = 1:numPos
+        for kk = 1:nyquistIndx
+            % Progress
+            fprintf(clearProgress);
+            fprintf('%5.1f%%',(ll-1)*pL1 + (jj-1)*pL2 + (kk-1)*pL3);
+            [~,~,TH_test] = computeSphereHRTF(a,...
+                rVec(ll),theta{1}(jj),fVec(kk),{'fixedn',...
+                NMatL{ll,1}(kk,jj)});
+            thresh_test{ll,1}{kk,jj} = threshL{ll,1}{kk,jj}-TH_test;
+        end
+    end
+end
+fprintf(clearProgress);
+fprintf('%5.1f%%\n',100);
