@@ -1,15 +1,15 @@
-function ITD = computeSphericalHeadITD(a,sPos,TYPE)
-%COMPUTESPHERICALHEADITD Analytically computed ITD for a spherical head.
-%   B = COMPUTESPHERICALHEADITD(A,S) analytically computes ITD for a rigid
-%   spherical head of radius A (specified in meters), and for sound source
-%   positions, S, specified in SOFA cartesian coordinates, using the
-%   Woodworth and Schlosberg formula (see, for example, Kuhn [1]). S must
-%   be specified as an N-by-3 matrix. B will contain ITD values in seconds.
+function ITD = computeSphereITD(a,sPos,TYPE)
+%COMPUTESPHEREITD Analytically computed ITD for a sphere.
+%   B = COMPUTESPHEREITD(A,S) analytically computes ITD for a rigid sphere
+%   of radius A (specified in meters), and for sound source positions, S, 
+%   specified in SOFA cartesian coordinates, using the Woodworth and 
+%   Schlosberg formula (see, for example, Kuhn [1]). S must be specified as 
+%   an N-by-3 matrix. B will contain ITD values in seconds.
 %       If A is a scalar, B will be a row vector of length N.
 %       If A is a vector of length M, B will be an M-by-N matrix.
 %
-%   B = COMPUTESPHERICALHEADITD(...,TYPE) optionally specifies the type of
-%   formula to use to compute ITD. The two options for TYPE are:
+%   B = COMPUTESPHEREITD(...,TYPE) optionally specifies the type of formula
+%   to use to compute ITD. The two options for TYPE are:
 %       1. 'WS' - Woodworth and Schlosberg formula (default).
 %       2. 'LF' - Low-frequency limit formula (see, for example, Kuhn [1]).
 
@@ -23,7 +23,7 @@ function ITD = computeSphericalHeadITD(a,sPos,TYPE)
 %   
 %   MIT License
 %   
-%   Copyright (c) 2018 Princeton University
+%   Copyright (c) 2019 Princeton University
 %   
 %   Permission is hereby granted, free of charge, to any person obtaining a
 %   copy of this software and associated documentation files (the 
@@ -57,11 +57,11 @@ end
 
 % Check inputs
 validateattributes(a,{'double'},{'vector','nonempty','nonnan','finite',...
-    'positive','real'},'computeSphericalHeadITD','A');
+    'positive','real'},'computeSphereITD','A',1);
 validateattributes(sPos,{'double'},{'2d','nonempty','nonnan','finite',...
-    'size',[NaN,3],'real'},'computeSphericalHeadITD','S');
+    'size',[NaN,3],'real'},'computeSphereITD','S',2);
 validateattributes(TYPE,{'char'},{'scalartext','nonempty'},...
-    'computeSphericalHeadITD','TYPE');
+    'computeSphereITD','TYPE',3);
 
 % Reformat inputs
 a = shiftdim(a); % If a is a row vector, force it to be a column.
