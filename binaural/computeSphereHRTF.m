@@ -10,7 +10,7 @@ function [H,N,thVec] = computeSphereHRTF(a,r,theta,f,METHOD)
 %   H, and a 2-by-1 vector, T, of corresponding threshold values for use 
 %   with the HRTF computation methods described by Cooper and Bauck [2], 
 %   and Duda and Martens [3], in that order. The GETCENTRALANGLE function 
-%   may be useful for computing THETA. 
+%   may be useful for computing THETA.
 %
 %   [H,N,T] = COMPUTESPHEREHRTF(A,R,THETA,F,METHOD) optionally specifies
 %   the METHOD to use to compute the HRTF. METHOD must be a 2-element cell 
@@ -26,12 +26,22 @@ function [H,N,thVec] = computeSphereHRTF(a,r,theta,f,METHOD)
 %       3. {'cooperbauck1980',TH} where TH can be any finite, real number,
 %       and refers to the threshold for determining the order, N, of the
 %       calculation. In the Fortran code published by Cooper and Bauck [2], 
-%       TH is set to 0.001. In this case, the specified value of TH will be
+%       TH is set to 0.001. In this case, the specified value of TH will 
 %       also be returned as the first element of the output vector, T.
 %       4. {'dudamartens1998',TH} where TH is as defined in 3, above. In
-%       this case, the specified value of TH will be also be returned as 
-%       the second element of the output vector, T.
-%       5. {'exact',P} where P is as defined in 1, above.
+%       this case, the specified value of TH will also be returned as the
+%       second element of the output vector, T.
+%       5. {'exact',P} where P is as defined in 1, above, computes the
+%       smallest order, N, that results in a numerically exact (to within
+%       precision, P) value of H.
+%       6. {'maxn'} computes the maximum permissible value of order, N, for
+%       the given set of input parameters. The returned value of H is exact
+%       but this setting is different from {'exact',inf} in that whereas
+%       the latter identifies the smallest value of N that gives a 
+%       numerically exact solution, {'maxn'} identifies the largest value 
+%       of N that does so, noting that a larger N will produce NaNs. Note
+%       that {'maxn'} gives the same result as {'exact',inf} only when F =
+%       0.
 %
 %   See also GETCENTRALANGLE, COMPUTESPHEREITD.
 
@@ -81,7 +91,6 @@ narginchk(4,5);
 if nargin < 5
     METHOD{1} = 'sridharchoueiri2019';
     METHOD{2} = inf; % precision/threshold, depending on METHOD{1}
-                     % Note: threshold = 10^(-precision)
 end
 
 % Check inputs
@@ -95,8 +104,10 @@ validateattributes(f,{'double'},{'scalar','nonempty','nonnan','finite',...
     'nonnegative','real'},'computeSphereHRTF','F',4);
 validateattributes(METHOD{1},{'char'},{'scalartext','nonempty'},...
     'computeSphereHRTF','first element of METHOD',5);
-validateattributes(METHOD{2},{'double'},{'scalar','nonempty','nonnan'},...
-    'computeSphereHRTF','second element of METHOD',5);
+if length(METHOD) == 2
+    validateattributes(METHOD{2},{'double'},{'scalar','nonempty',...
+        'nonnan'},'computeSphereHRTF','second element of METHOD',5);
+end
 
 % Initialize common variables
 c = getSoundSpeed();
@@ -107,10 +118,116 @@ rho = r/a;
 
 % Main calculation
 if mu == 0
-    H = 1;
-    N = 0;
-    thVec = ones(2,1);
-else
+    if rho == inf
+        H = 1;
+        N = 0;
+        thVec = ones(2,1);
+    else
+        P = zeros(3,1); % Initialize P to store 3 most recent terms
+        P(1) = 1; % m = 0
+        P(2) = x; % m = 1
+        
+        % Initialize sums
+        psiPS_old = 0;
+        psiPS = 0;
+        switch lower(METHOD{1})
+            case 'fixedn'
+                N = METHOD{2}; % extract order from input
+                m = 0;
+                Bm = ((2*m)+1)/((m+1)*rho^m); % m = 0
+                psiP = Bm*P(1);
+                psiPS = psiPS + psiP;
+                m = m + 1;
+                % Store old values
+                psiP_old = psiP;
+                psiPS_older = psiPS_old;
+                psiPS_old = psiPS;
+                % Compute new values
+                Bm = ((2*m)+1)/((m+1)*rho^m); % m = 1
+                psiP = Bm*P(2);
+                psiPS = psiPS + psiP;
+                for m = 2:N
+                    % Store old values
+                    psiP_old = psiP;
+                    psiPS_older = psiPS_old;
+                    psiPS_old = psiPS;
+                    % Compute new values
+                    Bm = ((2*m)+1)/((m+1)*rho^m);
+                    P(3) = computeP(P(1:2),m,x);
+                    psiP = Bm*P(3);
+                    psiPS = psiPS + psiP;
+                    P(1) = P(2);
+                    P(2) = P(3);
+                end
+                H = psiPS;
+                % Compute equivalent thresholds
+                for ii = 1:2
+                    [~,thVec(ii),~] = evaluateConvergence(psiPS_older,...
+                        psiP_old,psiPS_old,psiP,psiPS,0,ii); % 0 - dummy
+                end
+            case {'cooperbauck1980','dudamartens1998',...
+                    'sridharchoueiri2019','exact','maxn'}
+                switch lower(METHOD{1})
+                    case 'cooperbauck1980'
+                        methodFlag = 1;
+                    case 'dudamartens1998'
+                        methodFlag = 2;
+                    case 'sridharchoueiri2019'
+                        methodFlag = 3;
+                    case 'exact' % same as sridharchoueiri2019 for mu = 0
+                        methodFlag = 3;
+                    case 'maxn' % same as sridharchoueiri2019 for mu = 0
+                        methodFlag = 3;
+                        METHOD{2} = inf;
+                    otherwise
+                        error('Invalid METHOD specification.')
+                end
+                thVal = METHOD{2}; % extract threshold from input
+                m = 0;
+                Bm = ((2*m)+1)/((m+1)*rho^m); % m = 0
+                psiP = Bm*P(1);
+                psiPS = psiPS + psiP;
+                m = m + 1;
+                % Store old values
+                psiP_old = psiP;
+                psiPS_older = psiPS_old;
+                psiPS_old = psiPS;
+                % Compute new values
+                Bm = ((2*m)+1)/((m+1)*rho^m); % m = 1
+                psiP = Bm*P(2);
+                psiPS = psiPS + psiP;
+                [~,~,lF] = evaluateConvergence(psiPS_older,psiP_old,...
+                    psiPS_old,psiP,psiPS,thVal,methodFlag);
+                while lF
+                    m = m + 1;
+                    % Store old values
+                    psiP_old = psiP;
+                    psiPS_older = psiPS_old;
+                    psiPS_old = psiPS;
+                    % Compute new values
+                    Bm = ((2*m)+1)/((m+1)*rho^m);
+                    P(3) = computeP(P(1:2),m,x);
+                    psiP = Bm*P(3);
+                    psiPS = psiPS + psiP;
+                    P(1) = P(2);
+                    P(2) = P(3);
+                    [~,~,lF] = evaluateConvergence(psiPS_older,psiP_old,...
+                        psiPS_old,psiP,psiPS,thVal,methodFlag);
+                end
+                H = psiPS_older;
+                % Compute output order, N
+                N = m-2; % See comment in mu > 0 case
+                % Compute equivalent thresholds
+                for ii = 1:2
+                    [thVec(ii),~,~] = evaluateConvergence(...
+                        psiPS_older,psiP_old,psiPS_old,psiP,psiPS,...
+                        0,ii); % 0 - dummy value
+                end
+            otherwise
+                error('Invalid METHOD specification.')
+        end
+    end
+else % mu > 0
     % Perform preliminary calculations
     % Note: hf is the variable storing the value of the spherical-Hankel 
     % function (of the first kind) with mu as the argument. P is the 
@@ -216,7 +333,7 @@ else
                     psiP_old,psiPS_old,psiP,psiPS,0,ii); % 0 - dummy value
             end
         case {'cooperbauck1980','dudamartens1998','sridharchoueiri2019',...
-                'exact'}
+                'exact','maxn'}
             switch lower(METHOD{1})
                 case 'cooperbauck1980'
                     methodFlag = 1;
@@ -226,6 +343,9 @@ else
                     methodFlag = 3;
                 case 'exact'
                     methodFlag = 4;
+                case 'maxn'
+                    methodFlag = 5;
+                    METHOD{2} = inf;
                 otherwise
                     error('Invalid METHOD specification.')
             end
@@ -343,7 +463,7 @@ else
                 end
                 [H,~,thVec] = computeSphereHRTF(a,r,theta,f,{'fixedn',N});
             else
-                N = m-1;
+                N = m-2; % -2 for 2 consecutive, non-changing sums.
                 % Compute equivalent thresholds
                 for ii = 1:2
                     [thVec(ii),~,~] = evaluateConvergence(psiPS_older,...
@@ -392,12 +512,16 @@ out = (((2*m)-1)/m)*x*P(2)-(((m-1)/m)*P(1));
 end
 
 function out = computeAm(m,hp)
+%COMPUTEAM Factor in summation term in solution corresponding to infinitely 
+%distant source. See the paper by Sridhar and Choueiri [1].
 
 out = ((-1i)^(m-1))*(2*m+1)/hp;
 
 end
 
 function out = computeBm(m,hp,hn)
+%COMPUTEBM Factor in summation term in solution corresponding to source at 
+%a finite distance. See the paper by Sridhar and Choueiri [1].
 
 out = ((2*m)+1)*hn/hp;
 
@@ -405,6 +529,13 @@ end
 
 function [old,new,lF] = evaluateConvergence(psiPS_older,psiP_old,...
     psiPS_old,psiP,psiPS,TH,methodFlag)
+%EVALUATECONVERGENCE Determine if series solution has converged.
+%   [O,N,LF] = EVALUATECONVERGENCE(P1,P2,P3,P4,P5,TH,MF) computes two
+%   consecutive values, O and N, of the convergence metric corresponding to 
+%   the method identified by the flag, MF, given the five input parameters
+%   P1-P5, and a convergence threshold/numerical precision, TH. Also
+%   returned is a loop flag used to indicate if the series solution has
+%   converged. When LF is false, convergence has been achieved.
 
 switch methodFlag
     case 1
@@ -435,6 +566,10 @@ switch methodFlag
         old = 0; % dummy value
         new = 0; % dummy value
         lF = ~isnan(psiP_old);
+    case 5 % maxn
+        old = 0; % dummy value
+        new = 0; % dummy value
+        lF = ~isnan(psiP_old);
     otherwise
         error('Invalid methodFlag value.')
 end
@@ -442,6 +577,10 @@ end
 end
 
 function out = computeConvergenceMetric(in1,in2,MF)
+%COMPUTECONVERGENCEMETRIC Convergence metric for determing order.
+%   Y = COMPUTECONVERGENCEMETRIC(X1,X2,FLAG) computes the value, Y, of the
+%   convergence metric corresponding to the method identified by the flag,
+%   MF, given input parameters X1 and X2.
 
 switch MF
     case 1 % Cooper and Bauck 1980
