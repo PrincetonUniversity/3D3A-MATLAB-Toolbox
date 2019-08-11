@@ -1,1 +1,2 @@
 1. Rename getPotential --> p2psi and getPressure --> psi2p.
+2. Add new functions to documentation.
