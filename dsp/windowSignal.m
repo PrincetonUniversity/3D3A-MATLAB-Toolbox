@@ -129,7 +129,7 @@ numCols = extras{2,1};
 oVecMax = max(oVec);
 % Compute maximum window length possible if input, h, is not zero-padded on
 % the right.
-noPadMaxWinLen = hLen-(wS+oVecMax-1);
+noPadMaxWinLen = hLen-(wS+oVecMax);
 % Zero pad input on the right as needed.
 if wLen > noPadMaxWinLen
     h = [h;zeros(wLen-noPadMaxWinLen,numCols)];
@@ -178,9 +178,9 @@ winMat = zeros(hLen,numCols);
 padWinVec = [wVec;zeros(hLen-wLen,1)];
 for ii = 1:numCols
     currentSPos = wS+oVec(ii);
-    currentWin = shiftSignal(padWinVec,currentSPos-1);
+    currentWin = circshift(padWinVec,currentSPos);
     hWinFull = h(:,ii).*currentWin;
-    hWin(:,ii) = hWinFull(currentSPos:(currentSPos+wLen-1));
+    hWin(:,ii) = hWinFull(wS:(wS+wLen-1));
     winMat(:,ii) = currentWin;
 end
 

@@ -147,10 +147,11 @@ else
         [~,fIndx] = max(hMagdB_crop);
         refMag = zeros(1,numDirs);
         for ii = 1:numDirs
-            refMag(ii) = db2mag(mean(hMagdB_crop(fIndx(ii),:)));
+            refMag(ii) = db2mag(hMagdB_crop(fIndx(ii),ii));
         end
     else
-        refMag = db2mag(mean(hMagdB_crop,1));
+%         refMag = db2mag(mean(hMagdB_crop,1));
+        refMag = db2mag(logmean(hMagdB,fVec,[fVec(fLIndx),fVec(fUIndx)]));
     end
 end
 

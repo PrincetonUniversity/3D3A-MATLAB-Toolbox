@@ -55,8 +55,10 @@ end
 r1Mag = sqrt(dot(r1,r1,2));
 r2Mag = sqrt(dot(r2,r2,2));
 r2 = r2 * mean(r1Mag) / mean(r2Mag);
-u1 = r1 * diag(1./r1Mag);
-u2 = r2 * diag(1./r2Mag);
+% u1 = r1 * diag(1./r1Mag);
+% u2 = r2 * diag(1./r2Mag);
+u1 = (r1.' * diag(1./r1Mag)).';
+u2 = (r2.' * diag(1./r2Mag)).';
 
 numDirs = size(r2,1);
 mask = false(numDirs,1);
