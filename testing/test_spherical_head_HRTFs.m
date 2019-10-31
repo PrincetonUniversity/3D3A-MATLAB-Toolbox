@@ -38,7 +38,7 @@
 %       [1]. Duda and Martens (1998) - Range dependence of the response of 
 %   a spherical head model.
 
-close all
+% close all
 clearvars
 clc
 
@@ -50,7 +50,8 @@ eR = [260,0]; % Right ear direction
 % Source parameters
 azVec = (0:10:350).';
 elVec = 0;
-rhoVec = [1.25;1.5;2;4;8;inf]; % See Fig. 3 in Duda and Martens [1].
+% rhoVec = [1.25;1.5;2;4;8;inf]; % See Fig. 3 in Duda and Martens [1].
+rhoVec = 10;
 rVec = a*rhoVec; % Source distance
 rVecLen = length(rVec);
 

@@ -32,7 +32,7 @@
 %   SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 %   =======================================================================
 
-fc = erbspacebw(50,21000);
+fc = getERBFreqVec(50,21000);
 Fs = 96000;
 N = 16384;
 fVec = getFreqVec(Fs,N);

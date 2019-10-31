@@ -51,8 +51,8 @@ if nargin < 3
     FILTERLEN = size(h,1); % Default fIR length in samples.
 end
 
-w1 = 500/(fS/2);
-w2 = 15000/(fS/2);
+w1 = 100/(fS/2);
+w2 = 16000/(fS/2);
 eqFilterIR = computeInverseFilter(h,'gardner1994',{'avgRange',[w1,w2]});
 
 fIR = makeMinPhaseIR(eqFilterIR,'hilb');

@@ -99,15 +99,18 @@ switch(lower(SCALE))
     case 'db'
         Hsm1 = db2mag(M*mag2db(abs(H)));
     case 'complex'
+        % See Eq. (52) in [1]
         Hsm1Re = M*real(H);
         Hsm1Im = M*imag(H);
         Hsm1 = Hsm1Re+1i*Hsm1Im;
     case 'equiv-complex'
+        % Step 1 on pp. 273 in [1]
+        Hsm1b = sqrt(M*(abs(H).^2));
+        % Step 2 on pp. 273 in [1]
         Hsm1Re = M*real(H);
         Hsm1Im = M*imag(H);
-        Hsm1a = Hsm1Re+1i*Hsm1Im;
-        Hsm1b = sqrt(M*(abs(H).^2));
-        Hsm1 = (Hsm1a.*Hsm1b)./(abs(Hsm1a));
+        Hsm1a = Hsm1Re+1i*Hsm1Im; % Eq. (52) in [1]
+        Hsm1 = (Hsm1a.*Hsm1b)./(abs(Hsm1a)); % Eq. (59) in [1]
 end
 
 if mod(FFTLen,2) % FFTLen is odd

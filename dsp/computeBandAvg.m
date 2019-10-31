@@ -64,7 +64,8 @@ elseif strcmpi(B,'erb') % ERB-spaced auditory bands
         FFTLen = round(Fs/mean(diff(F)));
         
         f = getFreqVec(Fs,FFTLen);
-        h = getGammatoneFilters(fc, Fs, FFTLen);
+        h = getPattersonFilters(fc,Fs,FFTLen,'causal');
+        % h = getGammatoneFilters(fc, Fs, FFTLen);
         Hmag = getMagSpec(h,1); % FFTLen-by-numfc
         
         % Resample to frequencies given in F

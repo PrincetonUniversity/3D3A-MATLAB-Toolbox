@@ -1,15 +1,10 @@
-function [sd,mSD] = computeSD(ref,test,DIM)
+function sD = computeSD(ref,test)
 %COMPUTESD Compute spectral distortion
-%   [sd,mSD] = COMPUTESD(ref,test) computes the spectral distortion between 
-%   ref and test. Some possible options for ref and test might be:
-%       1. frequency responses
-%       2. magnitude responses
-%   Both ref and test may be vectors, or matrices with the same dimensions.
-%   The mean spectra distortion (mSD) is also returned. Both sd and mSD are 
-%   returned in dB.
-%
-%   ___ = COMPUTESD(...,DIM) specifies the dimensions along which to
-%   perform computation of mSD. See the SUM function for more information.
+%   D = COMPUTESD(R,T) computes the distortion, in dB, between 
+%   corresponding spectra in R and T. Both R and T may be vectors, or 
+%   matrices with the same dimensions. R and T may contain either
+%   complex-valued frequency responses or magnitude spectra. COMPUTESD then
+%   computes, element-wise, the ratio |R|/|T| and returns the result in dB.
 
 %   =======================================================================
 %   This file is part of the 3D3A MATLAB Toolbox.
@@ -21,7 +16,7 @@ function [sd,mSD] = computeSD(ref,test,DIM)
 %   
 %   MIT License
 %   
-%   Copyright (c) 2018 Princeton University
+%   Copyright (c) 2019 Princeton University
 %   
 %   Permission is hereby granted, free of charge, to any person obtaining a
 %   copy of this software and associated documentation files (the 
@@ -43,28 +38,21 @@ function [sd,mSD] = computeSD(ref,test,DIM)
 %   SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 %   =======================================================================
 
-%   References:
+%   Ref:
 %       [1]. Xie (2013) - Head-Related Transfer Function and Virtual
 %       Auditory Display, Second Edition, J. Ross. 
 
-narginchk(2,3);
+narginchk(2,2);
 
-if nargin < 3
-    DIM = 1;
-end
-
+% Check inputs
 validateattributes(ref,{'double'},{'2d','nonempty','nonnan','finite',...
-    'ndims',2},'computeSD','ref',1);
+    'ndims',2},'computeSD','R',1);
 validateattributes(test,{'double'},{'2d','nonempty','nonnan','finite',...
-    'size',size(ref)},'computeSD','test',2);
-validateattributes(DIM,{'double'},{'scalar','nonempty','nonnan',...
-    'finite','integer','positive','<=',2},'computeSD','DIM',3);
-
+    'size',size(ref)},'computeSD','T',2);
 ref = shiftdim(ref); % If row vector, convert to column vector.
 test = shiftdim(test);
 
-% The following formulas were adapted from page 138 of Xie [1].
-sd = mag2db(abs(ref)./abs(test));
-mSD = rms(sd,DIM);
+% The following formula was adapted from page 138 of Xie [1].
+sD = mag2db(abs(ref)./abs(test));
 
 end
