@@ -1,4 +1,4 @@
-function [] = start3D3AMATLABToolbox()
+function start3D3AMATLABToolbox()
 %START3D3AMATLABTOOLBOX Start the 3D3A MATLAB Toolbox.
 
 %   =======================================================================
@@ -45,7 +45,7 @@ else
         foundLTFAT = true;
     else
         warning(['Could not find LTFAT! Please add LTFAT to the MATLAB'...
-            'search path, otherwise some functions may not work.']);
+            ' search path, otherwise some functions may not work.']);
     end
 end
 
@@ -60,7 +60,7 @@ else
         foundSOFA = true;
     else
         warning(['Could not find SOFA! Please add SOFA to the MATLAB'...
-            'search path, otherwise some functions may not work.']);
+            ' search path, otherwise some functions may not work.']);
     end
 end
 
@@ -75,7 +75,7 @@ else
         foundSFS = true;
     else
         warning(['Could not find SFS! Please add SFS to the MATLAB'...
-            'search path, otherwise some functions may not work.']);
+            ' search path, otherwise some functions may not work.']);
     end
 end
 
@@ -90,7 +90,7 @@ else
         foundAMT = true;
     else
         warning(['Could not find AMT! Please add AMT to the MATLAB'...
-            'search path, otherwise some functions may not work.']);
+            ' search path, otherwise some functions may not work.']);
     end
 end
 
