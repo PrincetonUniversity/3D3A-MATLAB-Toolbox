@@ -1,8 +1,14 @@
 function absPath = rel2abs(relPath)
-%REL2ABS Convert relative path to absolute path
+%REL2ABS Convert relative path to absolute path.
 %   B = REL2ABS(A) converts the relative path specified in A to an absolute 
 %   path, B, where the absolute path is generated assuming that the
-%   relative path is specified relative to the current folder.
+%   relative path is specified relative to the current folder in MATLAB. If
+%   the path contains a shortcut for the user directory, this is also
+%   replaced by the full path. The following shortcuts are recognized:
+%       1. '~' on Unix-based systems (including macOS)
+%       2. %userprofile% on Windows
+%
+%   See also GETUSERPATH.
 
 %   =======================================================================
 %   This file is part of the 3D3A MATLAB Toolbox.
@@ -14,7 +20,7 @@ function absPath = rel2abs(relPath)
 %   
 %   MIT License
 %   
-%   Copyright (c) 2018 Princeton University
+%   Copyright (c) 2019 Princeton University
 %   
 %   Permission is hereby granted, free of charge, to any person obtaining a
 %   copy of this software and associated documentation files (the 
@@ -51,6 +57,19 @@ if relPath_numDDotIndxs > 0
         relPath(relPath_DDotIndxs(end)+2+length(filesep):end)];
 else
     absPath = relPath;
+end
+
+if ismac || isunix
+    userPathSym = '~';
+elseif ispc
+    userPathSym = '%userprofile%';
+else
+    disp('Platform not supported.')
+end
+
+userPathSymFlag = strfind(absPath,userPathSym);
+if userPathSymFlag
+    absPath = strrep(absPath,userPathSym,getUserPath);
 end
 
 end

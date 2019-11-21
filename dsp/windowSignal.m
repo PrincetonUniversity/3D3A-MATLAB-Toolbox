@@ -14,8 +14,8 @@ function [hWin,varargout] = windowSignal(h,wLen,varargin)
 %   window to apply. The following may be specified for TYPE (which must be
 %   a cell array):
 %       1. {'rect'} - rectangular window (default)
-%       2. {'hann'} - hanning window
-%       3. {'hamm'} - hamming window
+%       2. {'hann'} - hann window
+%       3. {'hamming'} - hamming window
 %       4. {'tukey',R} - tukey window with the first and last 100*R/2 
 %       percent of samples equal to parts of a cosine. If R is not 
 %       specified, a default of 0.5 is assumed. R can take values in the 
@@ -144,7 +144,7 @@ switch lower(wType{1,1})
         wVec = ones(wLen,1);
     case 'hann'
         wVec = hann(wLen); % From Signal Processing Toolbox
-    case 'hamm'
+    case 'hamming'
         wVec = hamming(wLen); % From Signal Processing Toolbox
     case 'tukey'
         if length(wType) > 1

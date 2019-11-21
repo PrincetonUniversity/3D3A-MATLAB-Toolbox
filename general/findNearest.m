@@ -1,20 +1,23 @@
-function [x1,IND] = findNearest(xVec,x0,SCALE,N)
+function [xOut,IND] = findNearest(xIn,xD,varargin)
 %FINDNEAREST Find the row of a matrix nearest to a given row vector.
-%   X1 = FINDNEAREST(X,X0) returns X1, the row of the matrix X which is
-%   closest in value to the row vector X0.
+%   Y = FINDNEAREST(X,XD) returns Y, the row of the matrix X which is
+%   closest (in a least-squares sense) to the row vector XD. The number of 
+%   columns in X must equal the length of XD. If X is a vector, XD must be
+%   a scalar.
 %
-%   [X1,I1] = FINDNEAREST(X,X0) returns the position I1 of X1 in X.
+%   Y = FINDNEAREST(X,XD,SCALE) optionally uses SCALE to measure the
+%   distance between elements. The options for SCALE are:
+%       1. 'linear' or 'l1' - distance is measured using the manhattan
+%       norm.
+%       2. 'least-squares' or 'l2' - distance is measured using the
+%       Euclidean norm. This is the default.
+%       3. 'angular' - distance is measured in terms of the angle between
+%       two positions.
 %
-%   [X1,I1] = FINDNEAREST(X,X0,SCALE) measures distance between elements
-%   using the specified SCALE (see options below).
+%   Y = FINDNEAREST(X,XD,SCALE,N) optionally returns the N nearest rows of
+%   X.
 %
-%   [X1,I1] = FINDNEAREST(X,X0,SCALE,N) returns N nearest elements.
-%   
-%   OPTIONAL INPUTS:
-%   1. SCALE (default = 'linear') - specifies the distance metric to use. 
-%   The options are 'linear' or 'l1', 'least-squares' or 'l2', and
-%   'angular'.
-%   2. N (default = 1) - specifies the number of elements to return.
+%   [Y,I] = FINDNEAREST(___) also returns the position(s), I, of Y in X.
 
 %   =======================================================================
 %   This file is part of the 3D3A MATLAB Toolbox.
@@ -27,7 +30,7 @@ function [x1,IND] = findNearest(xVec,x0,SCALE,N)
 %   
 %   MIT License
 %   
-%   Copyright (c) 2018 Princeton University
+%   Copyright (c) 2019 Princeton University
 %   
 %   Permission is hereby granted, free of charge, to any person obtaining a
 %   copy of this software and associated documentation files (the 
@@ -49,34 +52,53 @@ function [x1,IND] = findNearest(xVec,x0,SCALE,N)
 %   SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 %   =======================================================================
 
+% Check number of inputs
 narginchk(2,4);
 
-% Re-orient arrays if needed
-if isrow(xVec) && ~isequal(size(xVec), size(x0))
-    xVec = shiftdim(xVec);
+% Validate attributes of required inputs
+validateattributes(xIn,{'numeric'},{'2d','nonempty','nonnan'},...
+    'findNearest','X',1);
+xIn = shiftdim(xIn); % If vector, force to a column.
+[numRowsX,numColsX] = size(xIn);
+validateattributes(xD,{'numeric'},{'row','nonempty','ncols',numColsX},...
+    'findNearest','XD',2);
+
+% Parse optional inputs
+switch nargin
+    case 2
+        SCALE = 'l2';
+        N = 1;
+    case 3
+        SCALE = varargin{1};
+        N = 1;
+    case 4
+        SCALE = varargin{1};
+        N = varargin{2};
 end
 
-% Use linear distance metric by default
-if nargin < 3 || isempty(SCALE)
-    SCALE = 'linear';
+if isempty(SCALE)
+    SCALE = 'l2';
 end
 
-% Find 1 nearest point by default
-if nargin < 4 || isempty(N)
-	N = 1;
-end
+% Validate attributes of optional inputs
+validateattributes(SCALE,{'char'},{'scalartext','nonempty'},...
+    'findNearest','SCALE',3);
+validateattributes(N,{'numeric'},{'scalar','nonempty','nonnan','finite',...
+    'integer','positive','<=',numRowsX},'findNearest','N',4);
 
-[xLen, ~] = size(xVec);
 switch lower(SCALE)
-    case {'linear', 'l1'}
-        distVec = sum(abs(xVec - ones(xLen,1)*x0),2);
-    case {'least-squares', 'l2'}
-        distVec = sqrt(sum((xVec - ones(xLen,1)*x0).^2,2));
+    case {'linear','l1'}
+        distVec = sum(abs(xIn - ones(numRowsX,1)*xD),2);
+    case {'least-squares','l2'}
+        distVec = sqrt(sum((xIn - ones(numRowsX,1)*xD).^2,2));
     case 'angular'
-        distVec = acos(normalizeVector(xVec,2)*normalizeVector(x0,2).');
+        distVec = acos(normalizeVector(xIn,2)*normalizeVector(xD,2).');
+    otherwise
+        error('Invalid specification for SCALE.')
 end
-[~, indVec] = sort(distVec);
+
+[~,indVec] = sort(distVec);
 IND = indVec(1:N);
-x1 = xVec(IND,:);
+xOut = xIn(IND,:);
 
 end
