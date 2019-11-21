@@ -5,6 +5,7 @@ function [] = start3D3AMATLABToolbox()
 %   This file is part of the 3D3A MATLAB Toolbox.
 %   
 %   Contributing author(s), listed alphabetically by last name:
+%   Rahulram Sridhar <rahulram@princeton.edu>
 %   Joseph G. Tylka <josephgt@princeton.edu>
 %   3D Audio and Applied Acoustics (3D3A) Laboratory
 %   Princeton University, Princeton, New Jersey 08544, USA
@@ -48,21 +49,6 @@ else
     end
 end
 
-% Next, try to find AMT
-foundAMT = false;
-if exist('amt_start','file') == 2
-    foundAMT = true;
-else
-    amtDir = dir(fullfile(userpath,'**','amt_start.m'));
-    if ~isempty(amtDir)
-        addpath(amtDir(1).folder)
-        foundAMT = true;
-    else
-        warning(['Could not find AMT! Please add AMT to the MATLAB'...
-            'search path, otherwise some functions may not work.']);
-    end
-end
-
 % Next, try to find SOFA
 foundSOFA = false;
 if exist('SOFAstart','file') == 2
@@ -78,22 +64,71 @@ else
     end
 end
 
-% Start the found toolbox(es)
-if ~foundAMT
-    if foundLTFAT
-        ltfatstart;
+% Next, try to find SFS
+foundSFS = false;
+if exist('SFS_start','file') == 2
+    foundSFS = true;
+else
+    sfsDir = dir(fullfile(userpath,'**','SFS_start.m'));
+    if ~isempty(sfsDir)
+        addpath(sfsDir(1).folder)
+        foundSFS = true;
+    else
+        warning(['Could not find SFS! Please add SFS to the MATLAB'...
+            'search path, otherwise some functions may not work.']);
     end
+end
+
+% Next, try to find AMT
+foundAMT = false;
+if exist('amt_start','file') == 2
+    foundAMT = true;
+else
+    amtDir = dir(fullfile(userpath,'**','amt_start.m'));
+    if ~isempty(amtDir)
+        addpath(amtDir(1).folder)
+        foundAMT = true;
+    else
+        warning(['Could not find AMT! Please add AMT to the MATLAB'...
+            'search path, otherwise some functions may not work.']);
+    end
+end
+
+if foundAMT
+    amt_start; % This should also start SOFA, LTFAT, and SFS.
+    if foundLTFAT
+        % Delete rms.m from the LTFAT toolbox because of naming conflict
+        ltfatPath = fileparts(which('ltfatstart.m'));
+        if exist(fullfile(ltfatPath,'sigproc','rms.m'),'file')
+            delete(fullfile(ltfatPath,'sigproc','rms.m'));
+        end
+    end
+    if foundSFS
+        % Delete rms.m from the SFS toolbox because of naming conflict
+        sfsPath = fileparts(which('SFS_start.m'));
+        if exist(fullfile(sfsPath,'SFS_general','rms.m'),'file')
+            delete(fullfile(sfsPath,'SFS_general','rms.m'));
+        end
+    end
+else
     if foundSOFA
         SOFAstart;
     end
-else
-    try
-        amt_start; % Might find LTFAT/SOFA in AMT's thirdparty folder
-    catch ME
-        disp('Found AMT but could not start due to the following error:')
-        messageLines = splitlines(ME.message);
-        indentMessage = compose('\t %s',messageLines);
-        disp(strjoin(indentMessage,'\n'))
+    if foundLTFAT
+        ltfatstart;
+        % Delete rms.m from the LTFAT toolbox because of naming conflict
+        ltfatPath = fileparts(which('ltfatstart.m'));
+        if exist(fullfile(ltfatPath,'sigproc','rms.m'),'file')
+            delete(fullfile(ltfatPath,'sigproc','rms.m'));
+        end
+    end
+    if foundSFS
+        SFS_start;
+        % Delete rms.m from the SFS toolbox because of naming conflict
+        sfsPath = fileparts(which('SFS_start.m'));
+        if exist(fullfile(sfsPath,'SFS_general','rms.m'),'file')
+            delete(fullfile(sfsPath,'SFS_general','rms.m'));
+        end
     end
 end
 
