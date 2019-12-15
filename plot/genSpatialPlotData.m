@@ -10,8 +10,14 @@ function varargout = genSpatialPlotData(dataIn,posIn,varargin)
 %   decimal places when extracting unique values to mitigate rounding
 %   errors.
 %
+%   Z = GENSPATIALPLOTDATA(D,S,'posOut',SO) optionally specifies the
+%   positions at which the spatial plot data should be returned. A useful
+%   function to generate SO might be MAKEPOSMAT.
+%
 %   Z = GENSPATIALPLOTDATA(D,S,'roundS',false) does not round values in S
-%   prior to extracting unique values.
+%   prior to extracting unique values when 'posOut' and SO are not 
+%   specified. If 'posOut' and SO are specified, this command has no effect
+%   on the output.
 %
 %   [Z,X,Y] = GENSPATIALPLOTDATA(__) additionally returns the unique values 
 %   in the first column of S as the vector X, and the unique values in the
@@ -53,43 +59,58 @@ function varargout = genSpatialPlotData(dataIn,posIn,varargin)
 %   SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 %   =======================================================================
 
-narginchk(2,4);
+% Check input count
+narginchk(2,6);
 
-% Check inputs
+% Validate required inputs
 validateattributes(dataIn,{'double'},{'vector','nonempty','nonnan',...
     'finite','real'},'genSpatialPlotData','D',1);
 dataIn = shiftdim(dataIn); % Force dataIn to be a column vector
 dataInLen = length(dataIn);
 validateattributes(posIn,{'double'},{'2d','nonempty','nonnan','finite',...
     'real','size',[dataInLen,2]},'genSpatialPlotData','S',2);
+
+% Validate optional inputs
+indx = find(strcmpi(varargin,'posOut'),1);
+if isempty(indx)
+    posOutFlag = false;
+else
+    SO = varargin{indx+1};
+    posOutFlag = true;
+end
+
 indx = find(strcmpi(varargin,'roundS'),1);
 if isempty(indx)
     roundFlag = true;
 else
-    if indx == 1 && ~varargin{indx+1}
-        roundFlag = false;
-    else
-        roundFlag = true;
-    end
+    roundFlag = varargin{indx+1};
 end
 
 % Generate interpolation function
-if roundFlag
-    posInX = round(posIn(:,1),5);
-    posInY = round(posIn(:,2),5);
-else
-    posInX = posIn(:,1);
-    posInY = posIn(:,2);
-end
-interpF = scatteredInterpolant(posInX,posInY,dataIn,'nearest','nearest');
+posInX = posIn(:,1);
+posInY = posIn(:,2);
+interpF = scatteredInterpolant([posInX,posInY],dataIn,'linear','none');
 
 % Extract unique position values and generate output data matrix
-[xPos,~,~] = unique(posInX);
-[yPos,~,~] = unique(posInY);
+if posOutFlag
+    xPos = unique(SO(:,1),'stable');
+    yPos = unique(SO(:,2),'stable');
+else
+    if roundFlag
+        [xPos,~,~] = unique(round(posInX,5));
+        [yPos,~,~] = unique(round(posInY,5));
+    else
+        [xPos,~,~] = unique(posInX);
+        [yPos,~,~] = unique(posInY);
+    end
+end
 [xPosGrid,yPosGrid] = meshgrid(xPos,yPos);
+
+% Generate output plot data
 dataMat = interpF(xPosGrid(:),yPosGrid(:));
 dataMat = reshape(dataMat,size(xPosGrid));
 
+% Return outputs
 switch nargout
     case 1
         varargout = {dataMat};
