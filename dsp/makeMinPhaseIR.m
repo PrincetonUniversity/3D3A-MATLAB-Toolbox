@@ -63,8 +63,10 @@ switch lower(METHOD)
         minPhaseIR = zeros(size(ir));
         numIRs = size(ir,2);
         tF = fft(ir);
-        tF(tF == 0) = 0 + 1i*eps;
-        ir = ifft(tF,'symmetric'); % rceps only works with real IRs
+        if any(tF == 0)
+            tF(tF == 0) = 0 + 1i*eps;
+            ir = ifft(tF,'symmetric'); % rceps only works with real IRs
+        end
         for ii = 1:numIRs
             [~,minPhaseIR(:,ii)] = rceps(ir(:,ii));
         end
