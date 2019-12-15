@@ -1,4 +1,4 @@
-function [H,N,thVec] = computeSphereHRTF(a,r,theta,f,METHOD)
+function [H,N,thVec] = computeSphereHRTF(a,r,theta,f,varargin)
 %COMPUTESPHEREHRTF Analytically computed HRTF for a sphere.
 %   [H,N,T] = COMPUTESPHEREHRTF(A,R,THETA,F) analytically computes the HRTF
 %   value, H, for a sphere of radius A (in meters), source at distance R
@@ -15,25 +15,30 @@ function [H,N,thVec] = computeSphereHRTF(a,r,theta,f,METHOD)
 %   [H,N,T] = COMPUTESPHEREHRTF(A,R,THETA,F,METHOD) optionally specifies
 %   the METHOD to use to compute the HRTF. METHOD must be a 2-element cell 
 %   array and can take the following values:
-%       1. {'sridharchoueiri2019',P} where P can be any finite integer or 
+%       1. {'sridharchoueiri2019',P} where P can be any finite integer or
 %       inf. The value of precision, P, refers to the number of decimal 
 %       places to use when determining the order, N, of the calculation, 
-%       with P = inf corresponding to maximum precision. If METHOD is not 
+%       with P = inf corresponding to maximum precision. If METHOD is not
 %       specified, {'sridharchoueiri2019',inf} is used.
+%
 %       2. {'fixedn',N} where N is the order and must be a non-negative
 %       integer. In this case, the second output, N, will be the same as 
 %       this specified input order.
+%
 %       3. {'cooperbauck1980',TH} where TH can be any finite, real number,
 %       and refers to the threshold for determining the order, N, of the
 %       calculation. In the Fortran code published by Cooper and Bauck [2], 
 %       TH is set to 0.001. In this case, the specified value of TH will 
 %       also be returned as the first element of the output vector, T.
+%
 %       4. {'dudamartens1998',TH} where TH is as defined in 3, above. In
 %       this case, the specified value of TH will also be returned as the
 %       second element of the output vector, T.
+%
 %       5. {'exact',P} where P is as defined in 1, above, computes the
 %       smallest order, N, that results in a numerically exact (to within
 %       precision, P) value of H.
+%
 %       6. {'maxn'} computes the maximum permissible value of order, N, for
 %       the given set of input parameters. The returned value of H is exact
 %       but this setting is different from {'exact',inf} in that whereas
@@ -42,6 +47,18 @@ function [H,N,thVec] = computeSphereHRTF(a,r,theta,f,METHOD)
 %       of N that does so, noting that a larger N will produce NaNs. Note
 %       that {'maxn'} gives the same result as {'exact',inf} only when F =
 %       0.
+%
+%   [H,N,T] = COMPUTESPHEREHRTF(A,R,THETA,F,METHOD,NORMLOC) optionally
+%   allows the normalization used for computing the HRTF to be specified.
+%   The two options are:
+%       1. 'center' (default) - HRTF is computed by normalizing the
+%       scattered pressure by the free-field pressure computed at a
+%       position corresponding to the location of the center of the sphere.
+%
+%       2. 'ear' - HRTF is computed by normalizing the scattered pressure
+%       by the free-field pressure computed at the appropriate ear
+%       position.
+%   To specify NORMLOC with default METHOD, specify METHOD as {}.
 %
 %   See also GETCENTRALANGLE, COMPUTESPHEREITD.
 
@@ -86,28 +103,44 @@ function [H,N,thVec] = computeSphereHRTF(a,r,theta,f,METHOD)
 %   [3]. Duda and Martens (1998) - Range dependence of the response of a 
 %   spherical head model.
 
-narginchk(4,5);
+narginchk(4,6);
 
+if nargin < 6
+    NORMLOC = 'center';
+else
+    NORMLOC = varargin{2};
+end
+
+defaultMETHOD = {'sridharchoueiri2019',inf};
 if nargin < 5
-    METHOD{1} = 'sridharchoueiri2019';
-    METHOD{2} = inf; % precision/threshold, depending on METHOD{1}
+    METHOD = defaultMETHOD;
+else
+    METHOD = varargin{1};
 end
 
 % Check inputs
-validateattributes(a,{'double'},{'scalar','nonempty','nonnan','finite',...
+validateattributes(a,{'numeric'},{'scalar','nonempty','nonnan','finite',...
     'positive','real'},'computeSphereHRTF','A',1);
-validateattributes(r,{'double'},{'scalar','nonempty','nonnan'},...
+validateattributes(r,{'numeric'},{'scalar','nonempty','nonnan'},...
     'computeSphereHRTF','R',2);
-validateattributes(theta,{'double'},{'scalar','nonempty','nonnan',...
+validateattributes(theta,{'numeric'},{'scalar','nonempty','nonnan',...
     'finite','real','nonnegative','<',360},'computeSphereHRTF','THETA',3);
-validateattributes(f,{'double'},{'scalar','nonempty','nonnan','finite',...
+validateattributes(f,{'numeric'},{'scalar','nonempty','nonnan','finite',...
     'nonnegative','real'},'computeSphereHRTF','F',4);
-validateattributes(METHOD{1},{'char'},{'scalartext','nonempty'},...
-    'computeSphereHRTF','first element of METHOD',5);
-if length(METHOD) == 2
-    validateattributes(METHOD{2},{'double'},{'scalar','nonempty',...
-        'nonnan'},'computeSphereHRTF','second element of METHOD',5);
+validateattributes(METHOD,{'cell'},{'2d'},'computeSphereHRTF','METHOD',5);
+if isempty(METHOD)
+    METHOD = defaultMETHOD;
+else
+    validateattributes(METHOD{1},{'char'},{'scalartext','nonempty'},...
+        'computeSphereHRTF','first element of METHOD',5);
+    methodLen = length(METHOD);
+    if methodLen > 1
+        validateattributes(METHOD{2},{'numeric'},{'scalar','nonempty',...
+            'nonnan'},'computeSphereHRTF','second element of METHOD',5);
+    end
 end
+validateattributes(NORMLOC,{'char'},{'scalartext','nonempty'},...
+    'computeSphereHRTF','NORMLOC',6);
 
 % Initialize common variables
 c = getSoundSpeed();
@@ -121,7 +154,7 @@ if mu == 0
     if rho == inf
         H = 1;
         N = 0;
-        thVec = ones(2,1);
+        thVec = [inf;inf]; % Threshold values don't matter in this case
     else
         P = zeros(3,1); % Initialize P to store 3 most recent terms
         P(1) = 1; % m = 0
@@ -172,9 +205,7 @@ if mu == 0
                         methodFlag = 1;
                     case 'dudamartens1998'
                         methodFlag = 2;
-                    case 'sridharchoueiri2019'
-                        methodFlag = 3;
-                    case 'exact' % same as sridharchoueiri2019 for mu = 0
+                    case {'sridharchoueiri2019','exact'}
                         methodFlag = 3;
                     case 'maxn' % same as sridharchoueiri2019 for mu = 0
                         methodFlag = 3;
@@ -215,6 +246,7 @@ if mu == 0
                         psiPS_old,psiP,psiPS,thVal,methodFlag);
                 end
                 H = psiPS_older;
+                
                 % Compute output order, N
                 N = m-2; % See comment in mu > 0 case
                 % Compute equivalent thresholds
@@ -280,7 +312,14 @@ else % mu > 0
                     P(1) = P(2);
                     P(2) = P(3);
                 end
-                H = (1/mu^2)*psiPS;
+                switch lower(NORMLOC)
+                    case 'center'
+                        H = (1/mu^2)*psiPS;
+                    case 'ear'
+                        H = (1/mu^2)*exp(-1i*mu*x)*psiPS;
+                    otherwise
+                        error('Invalid NORMLOC specification.')
+                end
             else
                 mr = mu*rho;
                 hn = zeros(3,1); % Init. hn to store 3 most recent terms
@@ -325,7 +364,15 @@ else % mu > 0
                     hn(1) = hn(2);
                     hn(2) = hn(3);
                 end
-                H = -(rho/mu)*exp(-1i*mu*rho)*psiPS;
+                switch lower(NORMLOC)
+                    case 'center'
+                        H = -(rho/mu)*psiPS;
+                    case 'ear'
+                        H = -(rho/mu)*exp(1i*mu*(sqrt(1+rho^2-2*rho*...
+                            x)))*psiPS;
+                    otherwise
+                        error('Invalid NORMLOC specification.')
+                end
             end
             % Compute equivalent thresholds
             for ii = 1:2
@@ -391,7 +438,14 @@ else % mu > 0
                     [~,~,lF] = evaluateConvergence(psiPS_older,...
                         psiP_old,psiPS_old,psiP,psiPS,thVal,methodFlag);
                 end
-                H = (1/mu^2)*psiPS_older;
+                switch lower(NORMLOC)
+                    case 'center'
+                        H = (1/mu^2)*psiPS_older;
+                    case 'ear'
+                        H = (1/mu^2)*exp(-1i*mu*x)*psiPS_older;
+                    otherwise
+                        error('Invalid NORMLOC specification.')
+                end
             else
                 mr = mu*rho;
                 hn = zeros(3,1); % Init. hn to store 3 most recent terms
@@ -444,7 +498,15 @@ else % mu > 0
                     [~,~,lF] = evaluateConvergence(psiPS_older,psiP_old,...
                         psiPS_old,psiP,psiPS,thVal,methodFlag);
                 end
-                H = -(rho/mu)*exp(-1i*mu*rho)*psiPS_older;
+                switch lower(NORMLOC)
+                    case 'center'
+                        H = -(rho/mu)*psiPS_older;
+                    case 'ear'
+                        H = -(rho/mu)*exp(1i*mu*(sqrt(1+rho^2-2*rho*...
+                            x)))*psiPS_older;
+                    otherwise
+                        error('Invalid NORMLOC specification.')
+                end
             end
             % Compute output order, N
             if methodFlag == 4
@@ -461,7 +523,8 @@ else % mu > 0
                 else
                     N = nonNanIndxs(lastNonZeroChange);
                 end
-                [H,~,thVec] = computeSphereHRTF(a,r,theta,f,{'fixedn',N});
+                [H,~,thVec] = computeSphereHRTF(a,r,theta,f,...
+                    {'fixedn',N},NORMLOC);
             else
                 N = m-2; % -2 for 2 consecutive, non-changing sums.
                 % Compute equivalent thresholds
@@ -562,11 +625,7 @@ switch methodFlag
         lF1 = ro ~= 0 || io ~= 0 || rn ~= 0 || in ~= 0;
         lF2 = ~isnan(ro) && ~isnan(io) && ~isnan(rn) && ~isnan(in);
         lF = lF1 && lF2;
-    case 4 % exact
-        old = 0; % dummy value
-        new = 0; % dummy value
-        lF = ~isnan(psiP_old);
-    case 5 % maxn
+    case {4,5} % exact/maxn
         old = 0; % dummy value
         new = 0; % dummy value
         lF = ~isnan(psiP_old);
