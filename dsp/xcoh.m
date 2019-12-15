@@ -1,11 +1,30 @@
-function [y,lag] = xcoh(x1,x2)
+function [y,lag] = xcoh(x1,x2,varargin)
 %XCOH Cross-coherence
 %   Y = XCOH(X1,X2) computes the cross-coherence between input signals X1 
-%   and X2 and returns the output in Y.
+%   and X2 and returns the output in Y. Cross-coherence is a normalized
+%   cross-correlation between X1 and X2 and measures the similarity between
+%   X1 and shifted (i.e., lagged) copies of X2.
 %       If X1 and X2 are vectors, they must have the same length, N. Y will 
-%       be a column vector with length (2*N)-1.
+%       be a column vector with length N.
 %       If X1 and X2 are matrices, they must have the same dimensions and
 %       the cross-coherence of corresponding columns is evaluated.
+%
+%   Y = XCOH(X1,X2,METHOD) optionally allows the method used to compute
+%   cross-coherence to be specified. METHOD can take the following two
+%   options:
+%       1. 'weightA' (default) - Cross-coherence is computed as the
+%       cross-correlation of X1 and X2 normalized by the geometric mean of
+%       the total energies of X1 and X2.
+%
+%       2. 'weightB' - Cross-coherence is computed as the cross-correlation 
+%       of X1 and X2 deconvolved by the convolution of zero-phase versions
+%       of X1 and X2.
+%
+%   Y = XCOH(X1,X2,METHOD,FRANGE) optionally specifies the frequency range
+%   over which the cross-coherence is computed. FRANGE must be specified as
+%   a two-element vector, [F1,F2], where F1 and F2 are the lower- and
+%   upper-bound frequencies. F1 and F2 must be specified such that 0
+%   corresponds to DC and 1 to the Nyquist frequency.
 %
 %   [Y,L] = XCOH(...) additionally returns lag indices, L.
 %
@@ -49,8 +68,10 @@ function [y,lag] = xcoh(x1,x2)
 %       [1]. Nam et al. (2008) - On the Minimum-Phase Nature of Head-
 %       Related Transfer Functions.
 
-narginchk(2,2);
+% Check input count
+narginchk(2,4);
 
+% Validate required inputs
 validateattributes(x1,{'double'},{'2d','finite','nonnan','nonempty'},...
     'xcoh','X1',1)
 x1 = shiftdim(x1); % If vector, force to column
@@ -63,13 +84,54 @@ if size(x1) ~= size(x2)
         ' dimensions (if matrices).'])
 end
 
-[numRows,numCols] = size(x1);
-lag = zeros(numCols,(2*numRows)-1);
-y = zeros((2*numRows)-1,numCols);
-for ii = 1:numCols
-    [y_xcorr,lag(ii,:)] = xcorr(x1(:,ii),x2(:,ii));
-    % Take absolute value below to allow complex X1 and X2.
-    y(:,ii) = y_xcorr/sqrt(sum(abs(x1(:,ii)).^2)*sum(abs(x2(:,ii)).^2));
+% Validate optional inputs
+if nargin < 4
+    frange = [0,1];
+else
+    frange = varargin{2};
+    validateattributes(frange,{'numeric'},{'vector','nonempty','real',...
+        'nonnegative','<=',1},'xcoh','FRANGE',4)
 end
+
+if nargin < 3
+    method = 'weightA';
+else
+    method = varargin{1};
+    validateattributes(method,{'char'},{'scalartext','nonempty'},...
+        'xcoh','METHOD',3)
+end
+
+% Compute normalized frequency indices
+numRows = size(x1,1);
+fVec = linspace(0,2-(2/numRows),numRows);
+[~,fL] = min(abs(fVec-frange(1)));
+[~,fU] = min(abs(fVec-frange(2)));
+
+X_mask = zeros(size(x1));
+X_mask(fL:fU,:) = 1;
+X_mask = forceConjugateSymmetry(X_mask);
+X1 = fft(x1).*X_mask;
+X2 = fft(x2).*X_mask;
+switch lower(method)
+    case 'weighta'
+        if isreal(x1) && isreal(x2)
+            y_un = ifft(X1.*conj(X2),'symmetric');
+        else
+            y_un = ifft(X1.*conj(X2));
+        end
+        x1_sq = sqrt(sum(abs(X1).^2).*sum(abs(X2).^2))*(1/numRows);
+    case 'weightb'
+        if isreal(x1) && isreal(x2)
+            y_un = ifft(X_mask.*exp(-1i*angle(X1.*conj(X2))),'symmetric');       
+        else
+            y_un = ifft(X_mask.*exp(-1i*angle(X1.*conj(X2))));
+        end
+        x1_sq = sum(abs(X_mask).^2)*(1/numRows);
+    otherwise
+        error('Invalid METHOD specification.')
+end
+
+y = y_un./repmat(x1_sq,numRows,1);
+lag = 0:(numRows-1);
 
 end
