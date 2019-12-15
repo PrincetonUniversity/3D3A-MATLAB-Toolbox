@@ -1,4 +1,4 @@
-function onsetMat = estimateIROnset(inputIR,varargin)
+function varargout = estimateIROnset(inputIR,varargin)
 %ESTIMATEIRONSET Estimate onset of an impulse response (IR).
 %   O = ESTIMATEIRONSET(X) estimates the onset of impulse response(s), X,
 %   using thresholding with a 20% relative threshold.
@@ -33,6 +33,13 @@ function onsetMat = estimateIROnset(inputIR,varargin)
 %       the max. absolute value of the cross-correlation spectrum of X and
 %       its minimum-phase version computed using the MAKEMINPHASEIR
 %       function. The returned sample onset, O, is accurate to 1 sample.
+%       5. {'maxzeros'} estimates onset as the sample value which results 
+%       in the IR having maximum number of zeros inside the unit circle
+%       when the IR is shifted to begin at that sample. The returned sample 
+%       onset, O, is accurate to 1 sample.
+%
+%   [O,N] = ESTIMATEIRONSET(X,{'maxzeros'}) additionally returns the
+%   computed number of zeros inside the unit circle.
 %
 %   Needs: Signal Processing Toolbox.
 %
@@ -48,7 +55,7 @@ function onsetMat = estimateIROnset(inputIR,varargin)
 %
 %   MIT License
 %
-%   Copyright (c) 2018 Princeton University
+%   Copyright (c) 2019 Princeton University
 %
 %   Permission is hereby granted, free of charge, to any person obtaining a
 %   copy of this software and associated documentation files (the
@@ -70,16 +77,23 @@ function onsetMat = estimateIROnset(inputIR,varargin)
 %   SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 %   =======================================================================
 
+% Check input count
 narginchk(1,2);
 
-% Parse and verify inputs
-inputs = parseEstimateIROnsetInputs(inputIR,varargin);
+% Validate required input
+validateattributes(inputIR,{'numeric'},{'2d','nonempty','nonnan',...
+    'finite','real'},'estimateIROnset','X',1)
+% If inputIR is a vector, force it to be a column vector.
+inputIR = shiftdim(inputIR);
 
-% Extract parsed inputs
-inputIR = inputs.inputIR;
-METHOD = inputs.METHOD;
-
-% Perform additional input verification
+% Validate optional inputs
+if nargin < 2
+    METHOD = {'threshold',20};
+else
+    METHOD = varargin{1};
+end
+validateattributes(METHOD,{'cell'},{'nonempty'},'estimateIROnset',...
+    'METHOD',2)
 validateattributes(METHOD{1},{'char'},{'scalartext','nonempty'},...
     'estimateIROnset','the first element of METHOD',2)
 
@@ -91,14 +105,14 @@ switch lower(METHOD{1})
         else
             thp = METHOD{2};
         end
-        validateattributes(thp,{'double'},{'scalar','real','finite',...
+        validateattributes(thp,{'numeric'},{'scalar','real','finite',...
             'nonnan','nonnegative','<=',100},'estimateIROnset',...
             'the THP value when METHOD Name is ''threshold''',2)
-        onsetMat = thresholdIRs(inputIR,thp/100);
+        varargout{1} = thresholdIRs(inputIR,thp/100);
     case 'grpdelay'
         if length(METHOD) > 1
             Fs = METHOD{2};
-            validateattributes(Fs,{'double'},{'scalar','real','finite',...
+            validateattributes(Fs,{'numeric'},{'scalar','real','finite',...
                 'nonnan','positive'},'estimateIROnset',['the value ',...
                 'for Fs ','when METHOD Name is ''grpdelay'''],2)
         else
@@ -110,15 +124,15 @@ switch lower(METHOD{1})
         else
             avgRange = METHOD{3};
         end
-        validateattributes(avgRange,{'double'},{'vector','real',...
+        validateattributes(avgRange,{'numeric'},{'vector','real',...
             'finite','nonnan','nonnegative','numel',2,'<=',Fs/2},...
             'estimateIROnset',['the values for [FL,FU] when METHOD ',...
             'Name is ''grpdelay'''],2)
-        [~,onsetMat] = getGrpDelay(inputIR,Fs,avgRange);
+        [~,varargout{1}] = getGrpDelay(inputIR,Fs,avgRange);
     case 'phase'
         if length(METHOD) > 1
             Fs = METHOD{2};
-            validateattributes(Fs,{'double'},{'scalar','real','finite',...
+            validateattributes(Fs,{'numeric'},{'scalar','real','finite',...
                 'nonnan','positive'},'estimateIROnset',['the value',...
                 ' for Fs when METHOD Name is ''phase'''],2)
         else
@@ -132,7 +146,7 @@ switch lower(METHOD{1})
         else
             avgRange = METHOD{3};
         end
-        validateattributes(avgRange,{'double'},{'vector','real',...
+        validateattributes(avgRange,{'numeric'},{'vector','real',...
             'finite','nonnan','nonnegative','numel',2,'<=',nyqFreq},...
             'estimateIROnset',['the values for [FL,FU] when METHOD ',...
             'Name is ''phase'''],2)
@@ -159,7 +173,7 @@ switch lower(METHOD{1})
                 phaseSpec(:,ii) = polyval(fittingLine,fVec);
             end
         end
-        onsetMat = -Fs*mean(diag(1./(2*pi*fVec(fLIndx:fUIndx)))*...
+        varargout{1} = -Fs*mean(diag(1./(2*pi*fVec(fLIndx:fUIndx)))*...
             phaseSpec(fLIndx:fUIndx,:),'omitnan');
     case 'mpxc'
         onsetMat = zeros(1,numIRs);
@@ -169,34 +183,76 @@ switch lower(METHOD{1})
             [~,lagIndex] = max(abs(xc));
             onsetMat(ii) = lagVec(lagIndex);
         end
+        varargout{1} = onsetMat;
+    case 'maxzeros'
+        % First, get sample position of absolute maximum of each IR
+        [~,absMaxMat] = max(abs(inputIR));
+        
+        onsetMat = absMaxMat;
+        numZIn = cell(numIRs,1);
+        % Progress
+        % cpVal = 0;
+        % fprintf('Computing onsets using ''maxzeros'' method..%d%%',cpVal);
+        for ii = 1:numIRs
+            cLB = 0;
+            cUB = absMaxMat(ii);
+            numShifts = cUB-cLB;
+            fprintf('Current bracket size: %d (LB: %d; UB: %d)\n',...
+                numShifts,cLB,cUB);
+            while numShifts > 10
+                tSVec = round(linspace(cLB,cUB,6));
+                [tO,~] = getMZOnset(inputIR(:,ii),tSVec);
+                tOIndx = find(tSVec == (tO-1),1,'last');
+                if tOIndx == 1 || tOIndx == 6
+                    cLB = tSVec(tOIndx);
+                    cUB = tSVec(tOIndx);
+                else
+                    cLB = tSVec(tOIndx-1);
+                    cUB = tSVec(tOIndx+1);
+                end
+                numShifts = cUB-cLB;
+                fprintf('Current bracket size: %d (LB: %d; UB: %d)\n',...
+                    numShifts,cLB,cUB);
+            end
+            
+            % Determine final shift vector
+            shiftVec = cLB:cUB;
+            [onsetMat(ii),numZIn{ii,1}] = getMZOnset(inputIR(:,ii),...
+                shiftVec);
+%             ppVal = cpVal;
+%             cpVal = round(ii*100/numIRs,-1);
+%             if cpVal ~= ppVal
+%                 fprintf('..%d%%',cpVal);
+%             end
+        end
+        fprintf('\nComputing onsets using ''maxzeros'' method..done!\n');
+        
+        varargout{1} = onsetMat;
+        if nargout > 1
+            varargout{2} = numZIn;
+        end
     otherwise
         error('Invalid METHOD Name specification.');
 end
 
 end
 
-function inputs = parseEstimateIROnsetInputs(inputIR,opts)
-%PARSEESTIMATEIRONSETINPUTS Parse and verify inputs for the estimateIROnset
-%function.
+function [O,N] = getMZOnset(X,S)
+%GETMZONSET Estimate onset using 'max zeros' method.
 
-p = inputParser;
+% Compute number of zeros inside unit circle after each shift of the IR
+numShifts = length(S);
+N = zeros(numShifts,1);
+indx = 1;
+for ii = S
+    rX = circshift(X,-ii);
+    rootVec = roots(rX);
+    N(indx) = numel(find(abs(rootVec) < 1));
+    indx = indx + 1;
+end
 
-% Required inputs
-addRequired(p,'inputIR',@(x)validateattributes(x,{'double'},{'2d',...
-    'nonempty','nonnan','finite','real'},'estimateIROnset','X',1));
-
-% If inputIR is a vector, force it to be a column vector.
-inputIR = shiftdim(inputIR);
-
-% Optional inputs
-addOptional(p,'METHOD',{'threshold',20},@(x)validateattributes(x,...
-    {'cell'},{'nonempty','size',[1,NaN]},'estimateIROnset','METHOD',2));
-
-p.CaseSensitive = false;
-p.FunctionName = 'estimateIROnset';
-
-parse(p,inputIR,opts{:});
-
-inputs = p.Results;
+% Find position of max in numZIn
+[~,maxNIndx] = max(N);
+O = S(maxNIndx)+1;
 
 end
