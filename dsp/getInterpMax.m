@@ -64,12 +64,18 @@ x = shiftdim(x);
 numCols = length(beta);
 y = zeros(1,numCols);
 l = zeros(1,numCols);
+xLen = size(x,1);
 for ii = 1:numCols
-    gamma = x(beta_indx(ii)+1,ii);
-    alpha = x(beta_indx(ii)-1,ii);
-    p = 0.5*((alpha-gamma)/(alpha-(2*beta(ii))+gamma));
-    l(ii) = beta_indx(ii) + p;
-    y(ii) = beta(ii)-(0.25*(alpha-gamma)*p);
+    if beta_indx(ii) == 1 || beta_indx(ii) == xLen
+        l(ii) = beta_indx(ii);
+        y(ii) = beta(ii);
+    else
+        gamma = x(beta_indx(ii)+1,ii);
+        alpha = x(beta_indx(ii)-1,ii);
+        p = 0.5*((alpha-gamma)/(alpha-(2*beta(ii))+gamma));
+        l(ii) = beta_indx(ii) + p;
+        y(ii) = beta(ii)-(0.25*(alpha-gamma)*p);
+    end 
 end
 
 end
