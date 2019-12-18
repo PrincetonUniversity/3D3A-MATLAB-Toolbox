@@ -13,30 +13,36 @@ function [H,N,thVec] = computeSphereHRTF(a,r,theta,f,varargin)
 %   may be useful for computing THETA.
 %
 %   [H,N,T] = COMPUTESPHEREHRTF(A,R,THETA,F,METHOD) optionally specifies
-%   the METHOD to use to compute the HRTF. METHOD must be a 2-element cell 
-%   array and can take the following values:
-%       1. {'sridharchoueiri2019',P} where P can be any finite integer or
-%       inf. The value of precision, P, refers to the number of decimal 
+%   the METHOD to use to compute the HRTF. METHOD must be a cell array and
+%   can take the following values:
+%       1. {'sridharchoueiri2019',P,NI} where P can be any finite integer  
+%       or inf. The value of precision, P, refers to the number of decimal 
 %       places to use when determining the order, N, of the calculation, 
-%       with P = inf corresponding to maximum precision. If METHOD is not
-%       specified, {'sridharchoueiri2019',inf} is used.
+%       with P = inf corresponding to maximum precision. NI specifies the 
+%       number of partial sums that are checked against a threshold when 
+%       determining the order, N. NI must be a positive integer. If METHOD
+%       is not specified, {'sridharchoueiri2019',inf,2} is used.
 %
 %       2. {'fixedn',N} where N is the order and must be a non-negative
 %       integer. In this case, the second output, N, will be the same as 
 %       this specified input order.
 %
-%       3. {'cooperbauck1980',TH} where TH can be any finite, real number,
-%       and refers to the threshold for determining the order, N, of the
-%       calculation. In the Fortran code published by Cooper and Bauck [2], 
-%       TH is set to 0.001. In this case, the specified value of TH will 
-%       also be returned as the first element of the output vector, T.
+%       3. {'cooperbauck1980',TH,NI} where TH can be any finite, real
+%       number, and refers to the threshold for determining the order, N, 
+%       of the calculation. In the Fortran code published by Cooper and 
+%       Bauck [2], TH is set to 0.001. In this case, the specified value of 
+%       TH will also be returned as the first element of the output vector, 
+%       T. NI specifies the number of partial sums that are checked against 
+%       TH when determining the order, N. NI must be a positive integer.
 %
-%       4. {'dudamartens1998',TH} where TH is as defined in 3, above. In
+%       4. {'dudamartens1998',TH,NI} where TH is as defined in 3, above. In
 %       this case, the specified value of TH will also be returned as the
-%       second element of the output vector, T.
+%       second element of the output vector, T. NI specifies the number of 
+%       partial sums that are checked against TH when determining the 
+%       order, N. NI must be a positive integer.
 %
 %       5. {'exact',P} where P is as defined in 1, above, computes the
-%       smallest order, N, that results in a numerically exact (to within
+%       smallest order, N, that guarantees a numerically exact (to within
 %       precision, P) value of H.
 %
 %       6. {'maxn'} computes the maximum permissible value of order, N, for
@@ -111,7 +117,7 @@ else
     NORMLOC = varargin{2};
 end
 
-defaultMETHOD = {'sridharchoueiri2019',inf};
+defaultMETHOD = {'sridharchoueiri2019',inf,2};
 if nargin < 5
     METHOD = defaultMETHOD;
 else
@@ -138,6 +144,15 @@ else
         validateattributes(METHOD{2},{'numeric'},{'scalar','nonempty',...
             'nonnan'},'computeSphereHRTF','second element of METHOD',5);
     end
+    
+    if methodLen > 2
+        validateattributes(METHOD{3},{'numeric'},{'scalar','nonempty',...
+            'nonnan','integer','positive'},'computeSphereHRTF',...
+            'third element of METHOD',5);
+        numChkTerms = METHOD{3};
+    else
+        numChkTerms = 2;
+    end
 end
 validateattributes(NORMLOC,{'char'},{'scalartext','nonempty'},...
     'computeSphereHRTF','NORMLOC',6);
@@ -157,47 +172,51 @@ if mu == 0
         thVec = [inf;inf]; % Threshold values don't matter in this case
     else
         P = zeros(3,1); % Initialize P to store 3 most recent terms
-        P(1) = 1; % m = 0
-        P(2) = x; % m = 1
         
         % Initialize sums
-        psiPS_old = 0;
         psiPS = 0;
         switch lower(METHOD{1})
             case 'fixedn'
-                N = METHOD{2}; % extract order from input
+                numChkTerms = 1;
+                psiPSVec = zeros(numChkTerms+1,1);
+                psiPVec = zeros(numChkTerms+1,1);
+                
+                N = METHOD{2}; % Extract order from input
                 m = 0;
+                P(3) = 1; % Specify most recent P value (i.e., for m = 0)
                 Bm = ((2*m)+1)/((m+1)*rho^m); % m = 0
-                psiP = Bm*P(1);
+                psiP = Bm*P(3);
                 psiPS = psiPS + psiP;
-                m = m + 1;
-                % Store old values
-                psiP_old = psiP;
-                psiPS_older = psiPS_old;
-                psiPS_old = psiPS;
-                % Compute new values
-                Bm = ((2*m)+1)/((m+1)*rho^m); % m = 1
-                psiP = Bm*P(2);
-                psiPS = psiPS + psiP;
-                for m = 2:N
-                    % Store old values
-                    psiP_old = psiP;
-                    psiPS_older = psiPS_old;
-                    psiPS_old = psiPS;
-                    % Compute new values
+                termIndx = 2;
+                psiPVec(termIndx) = psiP;
+                psiPSVec(termIndx) = psiPS;
+                if termIndx == (numChkTerms+1)
+                    termIndx = termIndx - 1;
+                    psiPVec = circshift(psiPVec,-1);
+                    psiPSVec = circshift(psiPSVec,-1);  
+                end
+                P = circshift(P,-1); % Move current value out of P(3)
+                P(3) = x; % Update current value (i.e., for m = 1)
+                for m = 1:N
                     Bm = ((2*m)+1)/((m+1)*rho^m);
-                    P(3) = computeP(P(1:2),m,x);
                     psiP = Bm*P(3);
                     psiPS = psiPS + psiP;
-                    P(1) = P(2);
-                    P(2) = P(3);
+                    termIndx = termIndx + 1;
+                    psiPVec(termIndx) = psiP;
+                    psiPSVec(termIndx) = psiPS;
+                    if termIndx == (numChkTerms+1)
+                        termIndx = termIndx - 1;
+                        psiPVec = circshift(psiPVec,-1);
+                        psiPSVec = circshift(psiPSVec,-1);
+                    end
+                    P = circshift(P,-1); % Move current value out of P(3)
+                    P(3) = computeP(P(1:2),m+1,x); % Update current value
                 end
-                H = psiPS;
-                % Compute equivalent thresholds
-                for ii = 1:2
-                    [~,thVec(ii),~] = evaluateConvergence(psiPS_older,...
-                        psiP_old,psiPS_old,psiP,psiPS,0,ii); % 0 - dummy
-                end
+                
+                % Store final HRTF value
+                psiPVec = circshift(psiPVec,1);
+                psiPSVec = circshift(psiPSVec,1);
+                H = psiPSVec(numChkTerms+1);
             case {'cooperbauck1980','dudamartens1998',...
                     'sridharchoueiri2019','exact','maxn'}
                 switch lower(METHOD{1})
@@ -205,58 +224,72 @@ if mu == 0
                         methodFlag = 1;
                     case 'dudamartens1998'
                         methodFlag = 2;
-                    case {'sridharchoueiri2019','exact'}
+                    case {'sridharchoueiri2019','exact'} % Only for mu = 0
                         methodFlag = 3;
-                    case 'maxn' % same as sridharchoueiri2019 for mu = 0
+                    case 'maxn' % Only for mu = 0
                         methodFlag = 3;
                         METHOD{2} = inf;
                     otherwise
                         error('Invalid METHOD specification.')
                 end
-                thVal = METHOD{2}; % extract threshold from input
+                psiPSVec = zeros(numChkTerms+1,1);
+                psiPVec = zeros(numChkTerms+1,1);
+                
+                thVal = METHOD{2}; % Extract threshold from input
                 m = 0;
+                P(3) = 1; % Specify most recent P value (i.e., for m = 0)
                 Bm = ((2*m)+1)/((m+1)*rho^m); % m = 0
-                psiP = Bm*P(1);
+                psiP = Bm*P(3);
                 psiPS = psiPS + psiP;
-                m = m + 1;
-                % Store old values
-                psiP_old = psiP;
-                psiPS_older = psiPS_old;
-                psiPS_old = psiPS;
-                % Compute new values
-                Bm = ((2*m)+1)/((m+1)*rho^m); % m = 1
-                psiP = Bm*P(2);
-                psiPS = psiPS + psiP;
-                [~,~,lF] = evaluateConvergence(psiPS_older,psiP_old,...
-                    psiPS_old,psiP,psiPS,thVal,methodFlag);
+                termIndx = 2;
+                psiPVec(termIndx) = psiP;
+                psiPSVec(termIndx) = psiPS;
+                if termIndx == (numChkTerms+1)
+                    lF = evaluateConvergence(psiPSVec,psiPVec,thVal,...
+                        methodFlag);
+                    termIndx = termIndx - 1;
+                    psiPVec = circshift(psiPVec,-1);
+                    psiPSVec = circshift(psiPSVec,-1);  
+                else
+                    lF = true;
+                end
+                P = circshift(P,-1); % Move current value out of P(3)
+                P(3) = x; % Update current value (i.e., for m = 1)
                 while lF
                     m = m + 1;
-                    % Store old values
-                    psiP_old = psiP;
-                    psiPS_older = psiPS_old;
-                    psiPS_old = psiPS;
-                    % Compute new values
                     Bm = ((2*m)+1)/((m+1)*rho^m);
-                    P(3) = computeP(P(1:2),m,x);
                     psiP = Bm*P(3);
                     psiPS = psiPS + psiP;
-                    P(1) = P(2);
-                    P(2) = P(3);
-                    [~,~,lF] = evaluateConvergence(psiPS_older,psiP_old,...
-                        psiPS_old,psiP,psiPS,thVal,methodFlag);
+                    termIndx = termIndx + 1;
+                    psiPVec(termIndx) = psiP;
+                    psiPSVec(termIndx) = psiPS;
+                    if termIndx == (numChkTerms+1)
+                        lF = evaluateConvergence(psiPSVec,psiPVec,thVal,...
+                            methodFlag);
+                        termIndx = termIndx - 1;
+                        psiPVec = circshift(psiPVec,-1);
+                        psiPSVec = circshift(psiPSVec,-1);
+                    else
+                        lF = true;
+                    end
+                    P = circshift(P,-1); % Move current value out of P(3)
+                    P(3) = computeP(P(1:2),m+1,x); % Update current value
                 end
-                H = psiPS_older;
                 
                 % Compute output order, N
-                N = m-2; % See comment in mu > 0 case
-                % Compute equivalent thresholds
-                for ii = 1:2
-                    [thVec(ii),~,~] = evaluateConvergence(...
-                        psiPS_older,psiP_old,psiPS_old,psiP,psiPS,...
-                        0,ii); % 0 - dummy value
-                end
+                N = m-numChkTerms;
+                
+                % Store final HRTF value
+                psiPVec = circshift(psiPVec,1);
+                psiPSVec = circshift(psiPSVec,1);
+                H = psiPSVec(1);
             otherwise
                 error('Invalid METHOD specification.')
+        end
+        
+        % Compute equivalent thresholds
+        for ii = 1:2
+            thVec(ii) = computeEquivThreshold(psiPSVec,psiPVec,ii);
         end
     end
 else % mu > 0
@@ -267,56 +300,60 @@ else % mu > 0
     
     hf = zeros(3,1); % Initialize hf to store 3 most recent terms
     P = zeros(3,1); % Initialize P to store 3 most recent terms
-    hf(1) = exp(1i*mu)/(1i*mu); % m = 0
-    hf(2) = hf(1)*((1/mu)-1i); % m = 1
-    hf(3) = computeHX(hf(1:2),2,mu); % m = 2
-    P(1) = 1; % m = 0
-    P(2) = x; % m = 1
+    hf(2) = exp(1i*mu)/(1i*mu); % m = 0
+    hf(3) = hf(2)*((1/mu)-1i); % m = 1
     
     % Initialize sums
-    psiPS_old = 0;
     psiPS = 0;
     switch lower(METHOD{1})
         case 'fixedn'
+            numChkTerms = 1;
+            psiPSVec = zeros(numChkTerms+1,1);
+            psiPVec = zeros(numChkTerms+1,1);
+            
             N = METHOD{2}; % extract order from input
             if rho == inf
                 m = 0;
-                dh = computeDH(hf(1:2),m,mu); % m = 0
+                P(3) = 1; % Specify most recent P value (i.e., for m = 0)
+                dh = computeDH(hf(2:3),m,mu); % m = 0
                 Am = computeAm(m,dh); % m = 0
-                psiP = conj(Am)*P(1);
+                psiP = conj(Am)*P(3);
                 psiPS = psiPS + psiP;
-                m = m + 1;
-                % Store most recent values
-                psiP_old = psiP;
-                psiPS_older = psiPS_old;
-                psiPS_old = psiPS;
-                % Compute new values
-                dh = computeDH(hf(2:3),m,mu); % m = 1
-                Am = computeAm(m,dh); % m = 1
-                psiP = conj(Am)*P(2);
-                psiPS = psiPS + psiP;
-                for m = 2:N
-                    % Store old values
-                    psiP_old = psiP;
-                    psiPS_older = psiPS_old;
-                    psiPS_old = psiPS;
-                    % Compute new values
-                    hf(1) = hf(2);
-                    hf(2) = hf(3);
+                termIndx = 2;
+                psiPVec(termIndx) = psiP;
+                psiPSVec(termIndx) = psiPS;
+                if termIndx == (numChkTerms+1)
+                    termIndx = termIndx - 1;
+                    psiPVec = circshift(psiPVec,-1);
+                    psiPSVec = circshift(psiPSVec,-1);  
+                end
+                P = circshift(P,-1); % Move current value out of P(3)
+                P(3) = x; % Update current value (i.e., for m = 1)
+                for m = 1:N
+                    hf = circshift(hf,-1);
                     hf(3) = computeHX(hf(1:2),m+1,mu); % m+1 is ok, not m
                     dh = computeDH(hf(2:3),m,mu);
                     Am = computeAm(m,dh);
-                    P(3) = computeP(P(1:2),m,x);
                     psiP = conj(Am)*P(3);
                     psiPS = psiPS + psiP;
-                    P(1) = P(2);
-                    P(2) = P(3);
+                    termIndx = termIndx + 1;
+                    psiPVec(termIndx) = psiP;
+                    psiPSVec(termIndx) = psiPS;
+                    if termIndx == (numChkTerms+1)
+                        termIndx = termIndx - 1;
+                        psiPVec = circshift(psiPVec,-1);
+                        psiPSVec = circshift(psiPSVec,-1);
+                    end
+                    P = circshift(P,-1); % Move current value out of P(3)
+                    P(3) = computeP(P(1:2),m+1,x); % Update current value
                 end
+                psiPVec = circshift(psiPVec,1);
+                psiPSVec = circshift(psiPSVec,1);
                 switch lower(NORMLOC)
                     case 'center'
-                        H = (1/mu^2)*psiPS;
+                        H = (1/mu^2)*psiPSVec(numChkTerms+1);
                     case 'ear'
-                        H = (1/mu^2)*exp(-1i*mu*x)*psiPS;
+                        H = (1/mu^2)*exp(-1i*mu*x)*psiPSVec(numChkTerms+1);
                     otherwise
                         error('Invalid NORMLOC specification.')
                 end
@@ -326,58 +363,57 @@ else % mu > 0
                 % Note: hn is the variable storing the value of the 
                 % spherical-Hankel function (of the first kind) with mr as 
                 % the argument.
+                hn(3) = exp(1i*mr)/(1i*mr); % m = 0
                 
                 m = 0;
-                dh = computeDH(hf(1:2),m,mu); % m = 0
-                hn(1) = exp(1i*mr)/(1i*mr); % m = 0
-                Bm = computeBm(m,dh,hn(1)); % m = 0
-                psiP = conj(Bm)*P(1);
+                P(3) = 1; % Specify most recent P value (i.e., for m = 0)
+                dh = computeDH(hf(2:3),m,mu); % m = 0
+                Bm = computeBm(m,dh,hn(3)); % m = 0
+                psiP = conj(Bm)*P(3);
                 psiPS = psiPS + psiP;
-                m = m + 1;
-                % Store old values
-                psiP_old = psiP;
-                psiPS_older = psiPS_old;
-                psiPS_old = psiPS;
-                % Compute new values
-                dh = computeDH(hf(2:3),m,mu); % m = 1
-                hn(2) = hn(1)*((1/mr)-1i); % m = 1
-                Bm = computeBm(m,dh,hn(2)); % m = 1
-                psiP = conj(Bm)*P(2);
-                psiPS = psiPS + psiP;
-                for m = 2:N
-                    % Store old values
-                    psiP_old = psiP;
-                    psiPS_older = psiPS_old;
-                    psiPS_old = psiPS;
-                    % Compute new values
-                    hf(1) = hf(2);
-                    hf(2) = hf(3);
+                termIndx = 2;
+                psiPVec(termIndx) = psiP;
+                psiPSVec(termIndx) = psiPS;
+                if termIndx == (numChkTerms+1)
+                    termIndx = termIndx - 1;
+                    psiPVec = circshift(psiPVec,-1);
+                    psiPSVec = circshift(psiPSVec,-1);  
+                end
+                P = circshift(P,-1); % Move current value out of P(3)
+                P(3) = x; % Update current value (i.e., for m = 1)
+                hn = circshift(hn,-1);
+                hn(3) = hn(2)*((1/mr)-1i); % m = 1
+                for m = 1:N
+                    hf = circshift(hf,-1);
                     hf(3) = computeHX(hf(1:2),m+1,mu); % m+1 is ok, not m
                     dh = computeDH(hf(2:3),m,mu);
-                    hn(3) = computeHX(hn(1:2),m,mr); % m is ok, not m+1
                     Bm = computeBm(m,dh,hn(3));
-                    P(3) = computeP(P(1:2),m,x);
                     psiP = conj(Bm)*P(3);
                     psiPS = psiPS + psiP;
-                    P(1) = P(2);
-                    P(2) = P(3);
-                    hn(1) = hn(2);
-                    hn(2) = hn(3);
+                    termIndx = termIndx + 1;
+                    psiPVec(termIndx) = psiP;
+                    psiPSVec(termIndx) = psiPS;
+                    if termIndx == (numChkTerms+1)
+                        termIndx = termIndx - 1;
+                        psiPVec = circshift(psiPVec,-1);
+                        psiPSVec = circshift(psiPSVec,-1);
+                    end
+                    P = circshift(P,-1); % Move current value out of P(3)
+                    P(3) = computeP(P(1:2),m+1,x); % Update current value
+                    hn = circshift(hn,-1);
+                    hn(3) = computeHX(hn(1:2),m+1,mr);
                 end
+                psiPVec = circshift(psiPVec,1);
+                psiPSVec = circshift(psiPSVec,1);
                 switch lower(NORMLOC)
                     case 'center'
-                        H = -(rho/mu)*psiPS;
+                        H = -(rho/mu)*psiPSVec(numChkTerms+1);
                     case 'ear'
                         H = -(rho/mu)*exp(1i*mu*(sqrt(1+rho^2-2*rho*...
-                            x)))*psiPS;
+                            x)))*psiPSVec(numChkTerms+1);
                     otherwise
                         error('Invalid NORMLOC specification.')
                 end
-            end
-            % Compute equivalent thresholds
-            for ii = 1:2
-                [~,thVec(ii),~] = evaluateConvergence(psiPS_older,...
-                    psiP_old,psiPS_old,psiP,psiPS,0,ii); % 0 - dummy value
             end
         case {'cooperbauck1980','dudamartens1998','sridharchoueiri2019',...
                 'exact','maxn'}
@@ -390,59 +426,71 @@ else % mu > 0
                     methodFlag = 3;
                 case 'exact'
                     methodFlag = 4;
+                    numChkTerms = 1;
                 case 'maxn'
                     methodFlag = 5;
                     METHOD{2} = inf;
+                    numChkTerms = 1;
                 otherwise
                     error('Invalid METHOD specification.')
             end
-            thVal = METHOD{2}; % extract threshold from input
+            psiPSVec = zeros(numChkTerms+1,1);
+            psiPVec = zeros(numChkTerms+1,1);
+            
+            thVal = METHOD{2}; % Extract threshold from input
             if rho == inf
                 m = 0;
-                dh = computeDH(hf(1:2),m,mu); % m = 0
+                P(3) = 1; % Specify most recent P value (i.e., for m = 0)
+                dh = computeDH(hf(2:3),m,mu); % m = 0
                 Am = computeAm(m,dh); % m = 0
-                psiP = conj(Am)*P(1);
+                psiP = conj(Am)*P(3);
                 psiPS = psiPS + psiP;
                 psiPCS{m+1} = psiPS;
-                m = m + 1;
-                % Store old values
-                psiP_old = psiP;
-                psiPS_older = psiPS_old;
-                psiPS_old = psiPS;
-                % Compute new values
-                dh = computeDH(hf(2:3),m,mu); % m = 1
-                Am = computeAm(m,dh); % m = 1
-                psiP = conj(Am)*P(2);
-                psiPS = psiPS + psiP;
-                psiPCS{m+1} = psiPS;
-                [~,~,lF] = evaluateConvergence(psiPS_older,psiP_old,...
-                    psiPS_old,psiP,psiPS,thVal,methodFlag);
+                termIndx = 2;
+                psiPVec(termIndx) = psiP;
+                psiPSVec(termIndx) = psiPS;
+                if termIndx == (numChkTerms+1)
+                    lF = evaluateConvergence(psiPSVec,psiPVec,thVal,...
+                        methodFlag);
+                    termIndx = termIndx - 1;
+                    psiPVec = circshift(psiPVec,-1);
+                    psiPSVec = circshift(psiPSVec,-1);  
+                else
+                    lF = true;
+                end
+                P = circshift(P,-1); % Move current value out of P(3)
+                P(3) = x; % Update current value (i.e., for m = 1)
                 while lF
                     m = m + 1;
-                    % Store old values
-                    psiP_old = psiP;
-                    psiPS_older = psiPS_old;
-                    psiPS_old = psiPS;
-                    % Compute new values
-                    hf(1) = hf(2);
-                    hf(2) = hf(3);
+                    hf = circshift(hf,-1);
                     hf(3) = computeHX(hf(1:2),m+1,mu); % m+1 is ok, not m
                     dh = computeDH(hf(2:3),m,mu);
                     Am = computeAm(m,dh);
-                    P(3) = computeP(P(1:2),m,x);
                     psiP = conj(Am)*P(3);
                     psiPS = psiPS + psiP;
                     psiPCS{m+1} = psiPS;
-                    P(1) = P(2);
-                    P(2) = P(3);
-                    [~,~,lF] = evaluateConvergence(psiPS_older,...
-                        psiP_old,psiPS_old,psiP,psiPS,thVal,methodFlag);
+                    termIndx = termIndx + 1;
+                    psiPVec(termIndx) = psiP;
+                    psiPSVec(termIndx) = psiPS;
+                    if termIndx == (numChkTerms+1)
+                        lF = evaluateConvergence(psiPSVec,psiPVec,thVal,...
+                            methodFlag);
+                        termIndx = termIndx - 1;
+                        psiPVec = circshift(psiPVec,-1);
+                        psiPSVec = circshift(psiPSVec,-1);
+                    else
+                        lF = true;
+                    end
+                    P = circshift(P,-1); % Move current value out of P(3)
+                    P(3) = computeP(P(1:2),m+1,x); % Update current value
                 end
+                psiPVec = circshift(psiPVec,1);
+                psiPSVec = circshift(psiPSVec,1);
                 switch lower(NORMLOC)
                     case 'center'
-                        H = (1/mu^2)*psiPS_older;
+                        H = (1/mu^2)*psiPSVec(1);
                     case 'ear'
-                        H = (1/mu^2)*exp(-1i*mu*x)*psiPS_older;
+                        H = (1/mu^2)*exp(-1i*mu*x)*psiPSVec(1);
                     otherwise
                         error('Invalid NORMLOC specification.')
                 end
@@ -452,63 +500,71 @@ else % mu > 0
                 % Note: hn is the variable storing the value of the 
                 % spherical-Hankel function (of the first kind) with mr as 
                 % the argument.
+                hn(3) = exp(1i*mr)/(1i*mr); % m = 0
                 
                 m = 0;
-                dh = computeDH(hf(1:2),m,mu); % m = 0
-                hn(1) = exp(1i*mr)/(1i*mr); % m = 0
-                Bm = computeBm(m,dh,hn(1)); % m = 0
-                psiP = conj(Bm)*P(1);
+                P(3) = 1; % Specify most recent P value (i.e., for m = 0)
+                dh = computeDH(hf(2:3),m,mu); % m = 0
+                Bm = computeBm(m,dh,hn(3)); % m = 0
+                psiP = conj(Bm)*P(3);
                 psiPS = psiPS + psiP;
                 psiPCS{m+1} = psiPS;
-                m = m + 1;
-                % Store old values
-                psiP_old = psiP;
-                psiPS_older = psiPS_old;
-                psiPS_old = psiPS;
-                % Compute new values
-                dh = computeDH(hf(2:3),m,mu); % m = 1
-                hn(2) = hn(1)*((1/mr)-1i); % m = 1
-                Bm = computeBm(m,dh,hn(2)); % m = 1
-                psiP = conj(Bm)*P(2);
-                psiPS = psiPS + psiP;
-                psiPCS{m+1} = psiPS;
-                [~,~,lF] = evaluateConvergence(psiPS_older,psiP_old,...
-                    psiPS_old,psiP,psiPS,thVal,methodFlag);
+                termIndx = 2;
+                psiPVec(termIndx) = psiP;
+                psiPSVec(termIndx) = psiPS;
+                if termIndx == (numChkTerms+1)
+                    lF = evaluateConvergence(psiPSVec,psiPVec,thVal,...
+                        methodFlag);
+                    termIndx = termIndx - 1;
+                    psiPVec = circshift(psiPVec,-1);
+                    psiPSVec = circshift(psiPSVec,-1);  
+                else
+                    lF = true;
+                end
+                P = circshift(P,-1); % Move current value out of P(3)
+                P(3) = x; % Update current value (i.e., for m = 1)
+                hn = circshift(hn,-1);
+                hn(3) = hn(2)*((1/mr)-1i); % m = 1
                 while lF
                     m = m + 1;
-                    % Store old values
-                    psiP_old = psiP;
-                    psiPS_older = psiPS_old;
-                    psiPS_old = psiPS;
-                    % Compute new values
-                    hf(1) = hf(2);
-                    hf(2) = hf(3);
+                    hf = circshift(hf,-1);
                     hf(3) = computeHX(hf(1:2),m+1,mu); % m+1 is ok, not m
                     dh = computeDH(hf(2:3),m,mu);
-                    hn(3) = computeHX(hn(1:2),m,mr); % m is ok, not m+1
                     Bm = computeBm(m,dh,hn(3));
-                    P(3) = computeP(P(1:2),m,x);
                     psiP = conj(Bm)*P(3);
                     psiPS = psiPS + psiP;
                     psiPCS{m+1} = psiPS;
-                    P(1) = P(2);
-                    P(2) = P(3);
-                    hn(1) = hn(2);
-                    hn(2) = hn(3);
-                    [~,~,lF] = evaluateConvergence(psiPS_older,psiP_old,...
-                        psiPS_old,psiP,psiPS,thVal,methodFlag);
+                    termIndx = termIndx + 1;
+                    psiPVec(termIndx) = psiP;
+                    psiPSVec(termIndx) = psiPS;
+                    if termIndx == (numChkTerms+1)
+                        lF = evaluateConvergence(psiPSVec,psiPVec,thVal,...
+                            methodFlag);
+                        termIndx = termIndx - 1;
+                        psiPVec = circshift(psiPVec,-1);
+                        psiPSVec = circshift(psiPSVec,-1);
+                    else
+                        lF = true;
+                    end
+                    P = circshift(P,-1); % Move current value out of P(3)
+                    P(3) = computeP(P(1:2),m+1,x); % Update current value
+                    hn = circshift(hn,-1);
+                    hn(3) = computeHX(hn(1:2),m+1,mr);
                 end
+                psiPVec = circshift(psiPVec,1);
+                psiPSVec = circshift(psiPSVec,1);
                 switch lower(NORMLOC)
                     case 'center'
-                        H = -(rho/mu)*psiPS_older;
+                        H = -(rho/mu)*psiPSVec(1);
                     case 'ear'
                         H = -(rho/mu)*exp(1i*mu*(sqrt(1+rho^2-2*rho*...
-                            x)))*psiPS_older;
+                            x)))*psiPSVec(1);
                     otherwise
                         error('Invalid NORMLOC specification.')
                 end
             end
-            % Compute output order, N
+            
+            % Compute output order, N and equivalent thresholds
             if methodFlag == 4
                 psiPCS = cell2mat(psiPCS);
                 if thVal ~= inf && thVal ~= -inf
@@ -526,11 +582,11 @@ else % mu > 0
                 [H,~,thVec] = computeSphereHRTF(a,r,theta,f,...
                     {'fixedn',N},NORMLOC);
             else
-                N = m-2; % -2 for 2 consecutive, non-changing sums.
+                N = m-numChkTerms;
+                
                 % Compute equivalent thresholds
                 for ii = 1:2
-                    [thVec(ii),~,~] = evaluateConvergence(psiPS_older,...
-                        psiP_old,psiPS_old,psiP,psiPS,0,ii); % 0 - dummy
+                    thVec(ii) = computeEquivThreshold(psiPSVec,psiPVec,ii);
                 end
             end
         otherwise
@@ -590,45 +646,52 @@ out = ((2*m)+1)*hn/hp;
 
 end
 
-function [old,new,lF] = evaluateConvergence(psiPS_older,psiP_old,...
-    psiPS_old,psiP,psiPS,TH,methodFlag)
+function lF = evaluateConvergence(psiPSVec,psiPVec,TH,methodFlag)
 %EVALUATECONVERGENCE Determine if series solution has converged.
-%   [O,N,LF] = EVALUATECONVERGENCE(P1,P2,P3,P4,P5,TH,MF) computes two
-%   consecutive values, O and N, of the convergence metric corresponding to 
-%   the method identified by the flag, MF, given the five input parameters
-%   P1-P5, and a convergence threshold/numerical precision, TH. Also
-%   returned is a loop flag used to indicate if the series solution has
-%   converged. When LF is false, convergence has been achieved.
+%   LF = EVALUATECONVERGENCE(PSV,PV,TH,MF) returns a loog flag used to
+%   indicate if the series solution has converged. This is don by using the
+%   input parameters PSV and/or PV, and a convergence threshold/numerical
+%   precision value, TH.
+
+psiPVecLen = length(psiPVec);
+psiPSVecLen = length(psiPSVec);
 
 switch methodFlag
     case 1
-        old = computeConvergenceMetric(psiPS_old,psiPS_older,methodFlag);
-        new = computeConvergenceMetric(psiPS,psiPS_old,methodFlag);
-        lF = old > TH || new > TH;
-    case 2
-        old = computeConvergenceMetric(psiP_old,psiPS_old,methodFlag);
-        new = computeConvergenceMetric(psiP,psiPS,methodFlag);
-        lF = old > TH || new > TH;
-    case 3
-        old = computeConvergenceMetric(psiPS_old,psiPS_older,methodFlag);
-        new = computeConvergenceMetric(psiPS,psiPS_old,methodFlag);
-        ro = real(old);
-        io = imag(old);
-        rn = real(new);
-        in = imag(new);
-        if TH ~= inf
-            ro = round(ro,TH);
-            io = round(io,TH);
-            rn = round(rn,TH);
-            in = round(in,TH);
+        metricVec = zeros(psiPSVecLen-1,1);
+        for ii = 1:(psiPSVecLen-1)
+            metricVec(ii) = computeConvergenceMetric(psiPSVec(ii+1),...
+                psiPSVec(ii),methodFlag);
         end
-        lF1 = ro ~= 0 || io ~= 0 || rn ~= 0 || in ~= 0;
-        lF2 = ~isnan(ro) && ~isnan(io) && ~isnan(rn) && ~isnan(in);
+        lF = any(metricVec > TH);
+    case 2
+        if psiPVecLen ~= psiPSVecLen
+            error('PSV and PV must have the same length when MF = 2.');
+        else
+            metricVec = zeros(psiPSVecLen-1,1);
+            for ii = 1:(psiPSVecLen-1)
+                metricVec(ii) = computeConvergenceMetric(psiPVec(ii+1),...
+                    psiPSVec(ii+1),methodFlag);
+            end
+            lF = any(metricVec > TH);
+        end
+    case 3
+        metricVec = zeros(psiPSVecLen-1,1);
+        for ii = 1:(psiPSVecLen-1)
+            metricVec(ii) = computeConvergenceMetric(psiPSVec(ii+1),...
+                psiPSVec(ii),methodFlag);
+        end
+        realVec = real(metricVec);
+        imagVec = imag(metricVec);
+        if TH ~= inf
+            realVec = round(realVec,TH);
+            imagVec = round(imagVec,TH);
+        end
+        lF1 = any([realVec;imagVec] ~= 0);
+        lF2 = ~any(isnan([realVec;imagVec]));
         lF = lF1 && lF2;
     case {4,5} % exact/maxn
-        old = 0; % dummy value
-        new = 0; % dummy value
-        lF = ~isnan(psiP_old);
+        lF = ~isnan(psiPVec(psiPVecLen));
     otherwise
         error('Invalid methodFlag value.')
 end
@@ -650,6 +713,19 @@ switch MF
         out = in1-in2;
     otherwise
         error('Invalid MF specification.')
+end
+
+end
+
+function out = computeEquivThreshold(psiPSVec,psiPVec,methodFlag)
+
+switch methodFlag
+    case 1
+        out = computeConvergenceMetric(psiPSVec(2),psiPSVec(1),methodFlag);
+    case 2
+        out = computeConvergenceMetric(psiPVec(2),psiPSVec(2),methodFlag);
+    otherwise
+        error('Invalid methodFlag value.')
 end
 
 end
