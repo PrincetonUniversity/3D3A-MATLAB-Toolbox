@@ -277,7 +277,7 @@ if mu == 0
                 end
                 
                 % Compute output order, N
-                N = m-numChkTerms;
+                N = m-termIndx+1;
                 
                 % Store final HRTF value
                 psiPVec = circshift(psiPVec,1);
@@ -577,12 +577,12 @@ else % mu > 0
                 if isempty(lastNonZeroChange)
                     N = 0;
                 else
-                    N = nonNanIndxs(lastNonZeroChange);
+                    N = nonNanIndxs(lastNonZeroChange)+1;
                 end
                 [H,~,thVec] = computeSphereHRTF(a,r,theta,f,...
                     {'fixedn',N},NORMLOC);
             else
-                N = m-numChkTerms;
+                N = m-termIndx+1;
                 
                 % Compute equivalent thresholds
                 for ii = 1:2
