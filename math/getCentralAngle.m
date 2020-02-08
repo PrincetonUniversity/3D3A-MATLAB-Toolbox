@@ -3,7 +3,7 @@ function t = getCentralAngle(a,b)
 %   T = GETCENTRALANGLE(A,B) computes the angle between the two input 
 %   vectors, A and B, each specified in cartesian coordinates (i.e. as 
 %   [x,y,z]). The output angle, T, is specified in degrees in the range 
-%   [0,360).
+%   [0,180].
 
 %   =======================================================================
 %   This file is part of the 3D3A MATLAB Toolbox.
@@ -15,7 +15,7 @@ function t = getCentralAngle(a,b)
 %   
 %   MIT License
 %   
-%   Copyright (c) 2018 Princeton University
+%   Copyright (c) 2020 Princeton University
 %   
 %   Permission is hereby granted, free of charge, to any person obtaining a
 %   copy of this software and associated documentation files (the 
@@ -39,6 +39,6 @@ function t = getCentralAngle(a,b)
 
 narginchk(2,2);
 
-t = mod(atan2d(computeVectorNorm(cross(a,b,2),[],2),dot(a,b,2)),360);
+t = atan2d(computeVectorNorm(cross(a,b,2),[],2),dot(a,b,2));
 
 end
