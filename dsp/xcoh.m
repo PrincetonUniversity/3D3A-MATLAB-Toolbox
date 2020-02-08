@@ -20,11 +20,14 @@ function [y,lag] = xcoh(x1,x2,varargin)
 %       of X1 and X2 deconvolved by the convolution of zero-phase versions
 %       of X1 and X2.
 %
+%       3. 'timedomain' - Cross-coherence is computed in the time domain.
+%
 %   Y = XCOH(X1,X2,METHOD,FRANGE) optionally specifies the frequency range
 %   over which the cross-coherence is computed. FRANGE must be specified as
 %   a two-element vector, [F1,F2], where F1 and F2 are the lower- and
 %   upper-bound frequencies. F1 and F2 must be specified such that 0
-%   corresponds to DC and 1 to the Nyquist frequency.
+%   corresponds to DC and 1 to the Nyquist frequency. This option is not
+%   applicable when METHOD is set to 'timedomain'.
 %
 %   [Y,L] = XCOH(...) additionally returns lag indices, L.
 %
@@ -101,17 +104,26 @@ else
         'xcoh','METHOD',3)
 end
 
-% Compute normalized frequency indices
 numRows = size(x1,1);
-fVec = linspace(0,2-(2/numRows),numRows);
-[~,fL] = min(abs(fVec-frange(1)));
-[~,fU] = min(abs(fVec-frange(2)));
+switch lower(method)
+    case {'weighta','weightb'}
+        % Compute normalized frequency indices
+        fVec = linspace(0,2-(2/numRows),numRows);
+        [~,fL] = min(abs(fVec-frange(1)));
+        [~,fU] = min(abs(fVec-frange(2)));
+        
+        X_mask = zeros(size(x1));
+        X_mask(fL:fU,:) = 1;
+        X_mask = forceConjugateSymmetry(X_mask);
+        X1 = fft(x1).*X_mask;
+        X2 = fft(x2).*X_mask;
+    case 'timedomain'
+        numCols = size(x1,2);
+        y = zeros(2*numRows-1,numCols);
+    otherwise
+        error('Invalid METHOD specification.')
+end
 
-X_mask = zeros(size(x1));
-X_mask(fL:fU,:) = 1;
-X_mask = forceConjugateSymmetry(X_mask);
-X1 = fft(x1).*X_mask;
-X2 = fft(x2).*X_mask;
 switch lower(method)
     case 'weighta'
         if isreal(x1) && isreal(x2)
@@ -120,6 +132,8 @@ switch lower(method)
             y_un = ifft(X1.*conj(X2));
         end
         x1_sq = sqrt(sum(abs(X1).^2).*sum(abs(X2).^2))*(1/numRows);
+        y = y_un./repmat(x1_sq,numRows,1);
+        lag = 0:(numRows-1);
     case 'weightb'
         if isreal(x1) && isreal(x2)
             y_un = ifft(X_mask.*exp(-1i*angle(X1.*conj(X2))),'symmetric');       
@@ -127,11 +141,14 @@ switch lower(method)
             y_un = ifft(X_mask.*exp(-1i*angle(X1.*conj(X2))));
         end
         x1_sq = sum(abs(X_mask).^2)*(1/numRows);
+        y = y_un./repmat(x1_sq,numRows,1);
+        lag = 0:(numRows-1);
+    case 'timedomain'
+        for ii = 1:numCols
+            [y(:,ii),lag] = xcorr(x1(:,ii),x2(:,ii),'coeff');
+        end
     otherwise
         error('Invalid METHOD specification.')
 end
-
-y = y_un./repmat(x1_sq,numRows,1);
-lag = 0:(numRows-1);
 
 end
