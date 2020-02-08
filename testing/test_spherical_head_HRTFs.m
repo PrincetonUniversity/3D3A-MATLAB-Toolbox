@@ -50,8 +50,7 @@ eR = [260,0]; % Right ear direction
 % Source parameters
 azVec = (0:10:350).';
 elVec = 0;
-% rhoVec = [1.25;1.5;2;4;8;inf]; % See Fig. 3 in Duda and Martens [1].
-rhoVec = 10;
+rhoVec = [1.25;1.5;2;4;8;inf]; % See Fig. 3 in Duda and Martens [1].
 rVec = a*rhoVec; % Source distance
 rVecLen = length(rVec);
 
@@ -70,7 +69,8 @@ method = {'dudamartens1998',0.001};
 
 sourceDirs = makePosMat({azVec,elVec,1});
 sourcePositions = sofaS2sofaC(sourceDirs);
-sourcePositions = unique(round(sourcePositions,6),'rows','stable');
+[~,uniquePosIndxs,~] = unique(round(sourcePositions,6),'rows','stable');
+sourcePositions = sourcePositions(uniquePosIndxs,:);
 sourceDirs = sofaC2sofaS(sourcePositions);
 % Update numDirs after removing duplicate directions
 numDirs = size(sourceDirs,1);
@@ -213,11 +213,11 @@ varsbefore = who;
 HL = zeros(irLen,rVecLen*2);
 legendLabels = cell(rVecLen*2,1);
 for ii = 1:rVecLen
-    HL(:,[ii,ii+rVecLen]) = getMagSpecdB(hL{ii,1}(:,[10,25]));
+    HL(:,[ii,ii+rVecLen]) = getMagSpecdB(hL{ii,1}(:,[11,26]));
     legendLabels{ii,1} = ['\rho = ',num2str(rhoVec(ii)),...
-        '; \theta = ',num2str(aoiVec(10))];
+        '; \theta = ',num2str(aoiVec(11))];
     legendLabels{ii+rVecLen,1} = ['\rho = ',num2str(rhoVec(ii)),...
-        '; \theta = ',num2str(aoiVec(25))];
+        '; \theta = ',num2str(aoiVec(26))];
 end
 
 figure();
@@ -292,11 +292,12 @@ clear(varstoremove{:});
 clearvars varstokeep varstoremove varsafter newvars
 clear legendLabels
 
-%% Verify that returned order, N, is correct by using retured order, N, and
-% the 'fixedn' method to compute thresholds which may then be compared to
-% the input threshold. Corresponding pairs of threshold values should
-% match approximately. This test is only for 'cooperbauck1980' and 
-% 'dudamartens1998' methods.
+%% Verify that returned order, N, is correct
+%
+% Method: Use returned order, N, and the 'fixedn' method to compute 
+% thresholds which may then be compared to the input threshold. 
+% Corresponding pairs of threshold values should match. This test is only 
+% for 'cooperbauck1980' and 'dudamartens1998' methods.
 
 thresh_test = cell(rVecLen,1);
 pL1 = 100/rVecLen;
@@ -321,6 +322,7 @@ end
 fprintf(clearProgress);
 fprintf('%5.1f%%\n',100);
 
-% Open thresh_test and see if the values are 0.
+% Open thresh_test and see if the values are close to 0 (ignore any NaNs,
+% if any, for mu = 0).
 
 clear pL1 pL2 pL3 clearProgress ll jj kk TH_test
