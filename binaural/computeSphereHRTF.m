@@ -1,13 +1,13 @@
 function [H,N,thVec] = computeSphereHRTF(a,r,theta,f,varargin)
-%COMPUTESPHEREHRTF Analytically computed HRTF for a sphere.
+%COMPUTESPHEREHRTF Analytically-computed HRTF for a sphere.
 %   [H,N,T] = COMPUTESPHEREHRTF(A,R,THETA,F) analytically computes the HRTF
 %   value, H, for a sphere of radius A (in meters), source at distance R
 %   (in meters) with angle of incidence THETA (in degrees), and for
 %   frequency F (in Hz) using the method described by Sridhar and Choueiri
 %   [1] with a numerical precision value of inf (i.e., maximum precision).
 %   All inputs must be real-valued scalars. THETA can take values in the 
-%   range [0,360). Also returned are the computed order, N, used to compute 
-%   H, and a 2-by-1 vector, T, of corresponding threshold values for use 
+%   range [0,180]. Also returned are the computed order, N, used to compute 
+%   H, and a 2-by-1 vector, T, of corresponding threshold estimates for use 
 %   with the HRTF computation methods described by Cooper and Bauck [2], 
 %   and Duda and Martens [3], in that order. The GETCENTRALANGLE function 
 %   may be useful for computing THETA.
@@ -15,13 +15,13 @@ function [H,N,thVec] = computeSphereHRTF(a,r,theta,f,varargin)
 %   [H,N,T] = COMPUTESPHEREHRTF(A,R,THETA,F,METHOD) optionally specifies
 %   the METHOD to use to compute the HRTF. METHOD must be a cell array and
 %   can take the following values:
-%       1. {'sridharchoueiri2019',P,NI} where P can be any finite integer  
+%       1. {'sridharchoueiri2020',P,NI} where P can be any finite integer  
 %       or inf. The value of precision, P, refers to the number of decimal 
 %       places to use when determining the order, N, of the calculation, 
 %       with P = inf corresponding to maximum precision. NI specifies the 
 %       number of partial sums that are checked against a threshold when 
 %       determining the order, N. NI must be a positive integer. If METHOD
-%       is not specified, {'sridharchoueiri2019',inf,2} is used.
+%       is not specified, {'sridharchoueiri2020',inf,4} is used.
 %
 %       2. {'fixedn',N} where N is the order and must be a non-negative
 %       integer. In this case, the second output, N, will be the same as 
@@ -30,16 +30,12 @@ function [H,N,thVec] = computeSphereHRTF(a,r,theta,f,varargin)
 %       3. {'cooperbauck1980',TH,NI} where TH can be any finite, real
 %       number, and refers to the threshold for determining the order, N, 
 %       of the calculation. In the Fortran code published by Cooper and 
-%       Bauck [2], TH is set to 0.001. In this case, the specified value of 
-%       TH will also be returned as the first element of the output vector, 
-%       T. NI specifies the number of partial sums that are checked against 
-%       TH when determining the order, N. NI must be a positive integer.
+%       Bauck [2], TH is set to 0.001. NI specifies the number of partial 
+%       sums that are checked against TH when determining the order, N. 
+%       NI must be a positive integer.
 %
-%       4. {'dudamartens1998',TH,NI} where TH is as defined in 3, above. In
-%       this case, the specified value of TH will also be returned as the
-%       second element of the output vector, T. NI specifies the number of 
-%       partial sums that are checked against TH when determining the 
-%       order, N. NI must be a positive integer.
+%       4. {'dudamartens1998',TH,NI} where TH and NI are as defined in 3, 
+%       above.
 %
 %       5. {'exact',P} where P is as defined in 1, above, computes the
 %       smallest order, N, that guarantees a numerically exact (to within
@@ -54,9 +50,13 @@ function [H,N,thVec] = computeSphereHRTF(a,r,theta,f,varargin)
 %       that {'maxn'} gives the same result as {'exact',inf} only when F =
 %       0.
 %
+%       7. {'formulan'} computes N using the approximation formulas
+%       provided by Sridhar and Choueiri [1] and then uses the 'fixedn'
+%       approach defined in 2, above.
+%
 %   [H,N,T] = COMPUTESPHEREHRTF(A,R,THETA,F,METHOD,NORMLOC) optionally
 %   allows the normalization used for computing the HRTF to be specified.
-%   The two options are:
+%   The three options are:
 %       1. 'center' (default) - HRTF is computed by normalizing the
 %       scattered pressure by the free-field pressure computed at a
 %       position corresponding to the location of the center of the sphere.
@@ -64,6 +64,9 @@ function [H,N,thVec] = computeSphereHRTF(a,r,theta,f,varargin)
 %       2. 'ear' - HRTF is computed by normalizing the scattered pressure
 %       by the free-field pressure computed at the appropriate ear
 %       position.
+%
+%       3. 'ear_to' - same as 'center' except for time delay compensation
+%       based on the appropriate ear position.
 %   To specify NORMLOC with default METHOD, specify METHOD as {}.
 %
 %   See also GETCENTRALANGLE, COMPUTESPHEREITD.
@@ -78,7 +81,7 @@ function [H,N,thVec] = computeSphereHRTF(a,r,theta,f,varargin)
 %   
 %   MIT License
 %   
-%   Copyright (c) 2019 Princeton University
+%   Copyright (c) 2020 Princeton University
 %   
 %   Permission is hereby granted, free of charge, to any person obtaining a
 %   copy of this software and associated documentation files (the 
@@ -101,9 +104,9 @@ function [H,N,thVec] = computeSphereHRTF(a,r,theta,f,varargin)
 %   =======================================================================
 
 % Refs:
-%   [1]. Sridhar and Choueiri (to be published) - Computational Analysis 
-%   and Minimum-Phase Characteristics of the Head-Related Transfer 
-%   Functions of a Rigid Sphere.
+%   [1]. Sridhar and Choueiri (2020) - A Revised Algorithm for Computing
+%   Head-Related Transfer Functions of a Rigid Sphere and a Formula for 
+%   Computing Low-Frequency Interaural Level Difference.
 %   [2]. Cooper and Bauck (1980) - On Acoustical Specification of Natural 
 %   Stereo Imaging.
 %   [3]. Duda and Martens (1998) - Range dependence of the response of a 
@@ -117,7 +120,7 @@ else
     NORMLOC = varargin{2};
 end
 
-defaultMETHOD = {'sridharchoueiri2019',inf,2};
+defaultMETHOD = {'sridharchoueiri2020',inf,4};
 if nargin < 5
     METHOD = defaultMETHOD;
 else
@@ -130,7 +133,7 @@ validateattributes(a,{'numeric'},{'scalar','nonempty','nonnan','finite',...
 validateattributes(r,{'numeric'},{'scalar','nonempty','nonnan'},...
     'computeSphereHRTF','R',2);
 validateattributes(theta,{'numeric'},{'scalar','nonempty','nonnan',...
-    'finite','real','nonnegative','<',360},'computeSphereHRTF','THETA',3);
+    'finite','real','nonnegative','<=',180},'computeSphereHRTF','THETA',3);
 validateattributes(f,{'numeric'},{'scalar','nonempty','nonnan','finite',...
     'nonnegative','real'},'computeSphereHRTF','F',4);
 validateattributes(METHOD,{'cell'},{'2d'},'computeSphereHRTF','METHOD',5);
@@ -153,6 +156,11 @@ else
     else
         numChkTerms = 2;
     end
+    
+    % The following is provided for backwards compatibility.
+    if strcmpi(METHOD{1},'sridharchoueiri2019')
+        METHOD{1} = 'sridharchoueiri2020';
+    end
 end
 validateattributes(NORMLOC,{'char'},{'scalartext','nonempty'},...
     'computeSphereHRTF','NORMLOC',6);
@@ -163,6 +171,8 @@ mu = (2*pi*f*a)/c;
 thVec = zeros(2,1);
 x = cosd(theta);
 rho = r/a;
+g = sqrt(rho^2-(2*rho*x)+1);
+N_abort = 500; % Protection to prevent infinite loops
 
 % Main calculation
 if mu == 0
@@ -171,126 +181,13 @@ if mu == 0
         N = 0;
         thVec = [inf;inf]; % Threshold values don't matter in this case
     else
-        P = zeros(3,1); % Initialize P to store 3 most recent terms
-        
-        % Initialize sums
-        psiPS = 0;
-        switch lower(METHOD{1})
-            case 'fixedn'
-                numChkTerms = 1;
-                psiPSVec = zeros(numChkTerms+1,1);
-                psiPVec = zeros(numChkTerms+1,1);
-                
-                N = METHOD{2}; % Extract order from input
-                m = 0;
-                P(3) = 1; % Specify most recent P value (i.e., for m = 0)
-                Bm = ((2*m)+1)/((m+1)*rho^m); % m = 0
-                psiP = Bm*P(3);
-                psiPS = psiPS + psiP;
-                termIndx = 2;
-                psiPVec(termIndx) = psiP;
-                psiPSVec(termIndx) = psiPS;
-                if termIndx == (numChkTerms+1)
-                    termIndx = termIndx - 1;
-                    psiPVec = circshift(psiPVec,-1);
-                    psiPSVec = circshift(psiPSVec,-1);  
-                end
-                P = circshift(P,-1); % Move current value out of P(3)
-                P(3) = x; % Update current value (i.e., for m = 1)
-                for m = 1:N
-                    Bm = ((2*m)+1)/((m+1)*rho^m);
-                    psiP = Bm*P(3);
-                    psiPS = psiPS + psiP;
-                    termIndx = termIndx + 1;
-                    psiPVec(termIndx) = psiP;
-                    psiPSVec(termIndx) = psiPS;
-                    if termIndx == (numChkTerms+1)
-                        termIndx = termIndx - 1;
-                        psiPVec = circshift(psiPVec,-1);
-                        psiPSVec = circshift(psiPSVec,-1);
-                    end
-                    P = circshift(P,-1); % Move current value out of P(3)
-                    P(3) = computeP(P(1:2),m+1,x); % Update current value
-                end
-                
-                % Store final HRTF value
-                psiPVec = circshift(psiPVec,1);
-                psiPSVec = circshift(psiPSVec,1);
-                H = psiPSVec(numChkTerms+1);
-            case {'cooperbauck1980','dudamartens1998',...
-                    'sridharchoueiri2019','exact','maxn'}
-                switch lower(METHOD{1})
-                    case 'cooperbauck1980'
-                        methodFlag = 1;
-                    case 'dudamartens1998'
-                        methodFlag = 2;
-                    case {'sridharchoueiri2019','exact'} % Only for mu = 0
-                        methodFlag = 3;
-                    case 'maxn' % Only for mu = 0
-                        methodFlag = 3;
-                        METHOD{2} = inf;
-                    otherwise
-                        error('Invalid METHOD specification.')
-                end
-                psiPSVec = zeros(numChkTerms+1,1);
-                psiPVec = zeros(numChkTerms+1,1);
-                
-                thVal = METHOD{2}; % Extract threshold from input
-                m = 0;
-                P(3) = 1; % Specify most recent P value (i.e., for m = 0)
-                Bm = ((2*m)+1)/((m+1)*rho^m); % m = 0
-                psiP = Bm*P(3);
-                psiPS = psiPS + psiP;
-                termIndx = 2;
-                psiPVec(termIndx) = psiP;
-                psiPSVec(termIndx) = psiPS;
-                if termIndx == (numChkTerms+1)
-                    lF = evaluateConvergence(psiPSVec,psiPVec,thVal,...
-                        methodFlag);
-                    termIndx = termIndx - 1;
-                    psiPVec = circshift(psiPVec,-1);
-                    psiPSVec = circshift(psiPSVec,-1);  
-                else
-                    lF = true;
-                end
-                P = circshift(P,-1); % Move current value out of P(3)
-                P(3) = x; % Update current value (i.e., for m = 1)
-                while lF
-                    m = m + 1;
-                    Bm = ((2*m)+1)/((m+1)*rho^m);
-                    psiP = Bm*P(3);
-                    psiPS = psiPS + psiP;
-                    termIndx = termIndx + 1;
-                    psiPVec(termIndx) = psiP;
-                    psiPSVec(termIndx) = psiPS;
-                    if termIndx == (numChkTerms+1)
-                        lF = evaluateConvergence(psiPSVec,psiPVec,thVal,...
-                            methodFlag);
-                        termIndx = termIndx - 1;
-                        psiPVec = circshift(psiPVec,-1);
-                        psiPSVec = circshift(psiPSVec,-1);
-                    else
-                        lF = true;
-                    end
-                    P = circshift(P,-1); % Move current value out of P(3)
-                    P(3) = computeP(P(1:2),m+1,x); % Update current value
-                end
-                
-                % Compute output order, N
-                N = m-termIndx+1;
-                
-                % Store final HRTF value
-                psiPVec = circshift(psiPVec,1);
-                psiPSVec = circshift(psiPSVec,1);
-                H = psiPSVec(1);
-            otherwise
-                error('Invalid METHOD specification.')
+        if theta == 0
+            H = (2*rho/g)-(rho*log(rho/(rho-1)));
+        else
+            H = (2*rho/g)-(rho*log((1-(rho*x)+g)/(rho*(1-x))));
         end
-        
-        % Compute equivalent thresholds
-        for ii = 1:2
-            thVec(ii) = computeEquivThreshold(psiPSVec,psiPVec,ii);
-        end
+        N = 0;
+        thVec = [inf;inf]; % Threshold values don't matter in this case
     end
 else % mu > 0
     % Perform preliminary calculations
@@ -307,7 +204,7 @@ else % mu > 0
     psiPS = 0;
     switch lower(METHOD{1})
         case 'fixedn'
-            numChkTerms = 1;
+            numChkTerms = 1; % Needed to compute equivalent thresholds
             psiPSVec = zeros(numChkTerms+1,1);
             psiPVec = zeros(numChkTerms+1,1);
             
@@ -347,13 +244,21 @@ else % mu > 0
                     P = circshift(P,-1); % Move current value out of P(3)
                     P(3) = computeP(P(1:2),m+1,x); % Update current value
                 end
-                psiPVec = circshift(psiPVec,1);
-                psiPSVec = circshift(psiPSVec,1);
+                psiPVec = circshift(psiPVec,1); % Undo last circshift
+                psiPSVec = circshift(psiPSVec,1); % Undo last circshift
                 switch lower(NORMLOC)
                     case 'center'
                         H = (1/mu^2)*psiPSVec(numChkTerms+1);
                     case 'ear'
                         H = (1/mu^2)*exp(-1i*mu*x)*psiPSVec(numChkTerms+1);
+                    case 'ear_to'
+                        if theta <= 90
+                            delay = mu*x;
+                        else
+                            delay = -mu*deg2rad(theta-90);
+                        end
+                        H = (1/mu^2)*exp(-1i*delay)*...
+                            psiPSVec(numChkTerms+1);
                     otherwise
                         error('Invalid NORMLOC specification.')
                 end
@@ -403,26 +308,37 @@ else % mu > 0
                     hn = circshift(hn,-1);
                     hn(3) = computeHX(hn(1:2),m+1,mr);
                 end
-                psiPVec = circshift(psiPVec,1);
-                psiPSVec = circshift(psiPSVec,1);
+                psiPVec = circshift(psiPVec,1); % Undo last circshift
+                psiPSVec = circshift(psiPSVec,1); % Undo last circshift
                 switch lower(NORMLOC)
                     case 'center'
-                        H = -(rho/mu)*psiPSVec(numChkTerms+1);
-                    case 'ear'
-                        H = -(rho/mu)*exp(1i*mu*(sqrt(1+rho^2-2*rho*...
-                            x)))*psiPSVec(numChkTerms+1);
+                        H = -(rho/mu)*exp(1i*mu*rho)*...
+                            psiPSVec(numChkTerms+1);
+                    case 'ear'                      
+                        H = -(g/(rho*mu))*exp(1i*mu*g)*...
+                            psiPSVec(numChkTerms+1);
+                    case 'ear_to'
+                        theta0 = acosd(1/rho);
+                        hatG = sqrt(rho^2-1);
+                        if theta < theta0
+                            delay = mu*g;
+                        else
+                            delay = mu*(hatG + deg2rad(theta-theta0));
+                        end
+                        H = -(rho/mu)*exp(1i*delay)*...
+                            psiPSVec(numChkTerms+1);
                     otherwise
                         error('Invalid NORMLOC specification.')
                 end
             end
-        case {'cooperbauck1980','dudamartens1998','sridharchoueiri2019',...
+        case {'cooperbauck1980','dudamartens1998','sridharchoueiri2020',...
                 'exact','maxn'}
             switch lower(METHOD{1})
                 case 'cooperbauck1980'
                     methodFlag = 1;
                 case 'dudamartens1998'
                     methodFlag = 2;
-                case 'sridharchoueiri2019'
+                case 'sridharchoueiri2020'
                     methodFlag = 3;
                 case 'exact'
                     methodFlag = 4;
@@ -460,7 +376,7 @@ else % mu > 0
                 end
                 P = circshift(P,-1); % Move current value out of P(3)
                 P(3) = x; % Update current value (i.e., for m = 1)
-                while lF
+                while lF && (m < N_abort)
                     m = m + 1;
                     hf = circshift(hf,-1);
                     hf(3) = computeHX(hf(1:2),m+1,mu); % m+1 is ok, not m
@@ -484,13 +400,20 @@ else % mu > 0
                     P = circshift(P,-1); % Move current value out of P(3)
                     P(3) = computeP(P(1:2),m+1,x); % Update current value
                 end
-                psiPVec = circshift(psiPVec,1);
-                psiPSVec = circshift(psiPSVec,1);
+                psiPVec = circshift(psiPVec,1); % Undo last circshift
+                psiPSVec = circshift(psiPSVec,1); % Undo last circshift
                 switch lower(NORMLOC)
                     case 'center'
                         H = (1/mu^2)*psiPSVec(1);
                     case 'ear'
                         H = (1/mu^2)*exp(-1i*mu*x)*psiPSVec(1);
+                    case 'ear_to'
+                        if theta <= 90
+                            delay = mu*x;
+                        else
+                            delay = -mu*deg2rad(theta-90);
+                        end
+                        H = (1/mu^2)*exp(-1i*delay)*psiPSVec(1);
                     otherwise
                         error('Invalid NORMLOC specification.')
                 end
@@ -525,7 +448,7 @@ else % mu > 0
                 P(3) = x; % Update current value (i.e., for m = 1)
                 hn = circshift(hn,-1);
                 hn(3) = hn(2)*((1/mr)-1i); % m = 1
-                while lF
+                while lF && (m < N_abort)
                     m = m + 1;
                     hf = circshift(hf,-1);
                     hf(3) = computeHX(hf(1:2),m+1,mu); % m+1 is ok, not m
@@ -551,14 +474,22 @@ else % mu > 0
                     hn = circshift(hn,-1);
                     hn(3) = computeHX(hn(1:2),m+1,mr);
                 end
-                psiPVec = circshift(psiPVec,1);
-                psiPSVec = circshift(psiPSVec,1);
+                psiPVec = circshift(psiPVec,1); % Undo last circshift
+                psiPSVec = circshift(psiPSVec,1); % Undo last circshift
                 switch lower(NORMLOC)
                     case 'center'
-                        H = -(rho/mu)*psiPSVec(1);
-                    case 'ear'
-                        H = -(rho/mu)*exp(1i*mu*(sqrt(1+rho^2-2*rho*...
-                            x)))*psiPSVec(1);
+                        H = -(rho/mu)*exp(1i*mu*rho)*psiPSVec(1);
+                    case 'ear'                      
+                        H = -(g/(rho*mu))*exp(1i*mu*g)*psiPSVec(1);
+                    case 'ear_to'
+                        theta0 = acosd(1/rho);
+                        hatG = sqrt(rho^2-1);
+                        if theta < theta0
+                            delay = mu*g;
+                        else
+                            delay = mu*(hatG + deg2rad(theta-theta0));
+                        end
+                        H = -(rho/mu)*exp(1i*delay)*psiPSVec(1);
                     otherwise
                         error('Invalid NORMLOC specification.')
                 end
@@ -577,20 +508,35 @@ else % mu > 0
                 if isempty(lastNonZeroChange)
                     N = 0;
                 else
-                    N = nonNanIndxs(lastNonZeroChange)+1;
+                    N = nonNanIndxs(lastNonZeroChange)-1;
                 end
-                [H,~,thVec] = computeSphereHRTF(a,r,theta,f,...
-                    {'fixedn',N},NORMLOC);
+                [H,~,thVec] = computeSphereHRTF(a,r,theta,f,{'fixedn',...
+                    N},NORMLOC);
             else
-                N = m-termIndx+1;
-                
-                % Compute equivalent thresholds
-                for ii = 1:2
-                    thVec(ii) = computeEquivThreshold(psiPSVec,psiPVec,ii);
-                end
+                N = m-termIndx+1; % Plus 1 is needed and logical
             end
+        case 'formulan'
+            if rho == inf
+                alphaVal = 2.83;
+                betaVal = 2.6;
+                gammaVal = 0.82;
+            else
+                alphaVal = (2.83*rho+2.95)/(rho-1.17);
+                betaVal = (2.6*rho-3.9)/(rho-0.95);
+                gammaVal = (0.82*rho-0.76)/(rho-1.14);
+            end
+            N = round(alphaVal+(betaVal*mu^gammaVal));
+            [H,~,thVec] = computeSphereHRTF(a,r,theta,f,{'fixedn',N},...
+                NORMLOC);
         otherwise
             error('Invalid METHOD specification.')
+    end
+    
+    % Compute equivalent thresholds
+    if ~strcmpi(METHOD{1},'formulan')
+        for ii = 1:2
+            thVec(ii) = computeEquivThreshold(psiPSVec,psiPVec,ii);
+        end
     end
 end
 
@@ -648,10 +594,10 @@ end
 
 function lF = evaluateConvergence(psiPSVec,psiPVec,TH,methodFlag)
 %EVALUATECONVERGENCE Determine if series solution has converged.
-%   LF = EVALUATECONVERGENCE(PSV,PV,TH,MF) returns a loog flag used to
-%   indicate if the series solution has converged. This is don by using the
-%   input parameters PSV and/or PV, and a convergence threshold/numerical
-%   precision value, TH.
+%   LF = EVALUATECONVERGENCE(PSV,PV,TH,MF) returns a loop flag, LF, used to
+%   indicate if the series solution has converged. This is done by using 
+%   the input parameters PSV and/or PV, and a convergence threshold/
+%   numerical precision value, TH.
 
 psiPVecLen = length(psiPVec);
 psiPSVecLen = length(psiPSVec);
@@ -699,8 +645,9 @@ end
 end
 
 function out = computeConvergenceMetric(in1,in2,MF)
-%COMPUTECONVERGENCEMETRIC Convergence metric for determing order.
-%   Y = COMPUTECONVERGENCEMETRIC(X1,X2,FLAG) computes the value, Y, of the
+%COMPUTECONVERGENCEMETRIC Convergence metric for determing truncation 
+%order.
+%   Y = COMPUTECONVERGENCEMETRIC(X1,X2,MF) computes the value, Y, of the
 %   convergence metric corresponding to the method identified by the flag,
 %   MF, given input parameters X1 and X2.
 
@@ -709,7 +656,7 @@ switch MF
         out = abs((in1-in2)/in1);
     case 2 % Duda and Martens 1998
         out = abs(in1)/abs(in2);
-    case 3 % Sridhar and Choueiri 2019
+    case 3 % Sridhar and Choueiri 2020
         out = in1-in2;
     otherwise
         error('Invalid MF specification.')
@@ -718,6 +665,11 @@ end
 end
 
 function out = computeEquivThreshold(psiPSVec,psiPVec,methodFlag)
+%COMPUTEEQUIVTHRESHOLD Estimate equivalent threshold value.
+%   O = COMPUTEEQUIVTHRESHOLD(PSV,PV,MF) returns an estimate of the 
+%   equivalent threshold value that would need to be used by either the 
+%   cooperbauck1980 (MF = 1) or the dudamartens1998 (MF = 2) methods in 
+%   order to obtain the PSV and PV vectors provided as inputs.
 
 switch methodFlag
     case 1
