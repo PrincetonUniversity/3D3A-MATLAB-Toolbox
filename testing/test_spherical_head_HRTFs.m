@@ -12,7 +12,7 @@
 %   
 %   MIT License
 %   
-%   Copyright (c) 2019 Princeton University
+%   Copyright (c) 2020 Princeton University
 %   
 %   Permission is hereby granted, free of charge, to any person obtaining a
 %   copy of this software and associated documentation files (the 
@@ -275,7 +275,7 @@ legend(legendLabels,'Location','southeast')
 
 ax = gca;
 ax.XLim = [0.1,100];
-ax.YLim = [0,45];
+ax.YLim = [0,60];
 ax.XGrid = 'on';
 ax.YGrid = 'on';
 ax.GridLineStyle = ':';
@@ -314,7 +314,7 @@ for ll = 1:rVecLen
             fprintf('%5.1f%%',(ll-1)*pL1 + (jj-1)*pL2 + (kk-1)*pL3);
             [~,~,TH_test] = computeSphereHRTF(a,...
                 rVec(ll),theta{1}(jj),fVec(kk),{'fixedn',...
-                NMatL{ll,1}(kk,jj)});
+                NMatL{ll,1}(kk,jj)+1}); % Plus 1 is needed and logical
             thresh_test{ll,1}{kk,jj} = threshL{ll,1}{kk,jj}-TH_test;
         end
     end
