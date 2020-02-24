@@ -69,7 +69,7 @@ function [H,N,thVec] = computeSphereHRTF(a,r,theta,f,varargin)
 %       based on the appropriate ear position.
 %   To specify NORMLOC with default METHOD, specify METHOD as {}.
 %
-%   See also GETCENTRALANGLE, COMPUTESPHEREITD.
+%   See also GETCENTRALANGLE, COMPUTESPHEREITD, COMPUTESPHEREILD.
 
 %   =======================================================================
 %   This file is part of the 3D3A MATLAB Toolbox.
@@ -256,6 +256,7 @@ else % mu > 0
                             delay = mu*x;
                         else
                             delay = -mu*deg2rad(theta-90);
+%                             delay = -mu*deg2rad(theta-90)/0.966352097063640;
                         end
                         H = (1/mu^2)*exp(-1i*delay)*...
                             psiPSVec(numChkTerms+1);
@@ -324,6 +325,7 @@ else % mu > 0
                             delay = mu*g;
                         else
                             delay = mu*(hatG + deg2rad(theta-theta0));
+%                             delay = mu*hatG + mu*deg2rad(theta-theta0)/0.966352097063640;
                         end
                         H = -(rho/mu)*exp(1i*delay)*...
                             psiPSVec(numChkTerms+1);
@@ -412,6 +414,7 @@ else % mu > 0
                             delay = mu*x;
                         else
                             delay = -mu*deg2rad(theta-90);
+%                             delay = -mu*deg2rad(theta-90)/0.966352097063640;
                         end
                         H = (1/mu^2)*exp(-1i*delay)*psiPSVec(1);
                     otherwise
@@ -488,6 +491,7 @@ else % mu > 0
                             delay = mu*g;
                         else
                             delay = mu*(hatG + deg2rad(theta-theta0));
+%                             delay = mu*hatG + mu*deg2rad(theta-theta0)/0.966352097063640;
                         end
                         H = -(rho/mu)*exp(1i*delay)*psiPSVec(1);
                     otherwise
@@ -508,22 +512,23 @@ else % mu > 0
                 if isempty(lastNonZeroChange)
                     N = 0;
                 else
-                    N = nonNanIndxs(lastNonZeroChange)-1;
+                    N = nonNanIndxs(lastNonZeroChange);
                 end
                 [H,~,thVec] = computeSphereHRTF(a,r,theta,f,{'fixedn',...
                     N},NORMLOC);
             else
-                N = m-termIndx+1; % Plus 1 is needed and logical
+                N = m-termIndx;
             end
         case 'formulan'
             if rho == inf
-                alphaVal = 2.83;
-                betaVal = 2.6;
-                gammaVal = 0.82;
+                alphaVal = 0.7356;
+                betaVal = 3.033;
+                gammaVal = 0.7504;
             else
-                alphaVal = (2.83*rho+2.95)/(rho-1.17);
-                betaVal = (2.6*rho-3.9)/(rho-0.95);
-                gammaVal = (0.82*rho-0.76)/(rho-1.14);
+                alphaVal = ((0.7356*rho)+9.222)/(rho-1.147);
+                betaVal = ((3.033*rho^2)-(7.673*rho)+7.136)/(rho^2-...
+                    (2.866*rho)+6.055);
+                gammaVal = ((0.7504*rho)-0.4589)/(rho-1.037);
             end
             N = round(alphaVal+(betaVal*mu^gammaVal));
             [H,~,thVec] = computeSphereHRTF(a,r,theta,f,{'fixedn',N},...
