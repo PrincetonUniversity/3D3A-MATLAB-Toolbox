@@ -62,7 +62,7 @@ validateattributes(DIM,{'numeric'},{'vector','nonempty','nonnan',...
 X = shiftdim(X);
 DIM = shiftdim(DIM);
 
-C = ceil(X/DIM(2));
+C = ceil(X/DIM(1));
 R = mod(X,DIM(1));
 R(R == 0) = DIM(1);
 
