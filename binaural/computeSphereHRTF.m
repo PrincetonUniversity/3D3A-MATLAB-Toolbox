@@ -65,8 +65,17 @@ function [H,N,thVec] = computeSphereHRTF(a,r,theta,f,varargin)
 %       by the free-field pressure computed at the appropriate ear
 %       position.
 %
-%       3. 'ear_to' - same as 'center' except for time delay compensation
-%       based on the appropriate ear position.
+%       3. 'center_tdc' - same as 'center' except for time delay 
+%       compensation (tdc) based on the appropriate ear position.
+%       
+%       4. 'center_tdc_corr',FMAX - same as 'center_tdc' except the 
+%       time-delay compensation accuracy is improved by using creeping wave 
+%       theory. For more, see the work by Sridhar and Choueiri [1]. For 
+%       this option, the frequency, FMAX, at which the creeping wave 
+%       assumption is taken to be valid should be specified in Hz. 
+%       Typically, when computing spherical-head HRTFs as discrete-time 
+%       filters, FMAX may be specified as the Nyquist frequency for the 
+%       chosen sampling rate.
 %   To specify NORMLOC with default METHOD, specify METHOD as {}.
 %
 %   See also GETCENTRALANGLE, COMPUTESPHEREITD, COMPUTESPHEREILD.
@@ -112,7 +121,7 @@ function [H,N,thVec] = computeSphereHRTF(a,r,theta,f,varargin)
 %   [3]. Duda and Martens (1998) - Range dependence of the response of a 
 %   spherical head model.
 
-narginchk(4,6);
+narginchk(4,7);
 
 if nargin < 6
     NORMLOC = 'center';
@@ -173,6 +182,18 @@ x = cosd(theta);
 rho = r/a;
 g = sqrt(rho^2-(2*rho*x)+1);
 N_abort = 500; % Protection to prevent infinite loops
+if strcmpi(NORMLOC,'center_tdc_corr')
+    if length(varargin) < 3
+        error(['FMAX must be specified for NORMLOC option',...
+            ' ''center_tdc_corr''']);
+    else
+        FMAX = varargin{3};
+        validateattributes(FMAX,{'numeric'},{'scalar','real','nonempty',...
+            'nonnan','positive'},'computeSphereHRTF','FMAX',7);
+        mu_cw = 2*pi*(FMAX)*a/c;
+        corFac = 1/(1+0.5094*(2*mu_cw^2)^(-1/3));
+    end
+end
 
 % Main calculation
 if mu == 0
@@ -204,7 +225,8 @@ else % mu > 0
     psiPS = 0;
     switch lower(METHOD{1})
         case 'fixedn'
-            numChkTerms = 1; % Needed to compute equivalent thresholds
+            numChkTerms = 1;
+            % numChkTerms + 1 is needed to compute equivalent thresholds
             psiPSVec = zeros(numChkTerms+1,1);
             psiPVec = zeros(numChkTerms+1,1);
             
@@ -216,7 +238,7 @@ else % mu > 0
                 Am = computeAm(m,dh); % m = 0
                 psiP = conj(Am)*P(3);
                 psiPS = psiPS + psiP;
-                termIndx = 2;
+                termIndx = 1;
                 psiPVec(termIndx) = psiP;
                 psiPSVec(termIndx) = psiPS;
                 if termIndx == (numChkTerms+1)
@@ -251,12 +273,16 @@ else % mu > 0
                         H = (1/mu^2)*psiPSVec(numChkTerms+1);
                     case 'ear'
                         H = (1/mu^2)*exp(-1i*mu*x)*psiPSVec(numChkTerms+1);
-                    case 'ear_to'
+                    % ear_to for backwards compatibility.
+                    case {'ear_to','center_tdc','center_tdc_corr'} 
                         if theta <= 90
                             delay = mu*x;
                         else
-                            delay = -mu*deg2rad(theta-90);
-%                             delay = -mu*deg2rad(theta-90)/0.966352097063640;
+                            if strcmpi(NORMLOC,'center_tdc_corr')
+                                delay = -mu*deg2rad(theta-90)/corFac;
+                            else
+                                delay = -mu*deg2rad(theta-90);
+                            end
                         end
                         H = (1/mu^2)*exp(-1i*delay)*...
                             psiPSVec(numChkTerms+1);
@@ -277,7 +303,7 @@ else % mu > 0
                 Bm = computeBm(m,dh,hn(3)); % m = 0
                 psiP = conj(Bm)*P(3);
                 psiPS = psiPS + psiP;
-                termIndx = 2;
+                termIndx = 1;
                 psiPVec(termIndx) = psiP;
                 psiPSVec(termIndx) = psiPS;
                 if termIndx == (numChkTerms+1)
@@ -318,14 +344,19 @@ else % mu > 0
                     case 'ear'                      
                         H = -(g/(rho*mu))*exp(1i*mu*g)*...
                             psiPSVec(numChkTerms+1);
-                    case 'ear_to'
+                    % ear_to for backwards compatibility.
+                    case {'ear_to','center_tdc','center_tdc_corr'}
                         theta0 = acosd(1/rho);
                         hatG = sqrt(rho^2-1);
                         if theta < theta0
                             delay = mu*g;
                         else
-                            delay = mu*(hatG + deg2rad(theta-theta0));
-%                             delay = mu*hatG + mu*deg2rad(theta-theta0)/0.966352097063640;
+                            if strcmpi(NORMLOC,'center_tdc_corr')
+                                delay = mu*hatG + ...
+                                    mu*deg2rad(theta-theta0)/corFac;
+                            else
+                                delay = mu*(hatG + deg2rad(theta-theta0));
+                            end 
                         end
                         H = -(rho/mu)*exp(1i*delay)*...
                             psiPSVec(numChkTerms+1);
@@ -364,7 +395,7 @@ else % mu > 0
                 psiP = conj(Am)*P(3);
                 psiPS = psiPS + psiP;
                 psiPCS{m+1} = psiPS;
-                termIndx = 2;
+                termIndx = 1;
                 psiPVec(termIndx) = psiP;
                 psiPSVec(termIndx) = psiPS;
                 if termIndx == (numChkTerms+1)
@@ -409,12 +440,16 @@ else % mu > 0
                         H = (1/mu^2)*psiPSVec(1);
                     case 'ear'
                         H = (1/mu^2)*exp(-1i*mu*x)*psiPSVec(1);
-                    case 'ear_to'
+                    % ear_to for backwards compatibility.
+                    case {'ear_to','center_tdc','center_tdc_corr'}
                         if theta <= 90
                             delay = mu*x;
                         else
-                            delay = -mu*deg2rad(theta-90);
-%                             delay = -mu*deg2rad(theta-90)/0.966352097063640;
+                            if strcmpi(NORMLOC,'center_tdc_corr')
+                                delay = -mu*deg2rad(theta-90)/corFac;
+                            else
+                                delay = -mu*deg2rad(theta-90);
+                            end
                         end
                         H = (1/mu^2)*exp(-1i*delay)*psiPSVec(1);
                     otherwise
@@ -435,7 +470,7 @@ else % mu > 0
                 psiP = conj(Bm)*P(3);
                 psiPS = psiPS + psiP;
                 psiPCS{m+1} = psiPS;
-                termIndx = 2;
+                termIndx = 1;
                 psiPVec(termIndx) = psiP;
                 psiPSVec(termIndx) = psiPS;
                 if termIndx == (numChkTerms+1)
@@ -484,14 +519,19 @@ else % mu > 0
                         H = -(rho/mu)*exp(1i*mu*rho)*psiPSVec(1);
                     case 'ear'                      
                         H = -(g/(rho*mu))*exp(1i*mu*g)*psiPSVec(1);
-                    case 'ear_to'
+                    % ear_to for backwards compatibility.
+                    case {'ear_to','center_tdc','center_tdc_corr'}
                         theta0 = acosd(1/rho);
                         hatG = sqrt(rho^2-1);
                         if theta < theta0
                             delay = mu*g;
                         else
-                            delay = mu*(hatG + deg2rad(theta-theta0));
-%                             delay = mu*hatG + mu*deg2rad(theta-theta0)/0.966352097063640;
+                            if strcmpi(NORMLOC,'center_tdc_corr')
+                                delay = mu*hatG + ...
+                                    mu*deg2rad(theta-theta0)/corFac;
+                            else
+                                delay = mu*(hatG + deg2rad(theta-theta0));
+                            end
                         end
                         H = -(rho/mu)*exp(1i*delay)*psiPSVec(1);
                     otherwise
