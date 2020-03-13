@@ -12,15 +12,19 @@ function [y,lag] = xcoh(x1,x2,varargin)
 %   Y = XCOH(X1,X2,METHOD) optionally allows the method used to compute
 %   cross-coherence to be specified. METHOD can take the following two
 %   options:
-%       1. 'weightA' (default) - Cross-coherence is computed as the
+%       1. 'weighted' (default) - Cross-coherence is computed as the
 %       cross-correlation of X1 and X2 normalized by the geometric mean of
-%       the total energies of X1 and X2.
+%       the total energies of X1 and X2. This corresponds to a weighted sum
+%       of phase errors.
 %
-%       2. 'weightB' - Cross-coherence is computed as the cross-correlation 
-%       of X1 and X2 deconvolved by the convolution of zero-phase versions
-%       of X1 and X2.
+%       2. 'unweighted' - Cross-coherence is computed as the 
+%       cross-correlation of X1 and X2 deconvolved by the convolution of 
+%       zero-phase versions of X1 and X2. This corresponds to an unweighted 
+%       sum of phase errors.
 %
 %       3. 'timedomain' - Cross-coherence is computed in the time domain.
+%       The output should be very close to, if not exactly the same as,
+%       that obtained when using the 'weighted' option.
 %
 %   Y = XCOH(X1,X2,METHOD,FRANGE) optionally specifies the frequency range
 %   over which the cross-coherence is computed. FRANGE must be specified as
@@ -45,7 +49,7 @@ function [y,lag] = xcoh(x1,x2,varargin)
 %   
 %   MIT License
 %   
-%   Copyright (c) 2018 Princeton University
+%   Copyright (c) 2020 Princeton University
 %   
 %   Permission is hereby granted, free of charge, to any person obtaining a
 %   copy of this software and associated documentation files (the 
@@ -97,7 +101,7 @@ else
 end
 
 if nargin < 3
-    method = 'weightA';
+    method = 'weighted';
 else
     method = varargin{1};
     validateattributes(method,{'char'},{'scalartext','nonempty'},...
@@ -106,7 +110,8 @@ end
 
 numRows = size(x1,1);
 switch lower(method)
-    case {'weighta','weightb'}
+    % 'weighta' and 'weightb' options included for backwards compatibility
+    case {'weighted','unweighted','weighta','weightb'}
         % Compute normalized frequency indices
         fVec = linspace(0,2-(2/numRows),numRows);
         [~,fL] = min(abs(fVec-frange(1)));
@@ -125,7 +130,8 @@ switch lower(method)
 end
 
 switch lower(method)
-    case 'weighta'
+    % 'weighta' option included for backwards compatibility
+    case {'weighted','weighta'}
         if isreal(x1) && isreal(x2)
             y_un = ifft(X1.*conj(X2),'symmetric');
         else
@@ -134,7 +140,8 @@ switch lower(method)
         x1_sq = sqrt(sum(abs(X1).^2).*sum(abs(X2).^2))*(1/numRows);
         y = y_un./repmat(x1_sq,numRows,1);
         lag = 0:(numRows-1);
-    case 'weightb'
+    % 'weightb' option included for backwards compatibility
+    case {'unweighted','weightb'}
         if isreal(x1) && isreal(x2)
             y_un = ifft(X_mask.*exp(-1i*angle(X1.*conj(X2))),'symmetric');       
         else
