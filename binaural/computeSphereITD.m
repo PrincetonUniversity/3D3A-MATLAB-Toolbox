@@ -18,11 +18,11 @@ function ITD = computeSphereITD(a,sPos,TYPE)
 %       correspond to the left and right ear positions, respectively,
 %       each specified as the coordinate pair (az,el) where az and el 
 %       correspond to the azimuth and elevation, respectively, of the ear 
-%       in SOFA spherical coordinates. R corresponds to source distance 
-%       specified in meters. If R is not specified, R = inf is assumed. If 
-%       EL and ER are not specified, EL = (100,-10) and ER = (260,-10) are 
-%       assumed. The value of R specified here supersedes the source
-%       distance specified in S.
+%       specified in degrees in SOFA spherical coordinates. R corresponds 
+%       to source distance specified in meters. If R is not specified, R = 
+%       inf is assumed. If EL and ER are not specified, EL = (100,-10) and 
+%       ER = (260,-10) are assumed. The value of R specified here 
+%       supersedes the source distance specified in S.
 
 %   =======================================================================
 %   This file is part of the 3D3A MATLAB Toolbox.
@@ -115,7 +115,6 @@ end
 switch lower(TYPE{1})
     case 'w'
         ITD = a*(sin(theta)+theta)/c;
-%         ITD = (a*sin(theta)/c)+(a*theta/(0.971*c));
     case 'lf'
         ITD = 3*a*sin(theta)/c;
     case 'ew'
