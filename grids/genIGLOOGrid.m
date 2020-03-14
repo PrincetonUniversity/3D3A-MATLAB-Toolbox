@@ -47,7 +47,8 @@ if nargin < 1
 end
 
 q = (1:(3*2^Md)).';
-theta_q = 90-(q*(60/(2^Md)));
+theta_q = q*(60/(2^Md));
+% theta_q = ((2*q)-1)*(30/(2^Md));
 
 Eq = ceil(log2(q))-1;
 EMdq = ceil(log2(3*(2^Md)+1-q))-1;
@@ -65,12 +66,25 @@ for ii = 1:qLen
         Vq = 9*(2^EMdq(ii));
     end
     
+%     if q(ii) == 0 || q(ii) == (3*(2^Md))
+%         Vq = 1;
+%     elseif q(ii) == 1 || q(ii) == (3*(2^Md) - 1)
+%         Vq = 3;
+%     elseif q(ii) >= 2 && q(ii) <= (2^Md)
+%         Vq = 9*(2^Eq(ii));
+%     elseif q(ii) >= ((2^Md) + 1) && q(ii) < 2^(Md + 1)
+%         Vq = 6*(2^Md);
+%     elseif q(ii) >= (2^(Md+1)) && q(ii) <= (3*(2^Md) - 2)
+%         Vq = 9*(2^EMdq(ii));
+%     end
+    
     v = (0:Vq-1).';
     theta_qVec = repmat(theta_q(ii),Vq,1);
     dirCell{ii,1} = [v*(360/Vq),theta_qVec,ones(Vq,1)];
 end
 
 dirMat = cell2mat(dirCell);
+dirMat(:,2) = 90-dirMat(:,2);
 out = sofaS2sofaC(dirMat);
 
 end
