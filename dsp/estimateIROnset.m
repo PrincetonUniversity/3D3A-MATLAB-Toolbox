@@ -36,7 +36,14 @@ function varargout = estimateIROnset(inputIR,varargin)
 %       5. {'maxzeros'} estimates onset as the sample value which results 
 %       in the IR having maximum number of zeros inside the unit circle
 %       when the IR is shifted to begin at that sample. The returned sample 
-%       onset, O, is accurate to 1 sample.
+%       onset, O, is accurate to 1 sample. This option can result in a long
+%       computation time.
+%       6. {'multithresh',THPL} where THPL is a vector of threshold
+%       percentages to use. This method compares the estimated onsets using
+%       thresholding with each of the threshold values in THPL and
+%       statistically determines the 'best' onset from the list. If THPL is
+%       not specified, the following default list of thresholds is used:
+%       [5, 7.5, 10, 12.5, 15, 17.5, 20, 22.5, 25].
 %
 %   [O,N] = ESTIMATEIRONSET(X,{'maxzeros'}) additionally returns the
 %   computed number of zeros inside the unit circle.
@@ -190,9 +197,6 @@ switch lower(METHOD{1})
         
         onsetMat = absMaxMat;
         numZIn = cell(numIRs,1);
-        % Progress
-        % cpVal = 0;
-        % fprintf('Computing onsets using ''maxzeros'' method..%d%%',cpVal);
         for ii = 1:numIRs
             cLB = 0;
             cUB = absMaxMat(ii);
@@ -219,17 +223,76 @@ switch lower(METHOD{1})
             shiftVec = cLB:cUB;
             [onsetMat(ii),numZIn{ii,1}] = getMZOnset(inputIR(:,ii),...
                 shiftVec);
-%             ppVal = cpVal;
-%             cpVal = round(ii*100/numIRs,-1);
-%             if cpVal ~= ppVal
-%                 fprintf('..%d%%',cpVal);
-%             end
         end
-        fprintf('\nComputing onsets using ''maxzeros'' method..done!\n');
         
         varargout{1} = onsetMat;
         if nargout > 1
             varargout{2} = numZIn;
+        end
+    case 'multithresh'
+        if length(METHOD) < 2
+            thpVec = [5;7.5;10;12.5;15;17.5;20;22.5;25];
+        else
+            thpVec = METHOD{2};
+        end
+        validateattributes(thpVec,{'numeric'},{'vector','real','finite',...
+            'nonnan','nonnegative','<=',100},'estimateIROnset',...
+            'the THPL value when METHOD Name is ''multithresh''',2)
+        
+        % Compute onset using thresholding for each threshold in thpVec
+        numTHPs = length(thpVec);
+        delayMat = zeros(numTHPs,numIRs);
+        for ii = 1:numTHPs
+            delayMat(ii,:) = thresholdIRs(inputIR,thpVec(ii)/100);
+        end
+        
+        % Check if all computed thresholds are equal
+        delMatDiff = diff(delayMat);
+        eqChkFlag = any(delMatDiff(:));
+        if ~eqChkFlag
+            varargout{1} = delayMat(1,:);
+        else
+            finalDelayVec = zeros(1,numIRs);
+            for ii = 1:numIRs
+                currDelayVec = delayMat(:,ii);
+                % Successively eliminate outlying delay values
+                totDropped = 0;
+                while (numTHPs-totDropped) >= 2
+                    % Compute standard dev. excluding one delay at a time
+                    numTHPsLeft = numTHPs-totDropped;
+                    stDevVec = zeros(numTHPsLeft,1);
+                    for jj = 1:numTHPsLeft
+                        dropDelVec = currDelayVec;
+                        dropDelVec(jj) = [];
+                        stDevVec(jj) = std(dropDelVec);
+                    end
+                    
+                    % If the standard devs. of the remaining delays are all 
+                    % the same, exit the while loop
+                    stdDiffVec = diff(stDevVec);
+                    stdDiffChk = any(stdDiffVec);
+                    if ~stdDiffChk
+                        break
+                    end
+                    
+                    % Find all indices of minimum standard deviation
+                    drpIndxs = find(stDevVec == min(stDevVec));
+                    drpCount = length(drpIndxs);
+                    
+                    % If the minimum standard deviation occurs at all 
+                    % remaining positions, exit the while loop
+                    if drpCount == numTHPsLeft
+                        break
+                    end
+                    
+                    % Drop elements
+                    currDelayVec(drpIndxs) = [];
+                    
+                    totDropped = totDropped + drpCount;
+                end
+                finalDelayVec(ii) = currDelayVec(1);
+            end
+            varargout{1} = finalDelayVec;
         end
     otherwise
         error('Invalid METHOD Name specification.');
