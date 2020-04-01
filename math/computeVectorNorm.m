@@ -1,13 +1,14 @@
 function AN = computeVectorNorm(A,P,DIM)
 %COMPUTEVECTORNORM Compute the norm of a vector.
 %   AN = COMPUTEVECTORNORM(A) computes the l2-norm of the vector, A. If A
-%   is a matrix, the norm of each column is computed.
+%   is a matrix, each column is treated as an independent vector and the 
+%   norm of each column is computed.
 %
 %   AN = COMPUTEVECTORNORM(A,P) computes the lP-norm. Specify P as inf for
 %   the l-infinity norm.
 %
-%   AN = COMPUTEVECTORNORM(...,DIM) specifies the dimension along which to
-%   perform the computation.
+%   AN = COMPUTEVECTORNORM(A,P,DIM) specifies the dimension along which to
+%   perform the computation. Specify P as [] to use the default value.
 
 %   =======================================================================
 %   This file is part of the 3D3A MATLAB Toolbox.
@@ -43,16 +44,19 @@ function AN = computeVectorNorm(A,P,DIM)
 
 narginchk(1,3);
 
+validateattributes(A,{'numeric'},{'2d','nonempty','nonnan','finite'},...
+    'computeVectorNorm','A',1)
+
 if nargin < 3
     DIM = find(size(A) > 1,1);
 end
 
+validateattributes(DIM,{'numeric'},{'scalar','nonempty','nonnan',...
+    'finite','positive','integer'},'computeVectorNorm','DIM',3)
+
 if nargin < 2 || isempty(P)
     P = 2;
 end
-
-validateattributes(DIM,{'double'},{'scalar','nonempty','nonnan',...
-    'finite','positive','integer','<=',2},'computeVectorNorm','DIM')
 
 if P == inf
     AN = max(abs(A),[],DIM);
