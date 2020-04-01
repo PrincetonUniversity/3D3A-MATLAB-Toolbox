@@ -1,15 +1,16 @@
-function psi = getPointSourcePotential(r0,k,r,varargin)
-%getPointSourcePotential Potential due to a point source.
-%   psi = getPointSourcePotential(r0,k,r) computes the potential field at r
-%   due to a point source at r0 for an angular wavenumber k. The position 
-%   vectors r0 and r should be specified in meters in SOFA Cartesian 
-%   coordinates and must each be three-element vectors. The wavenumber, k, 
-%   may be a scalar or vector in units or rad/m. psi will have the same 
-%   dimensions as k. The GETPRESSURE function may be used to compute the
-%   pressure from the returned psi value.
+function psi = getPointSourcePotential(rs,k,r,varargin)
+%GETPOINTSOURCEPOTENTIAL Potential due to a point source.
+%   PSI = GETPOINTSOURCEPOTENTIAL(RS,K,R) computes the potential field at R
+%   due to a point source at RS for an angular wavenumber K. The position 
+%   vectors RS and R must be specified in meters in Cartesian coordinates.
+%   RS must be a length-3 vector while R must be an M-by-3 matrix where M
+%   >= 1. The wavenumber, K, must be specified in rad/m and may be a scalar 
+%   or vector of length N. PSI will have dimensions N-by-M is K is a column
+%   vector and M-by-N if K is a row vector. The GETPRESSURE function may be 
+%   used to compute the pressure from the returned PSI value.
 %
-%   psi = getPointSourcePotential(r0,k,r,t0) optionally allows a scalar 
-%   time delay, t0, to be specified in seconds.
+%   PSI = GETPOINTSOURCEPOTENTIAL(RS,K,R,TD) optionally allows a scalar 
+%   time delay, TD, to be specified in seconds.
 %
 %   See also GETPISTONPOTENTIAL, GETPRESSURE.
 
@@ -49,14 +50,43 @@ function psi = getPointSourcePotential(r0,k,r,varargin)
 % Check number of inputs
 narginchk(3,4);
 
+validateattributes(rs,{'numeric'},{'vector','real','finite','numel',3},...
+    'getPointSourcePotential','RS',1);
+validateattributes(k,{'numeric'},{'vector','real','finite',...
+    'nonnegative'},'getPointSourcePotential','K',2);
+validateattributes(r,{'numeric'},{'2d','real','finite','size',[NaN,3]},...
+    'getPointSourcePotential','R',3);
+
+% For backwards compatibility
+if isrow(k)
+    tpFlag = false;
+else
+    tpFlag = true;
+end
+
+rs = shiftdim(rs).'; % Force rs to be a row vector
+k = shiftdim(k).'; % Force k to be a row vector
+kLen = length(k);
+numPos = size(r,1);
+
 if nargin == 4
     c = getSoundSpeed();
-    phaseDelay = exp(1i*k*c*varargin{1});
+    validateattributes(varargin{1},{'numeric'},{'scalar','real',...
+        'finite'},'getPointSourcePotential','TD',4);
+    phaseDelay = repmat(exp(1i*k*c*varargin{1}),numPos,1);
 else
     phaseDelay = 1; % No delay by default
 end
 
-d = norm(r - r0);
-psi = (exp(1i*k*d)/d).*phaseDelay;
+dr = r-repmat(rs,numPos,1);
+d = computeVectorNorm(dr,2,2);
+preTerm = repmat(1./d,1,kLen);
+
+% For backwards compatibility
+if tpFlag
+    psi = (preTerm.*exp(1i*d*k).*phaseDelay).';
+else
+    psi = preTerm.*exp(1i*d*k).*phaseDelay;
+end
 
 end
