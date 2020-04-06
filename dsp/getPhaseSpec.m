@@ -16,8 +16,8 @@ function outputSpec = getPhaseSpec(inputIR,TYPE,TOL,DIM)
 %   must be specified in radians. See UNWRAP for more information.
 %
 %   S = GETPHASESPEC(...,DIM) specifies the dimension along which to
-%   compute S. TYPE and/or TOL may be specified as [] to use their default 
-%   values.
+%   compute S. TYPE and/or TOL must each be specified as [] to use their
+%   default values when specifying a custom value for DIM.
 %
 %   See also UNWRAP, ANGLE, GETMAGSPEC, GETMAGSPECDB.
 
@@ -55,7 +55,7 @@ function outputSpec = getPhaseSpec(inputIR,TYPE,TOL,DIM)
 
 narginchk(1,4);
 
-validateattributes(inputIR,{'double'},{'2d','nonempty','nonnan',...
+validateattributes(inputIR,{'numeric'},{'2d','nonempty','nonnan',...
     'finite'},'getPhaseSpec','X',1)
 
 if nargin < 4
@@ -83,8 +83,8 @@ switch lower(TYPE)
     case 'pv'
         outputSpec = angle(fft(inputIR,[],DIM));
     case 'unwrap'
-        validateattributes(TOL,{'double'},{'scalar','nonempty','nonnan',...
-            'finite','real'},'getPhaseSpec','DIM',3)
+        validateattributes(TOL,{'numeric'},{'scalar','nonnan','finite',...
+            'real'},'getPhaseSpec','TOL',3)
         outputSpec = unwrap(angle(fft(inputIR,[],DIM)),TOL,DIM);
     otherwise
         error('Invalid TYPE specification.');

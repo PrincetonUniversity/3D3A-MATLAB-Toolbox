@@ -180,8 +180,18 @@ switch lower(METHOD{1})
                 phaseSpec(:,ii) = polyval(fittingLine,fVec);
             end
         end
-        varargout{1} = -Fs*mean(diag(1./(2*pi*fVec(fLIndx:fUIndx)))*...
-            phaseSpec(fLIndx:fUIndx,:),'omitnan');
+        if fLIndx == 1
+            if fUIndx == 1
+                varargout{1} = 0;
+            else
+                fLIndx = fLIndx + 1;
+            end
+            varargout{1} = -Fs*mean(diag(1./(2*pi*fVec(fLIndx:fUIndx)))*...
+                phaseSpec(fLIndx:fUIndx,:),'omitnan');
+        else
+            varargout{1} = -Fs*mean(diag(1./(2*pi*fVec(fLIndx:fUIndx)))*...
+                phaseSpec(fLIndx:fUIndx,:),'omitnan');
+        end
     case 'mpxc'
         onsetMat = zeros(1,numIRs);
         minPhaseIR = makeMinPhaseIR(inputIR,'hilb');
