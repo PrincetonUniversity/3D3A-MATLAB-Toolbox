@@ -1,4 +1,4 @@
-function outputSpec = getPhaseSpec(inputIR,TYPE,TOL,DIM)
+function outputSpec = getPhaseSpec(inputIR,varargin)
 %GETPHASESPEC Compute phase spectrum.
 %   S = GETPHASESPEC(X) returns the principal value phase spectrum, S, 
 %   given an input impulse response (IR), X. If X is a matrix of IRs, the 
@@ -13,7 +13,8 @@ function outputSpec = getPhaseSpec(inputIR,TYPE,TOL,DIM)
 %
 %   S = GETPHASESPEC(X,'unwrap',TOL) additionally allows specification of a
 %   custom tolerance for unwrapping the principal value phase spectrum. TOL 
-%   must be specified in radians. See UNWRAP for more information.
+%   must be specified in radians. See the 'unwrap' function for more 
+%   information.
 %
 %   S = GETPHASESPEC(...,DIM) specifies the dimension along which to
 %   compute S. TYPE and/or TOL must each be specified as [] to use their
@@ -31,7 +32,7 @@ function outputSpec = getPhaseSpec(inputIR,TYPE,TOL,DIM)
 %   
 %   MIT License
 %   
-%   Copyright (c) 2018 Princeton University
+%   Copyright (c) 2020 Princeton University
 %   
 %   Permission is hereby granted, free of charge, to any person obtaining a
 %   copy of this software and associated documentation files (the 
@@ -64,20 +65,33 @@ if nargin < 4
     else
         DIM = 1;
     end
+else
+    DIM = varargin{3};
+    validateattributes(DIM,{'double'},{'scalar','nonempty','nonnan',...
+        'finite','integer','positive','<=',ndims(inputIR)},...
+        'getPhaseSpec','DIM',4)
 end
-validateattributes(DIM,{'double'},{'scalar','nonempty','nonnan',...
-    'finite','integer','positive','<=',ndims(inputIR)},'getPhaseSpec',...
-    'DIM',4)
 
-if nargin < 3 || isempty(TOL)
+if nargin < 3
     TOL = pi;
+else
+    TOL = varargin{2};
+    if isempty(TOL)
+        TOL = pi;
+    end
 end
 
-if nargin < 2 || isempty(TYPE)
+if nargin < 2
     TYPE = 'pv';
+else
+    TYPE = varargin{1};
+    if isempty(TYPE)
+        TYPE = 'pv';
+    else
+        validateattributes(TYPE,{'char'},{'scalartext','nonempty'},...
+            'getPhaseSpec','TYPE',2)
+    end
 end
-validateattributes(TYPE,{'char'},{'scalartext','nonempty'},...
-    'getPhaseSpec','TYPE',2)
 
 switch lower(TYPE)
     case 'pv'

@@ -1,5 +1,5 @@
 function ILD = computeSphereILD(a,sPos,varargin)
-%COMPUTESPHEREILD Analytically computed ITD for a sphere.
+%COMPUTESPHEREILD Exact low-frequency ILD using a rigid-sphere model.
 %   B = COMPUTESPHEREILD(A,S) analytically computes low-frequency ILD for a 
 %   rigid sphere of radius A (specified in meters), and for sound source 
 %   positions, S, specified in SOFA cartesian coordinates, using the 
@@ -14,7 +14,7 @@ function ILD = computeSphereILD(a,sPos,varargin)
 %   correspond to the left and right ear positions, respectively, each
 %   specified as the coordinate pair (az,el) where az and el correspond to
 %   the azimuth and elevation, respectively, of the ear specified in 
-%   degreesin SOFA spherical coordinates. 
+%   degrees in SOFA spherical coordinates. 
 %
 %   B = COMPUTESPHEREILD(...,[EL;ER],R) optionally specifies R as the 
 %   source distance in meters. If R is not specified, R is computed 
@@ -58,73 +58,49 @@ function ILD = computeSphereILD(a,sPos,varargin)
 narginchk(2,4);
 
 % Check inputs
-validateattributes(a,{'double'},{'vector','nonempty','nonnan','finite',...
+validateattributes(a,{'numeric'},{'vector','nonempty','nonnan','finite',...
     'positive','real'},'computeSphereILD','A',1);
-validateattributes(sPos,{'double'},{'2d','nonempty','nonnan','finite',...
+validateattributes(sPos,{'numeric'},{'2d','nonempty','nonnan','finite',...
     'size',[NaN,3],'real'},'computeSphereILD','S',2);
 
 % Get required variables and pre-process input data
 a = shiftdim(a); % If a is a row vector, force it to be a column.
 sDirs = sofaC2sofaS(sPos);
-numDirs = size(sDirs,1);
+numDirs = size(sDirs,1); % numDirs = N in documentation.
 
 if nargin < 4
     R = sDirs(:,3);
 else
     R = varargin{2};
-    validateattributes(R,{'numeric'},{'vector'},'nonempty','nonnan',...
+    validateattributes(R,{'numeric'},{'vector','nonempty','nonnan'},...
         'computeSphereILD','R',4);
-    R = shiftdim(R);
     
     if isscalar(R)
-        R = R*ones(numDirs,1);
+        R = R*ones(1,numDirs);
     else
-        if size(R,1) ~= numDirs
+        if length(R) ~= numDirs
             error('Invalid R specification.')
         end
     end
 end
-rho = R/a;
 
 if nargin < 3
     EL = [90,0];
     ER = [270,0];
 else
     ePos = varargin{1};
-    validateattributes(ePos,{'numeric'},{'2d'},'size',[2,2],'real',...
+    validateattributes(ePos,{'numeric'},{'2d','size',[2,2],'real'},...
         'computeSphereILD','[EL;ER]',3);
     
     EL = ePos(1,:);
     ER = ePos(2,:);
 end
 
-% Compute angles of incidence
-[xEL,yEL,zEL] = sofaS2sofaC(EL(1),EL(2),1);
-[xER,yER,zER] = sofaS2sofaC(ER(1),ER(2),1);
-S = sDirs(:,1:2);
-[xS,yS,zS] = sofaS2sofaC(S(:,1),S(:,2),ones(numDirs,1));
-thetaL = getCentralAngle([xS,yS,zS],repmat([xEL,yEL,zEL],numDirs,1));
-thetaR = getCentralAngle([xS,yS,zS],repmat([xER,yER,zER],numDirs,1));
+% DC gain calculation
+HL = computeSphereLFGain(a,sPos,EL,R);
+HR = computeSphereLFGain(a,sPos,ER,R);
 
-% Main calculation
-% Left ear HRTFs
-gL = sqrt(rho.^2 - 2*rho.*cosd(thetaL) + 1);
-if thetaL == 0
-    HL = (2*rho./gL)-(rho.*log(rho./(rho-1)));
-else
-    HL = (2*rho./gL)-(rho.*log((gL+1-(rho.*cosd(thetaL)))./(rho.*(1-...
-        cosd(thetaL)))));
-end
-
-% Right ear HRTFs
-gR = sqrt(rho.^2 - 2*rho.*cosd(thetaR) + 1);
-if thetaR == 0
-    HR = (2*rho./gR)-(rho.*log(rho./(rho-1)));
-else
-    HR = (2*rho./gR)-(rho.*log((gR+1-(rho.*cosd(thetaR)))./(rho.*(1-...
-        cosd(thetaR)))));
-end
-
+% Ratio of DC gains, in dB
 ILD = mag2db(HL./HR);
 
 end

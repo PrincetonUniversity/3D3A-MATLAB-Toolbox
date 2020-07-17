@@ -261,6 +261,8 @@ for ii = 1:rVecLen
     end
 end
 ILDMat = (cell2mat(ILDCell)).';
+% ILDMat_norm = ILDMat-repmat(ILDMat(1,:),irLen,1);
+% ILDMat_norm2 = ILDMat_norm-repmat(ILDMat_norm(:,rVecLen),1,rVecLen);
 
 clear ii jj sPosIndx ILDCell ILD
 
@@ -269,6 +271,7 @@ varsbefore = who;
 
 figure();
 semilogx(muVec(1:(nyqIndx-1)),ILDMat(1:(nyqIndx-1),:));
+% semilogx(muVec(1:(nyqIndx-1)),ILDMat_norm2(1:(nyqIndx-1),:));
 xlabel('Normalized frequency, $\mu$','Interpreter','latex')
 ylabel('ILD (dB)','Interpreter','latex')
 legend(legendLabels,'Location','southeast')
@@ -276,6 +279,7 @@ legend(legendLabels,'Location','southeast')
 ax = gca;
 ax.XLim = [0.1,100];
 ax.YLim = [0,60];
+% ax.YLim = [0,7];
 ax.XGrid = 'on';
 ax.YGrid = 'on';
 ax.GridLineStyle = ':';

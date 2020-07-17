@@ -3,7 +3,7 @@ function [ILD, fc, avgILD] = estimateILD(hL,hR,Fs,B,FRANGE)
 %   ILD = ESTIMATEILD(HL,HR) estimates the interaural level difference
 %   (ILD) spectra for the binaural (or head-related) impulse responses HL
 %   and HR. HL and HR must be the same size, and ILD will be a matrix also 
-%   of the same size.
+%   of the same size. ILD is returned in dB.
 %
 %   [ILD,FC] = ESTIMATEILD(HL,HR,FS) returns the frequency vector FC.
 %   corresponding to the rows of ILD, when the sampling rate FS is

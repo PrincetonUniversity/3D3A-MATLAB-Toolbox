@@ -1,19 +1,20 @@
-function [grpDelaySpec,avgGrpDelay] = getGrpDelay(inputIR,Fs,AVGRANGE)
-%GETGRPDELAY Compute group delay from impulse response (IR).
-%   [S,M] = GETGRPDELAY(A,Fs) computes the group delay of the transfer 
-%   function with impulse response, A, and returns the group delay
-%   spectrum, S, and the average group delay, M.
+function [grpDelaySpec,avgGrpDelay] = getGrpDelay(inputIR,Fs,varargin)
+%GETGRPDELAY Group delay from impulse response (IR).
+%   [S,M] = GETGRPDELAY(A,Fs) computes the group delay of the IR(s) in A 
+%   and returns the group delay spectrum, S, and the average group delay, 
+%   M.
 %       If A is a vector, S will be a column vector with the same length as 
-%       A and M will be a scalar.
-%       If A is a matrix with dimensions P-by-N, S will be a matrix with 
-%       dimensions P-by-N and M will be a row vector of length N.
+%       A, and M will be a scalar.
+%       If A is a matrix with dimensions P-by-N, S will have the same size 
+%       as A while M will be a row vector of length N.
 %   The group delay values in S and M are specified in samples. The
 %   sampling rate, Fs, must be specified in Hz.
 %
-%   ___ = GETGRPDELAY(...,AVGRANGE) optionally specifies the frequency 
+%   [S,M] = GETGRPDELAY(A,Fs,AVGRANGE) optionally specifies the frequency 
 %   range over which averaging of S should be performed to compute M. 
-%   AVGRANGE must be specified as a row vector [w1,w2] containing 
-%   frequencies specified in Hz such that w1 < w2.
+%   AVGRANGE must be specified as a row vector [FL,FU] containing 
+%   frequencies specified in Hz such that 0 <= FL <= FU <= Fs/2. The 
+%   default value is [0,Fs/2].
 %
 %   See also ESTIMATEIRONSET.
 
@@ -27,7 +28,7 @@ function [grpDelaySpec,avgGrpDelay] = getGrpDelay(inputIR,Fs,AVGRANGE)
 %   
 %   MIT License
 %   
-%   Copyright (c) 2018 Princeton University
+%   Copyright (c) 2020 Princeton University
 %   
 %   Permission is hereby granted, free of charge, to any person obtaining a
 %   copy of this software and associated documentation files (the 
@@ -48,28 +49,43 @@ function [grpDelaySpec,avgGrpDelay] = getGrpDelay(inputIR,Fs,AVGRANGE)
 %   TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE 
 %   SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 %   =======================================================================
-%
+
 %   Reference:
 %       [1]. https://ccrma.stanford.edu/~jos/filters/Numerical_Computation_
 %            Group_Delay.html#14646
 
+% Check input count
 narginchk(2,3);
 
-inputIR = shiftdim(inputIR);
+% Verify required inputs
+validateattributes(inputIR,{'numeric'},{'2d','nonempty','nonnan',...
+    'finite'},'getGrpDelay','A',1)
+validateattributes(Fs,{'numeric'},{'scalar','real','finite','nonnan',...
+    'positive'},'getGrpDelay','Fs',2)
+
+inputIR = shiftdim(inputIR); % If inputIR is a vector, force to a column.
 irLen = size(inputIR,1);
 
+% Verify optional inputs
 if nargin < 3
-    AVGRANGE = [0,Fs/2];
+    avgRange = [0,Fs/2];
+else
+    avgRange = varargin{1};
+    validateattributes(avgRange,{'numeric'},{'vector','real',...
+        'finite','nonnan','nonnegative','numel',2,'<=',Fs/2},...
+        'getGrpDelay','AVGRANGE',3)
 end
 
-if AVGRANGE(1) >= AVGRANGE(2)
-    error(['When AVGRANGE is specified as [w1,w2], w2 must be greater',...
-        ' than w1.'])
+if avgRange(1) >= avgRange(2)
+    error(['When AVGRANGE is specified as [FL,FU], FU must be greater',...
+        ' than FL.'])
 end
+
+% === Begin main calculations ===
 
 freqVec = getFreqVec(Fs,irLen);
-[~,lIndx] = min(abs(freqVec-AVGRANGE(1)));
-[~,hIndx] = min(abs(freqVec-AVGRANGE(2)));
+[~,lIndx] = min(abs(freqVec-avgRange(1)));
+[~,hIndx] = min(abs(freqVec-avgRange(2)));
 
 inputTF = fft(inputIR);
 

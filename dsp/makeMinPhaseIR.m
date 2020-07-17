@@ -1,4 +1,4 @@
-function minPhaseIR = makeMinPhaseIR(ir,METHOD)
+function minPhaseIR = makeMinPhaseIR(ir,varargin)
 %MAKEMINPHASEIR Compute the minimum-phase version of an impulse response. 
 %   Y = MAKEMINPHASEIR(X) computes Y, the minimum-phase version of the 
 %   input, X, using the 'rceps' function in the Signal Processing Toolbox.
@@ -10,8 +10,8 @@ function minPhaseIR = makeMinPhaseIR(ir,METHOD)
 % 
 %   Y = MAKEMINPHASEIR(X,METHOD) optionally specifies the method to use
 %   when computing Y. The options are:
-%       (i) 'rceps' - use the 'rceps' function in the Signal Processing 
-%       Toolbox (default).
+%       (i) 'rceps' (default) - use the 'rceps' function in the Signal 
+%       Processing Toolbox.
 %       (ii) 'hilb' - use the hilbert transform (computed using the
 %       'hilbert' function in the Signal Processing Toolbox).
 %
@@ -30,7 +30,7 @@ function minPhaseIR = makeMinPhaseIR(ir,METHOD)
 %   
 %   MIT License
 %   
-%   Copyright (c) 2018 Princeton University
+%   Copyright (c) 2020 Princeton University
 %   
 %   Permission is hereby granted, free of charge, to any person obtaining a
 %   copy of this software and associated documentation files (the 
@@ -52,30 +52,43 @@ function minPhaseIR = makeMinPhaseIR(ir,METHOD)
 %   SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 %   =======================================================================
 
-if nargin < 2
-    METHOD = 'rceps';
-end
+narginchk(1,2);
 
+validateattributes(ir,{'numeric'},{'2d','nonempty','nonnan','finite'},...
+    'makeMinPhaseIR','X',1)
 ir = shiftdim(ir); % Forces ir to a column if it is a row vector.
 
+if nargin < 2
+    METHOD = 'rceps';
+else
+    METHOD = varargin{1};
+    validateattributes(METHOD,{'char'},{'scalartext','nonempty'},...
+        'makeMinPhaseIR','METHOD',2)
+end
+
+minmag = 10*eps; % To deal with ill-conditioned values.
 switch lower(METHOD)
     case 'rceps'
-        minPhaseIR = zeros(size(ir));
-        numIRs = size(ir,2);
-        tF = fft(ir);
-        if any(tF == 0)
-            tF(tF == 0) = 0 + 1i*eps;
-            ir = ifft(tF,'symmetric'); % rceps only works with real IRs
+        if ~isreal(ir)
+            error(['Input X is not real. X must be real when METHOD is',...
+                ' ''rceps''.'])
         end
+        
+        minPhaseIR = zeros(size(ir));
+        numIRs = size(ir,2);        
         for ii = 1:numIRs
             [~,minPhaseIR(:,ii)] = rceps(ir(:,ii));
         end
     case 'hilb'
         absTF = getMagSpec(ir);
-        absTF(absTF == 0) = eps;
+        absTF(absTF < minmag) = minmag;
         argTF = imag(hilbert(log(absTF))); % hilbert operates along columns
         minPhaseTF = absTF.*exp(-1i*argTF);
-        minPhaseIR = ifft(minPhaseTF,'symmetric');
+        if isreal(ir)
+            minPhaseIR = ifft(minPhaseTF,'symmetric');
+        else
+            minPhaseIR = ifft(minPhaseTF);
+        end
     otherwise
         error('Invalid METHOD specification.')
 end

@@ -1,6 +1,6 @@
 function usrPath = getUserPath()
-%GETUSERPATH User base path.
-%   Y = GETUSERPATH returns the absolute path to the current user's folder.
+%GETUSERPATH Path to user home.
+%   Y = GETUSERPATH returns the absolute path to the user's home folder.
 
 %   =======================================================================
 %   This file is part of the 3D3A MATLAB Toolbox.
@@ -41,7 +41,8 @@ if ismac || isunix
 elseif ispc
     [~,usrPath] = system('echo %userprofile%');
 else
-    disp('Platform not supported.')
+    warning('Unable to determine absolute path to user home. Using ''~''.')
+    usrPath = '~';
 end
 
 end

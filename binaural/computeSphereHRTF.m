@@ -559,16 +559,22 @@ else % mu > 0
             else
                 N = m-termIndx;
             end
+            
+            if m == N_abort
+                warning(['Hard limit of %d iterations reached. ',...
+                    'Iteration stopped.'],N_abort)
+            end
         case 'formulan'
             if rho == inf
-                alphaVal = 0.7356;
-                betaVal = 3.033;
-                gammaVal = 0.7504;
+                alphaVal = 0.5471;
+                betaVal = 2.6838;
+                gammaVal = 0.8044;
             else
-                alphaVal = ((0.7356*rho)+9.222)/(rho-1.147);
-                betaVal = ((3.033*rho^2)-(7.673*rho)+7.136)/(rho^2-...
-                    (2.866*rho)+6.055);
-                gammaVal = ((0.7504*rho)-0.4589)/(rho-1.037);
+                alphaVal = ((0.5471*rho)+8.9974)/(rho-0.9998);
+                betaVal = ((2.6838*rho^2)-(8.6672*rho)+7.2079)/(rho^2-...
+                    (2.9353*rho)+2.5073);
+                gammaVal = ((0.8044*rho^2)-(2.3079*rho)+1.8737)/(rho^2-...
+                    (3.0765*rho)+2.4826);
             end
             N = round(alphaVal+(betaVal*mu^gammaVal));
             [H,~,thVec] = computeSphereHRTF(a,r,theta,f,{'fixedn',N},...
