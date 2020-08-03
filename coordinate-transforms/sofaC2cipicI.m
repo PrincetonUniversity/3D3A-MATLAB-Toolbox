@@ -1,31 +1,20 @@
 function varargout = sofaC2cipicI(varargin)
-%SOFAC2CIPICI Convert SOFA cartesian coordinates to CIPIC interaural 
-%coordinates.
+%SOFAC2CIPICI Convert SOFA cartesian to CIPIC interaural coordinates.
 %   [A,E,R] = SOFAC2CIPICI(X,Y,Z) converts from SOFA cartesian coordinates, 
 %   X, Y, and Z, to CIPIC interaural coordinates, A, E, and R. Azimuth, A, 
 %   and elevation, E, are specified in degrees, while radius, R, is
-%   specified in the same units as X, Y, and Z.
-%       If X, Y, and Z are specified as scalars, A, E, and R will also be
-%       scalars.
-%       If X, Y, and X are specified as vectors, they must all have the
-%       same length, N. A, E, and R will then be column vectors of length
-%       N.
+%   specified in the same units as X, Y, and Z, which may each be specified
+%   as scalars or vectors of the same length. A, E, and R will have the
+%   same dimensions as X, Y, and Z.
 %
-%   CI = SOFAC2CIPICI(X,Y,Z) optionally returns an N-by-3 matrix, CI = 
-%   [A,E,R].
-%
-%   __ = SOFAC2CIPICI(SC) allows X, Y, and Z to be specified as a 3-column 
+%   CI = SOFAC2CIPICI(SC) allows X, Y, and Z to be specified as a 3-column 
 %   matrix SC = [X,Y,Z].
 %
-%   __ = SOFAC2CIPICI(__,'flipAz') optionally flips the sign convention of
-%   azimuth values such that positions corresponding to positive values of
-%   Y in SOFA cartesian coordinates correspond to positive azimuths
-%   (unlike in the CIPIC coordinate system, where these positions
-%   correspond to negative azimuths).
-%
-%   __ = SOFAC2CIPICI(__,'sofaAz') optionally returns azimuths in SOFA
-%   spherical coordinates ranging from 0 to 360 degrees. Note that the 
-%   'flipAz' option has no effect if this option is also specified.
+%   ___ = SOFAC2CIPICI(___,'flipAz') optionally flips the sign convention
+%   of A such that positions corresponding to positive values of Y in SOFA 
+%   cartesian coordinates correspond to positive values of A (unlike in the 
+%   CIPIC coordinate system, where these positions correspond to negative 
+%   values).
 %
 %   See also CIPICI2SOFAC, SOFAS2SOFAC, SOFAC2SOFAS.
 
@@ -39,7 +28,7 @@ function varargout = sofaC2cipicI(varargin)
 %   
 %   MIT License
 %   
-%   Copyright (c) 2019 Princeton University
+%   Copyright (c) 2020 Princeton University
 %   
 %   Permission is hereby granted, free of charge, to any person obtaining a
 %   copy of this software and associated documentation files (the 
@@ -61,31 +50,63 @@ function varargout = sofaC2cipicI(varargin)
 %   SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 %   =======================================================================
 
-narginchk(1,5);
+narginchk(1,4);
 
-validateattributes(varargin{1},{'double'},{'2d','nonempty','nonnan',...
-    'finite','real'},'sofaC2cipicI','X or SC',1);
-switch size(varargin{1},2)
-    case 1
-        x = shiftdim(varargin{1});
-        validateattributes(x,{'double'},{'vector','nonempty','nonnan',...
-            'finite','real'},'sofaC2cipicI','X',1);
-        xLen = length(x);
-        y = shiftdim(varargin{2});
-        validateattributes(y,{'double'},{'vector','nonempty','nonnan',...
-            'finite','real','numel',xLen},'sofaC2cipicI','Y',2);
-        z = shiftdim(varargin{3});
-        validateattributes(z,{'double'},{'vector','nonempty','nonnan',...
-            'finite','real','numel',xLen},'sofaC2cipicI','Z',3);
-    case 3
-        SC = varargin{1};
-        validateattributes(SC,{'double'},{'2d','nonempty','nonnan',...
-            'finite','real','size',[NaN,3]},'sofaC2cipicI','SC',1);
-        x = SC(:,1);
-        y = SC(:,2);
-        z = SC(:,3);
-    otherwise
-        error('First input has invalid dimensions.')
+indx = find(strcmpi(varargin,'flipAz'),1);
+if isempty(indx)
+    switch nargin
+        case 1
+            singleArgFlag = true;
+            x = varargin{1};
+            validateattributes(x,{'numeric'},{'2d','nonempty','finite',...
+                'real','size',[NaN,3]},'sofaC2cipicI','SC',1)
+            z = x(:,3);
+            y = x(:,2);
+            x = x(:,1);
+        case 3
+            singleArgFlag = false;
+            x = varargin{1};
+            y = varargin{2};
+            z = varargin{3};
+            
+            validateattributes(x,{'numeric'},{'vector','finite','real'},...
+                'sofaC2cipicI','X',1)
+            validateattributes(y,{'numeric'},{'vector','finite','real',...
+                'size',size(x)},'sofaC2cipicI','Y',2)
+            validateattributes(z,{'numeric'},{'vector','finite','real',...
+                'size',size(x)},'sofaC2cipicI','Z',3)
+        otherwise
+            error(['Invalid number/format of inputs given ''flipAz''',...
+                ' is not specified.']) 
+    end
+    flipAzFlag = false;
+else 
+    switch indx
+        case 2
+            singleArgFlag = true;
+            x = varargin{1};
+            validateattributes(x,{'numeric'},{'2d','nonempty','finite',...
+                'real','size',[NaN,3]},'sofaC2cipicI','SC',1)
+            z = x(:,3);
+            y = x(:,2);
+            x = x(:,1);
+        case 4
+            singleArgFlag = false;
+            x = varargin{1};
+            y = varargin{2};
+            z = varargin{3};
+            
+            validateattributes(x,{'numeric'},{'vector','finite','real'},...
+                'sofaC2cipicI','X',1)
+            validateattributes(y,{'numeric'},{'vector','finite','real',...
+                'size',size(x)},'sofaC2cipicI','Y',2)
+            validateattributes(z,{'numeric'},{'vector','finite','real',...
+                'size',size(x)},'sofaC2cipicI','Z',3)
+        otherwise
+            error(['Invalid number/format of inputs given ''flipAz''',...
+                ' is specified.'])
+    end
+    flipAzFlag = true;
 end
 
 rad = sqrt(x.^2 + y.^2 + z.^2);
@@ -97,34 +118,26 @@ end
 el = mod(atan2d(z,x),360);
 el(el >= 270) = el(el >= 270)-360;
 
-flag1 = find(strcmpi(varargin,'sofaAz'),1);
-az = el; % Initialize
-if flag1
-    subIndxs = el > 90;
-    az(subIndxs) = 180+asind(-y(subIndxs)./rad(subIndxs));
-    subIndxs = el <= 90;
-    az(subIndxs) = mod(-asind(-y(subIndxs)./rad(subIndxs)),360);
+if flipAzFlag
+    az = -asind(-y./rad);
 else
-    flag2 = find(strcmpi(varargin,'flipAz'),1);
-    if flag2
-        az = -asind(-y./rad);
-    else
-        az = asind(-y./rad);
-    end
+    az = asind(-y./rad);
 end
 
-switch nargout
-    case {0,1}
+if singleArgFlag
+    if nargout > 1
+        error('Only 1 output may be requested when input is SC.')
+    else
         varargout{1} = [az,el,rad];
-    case 2
-        varargout{1} = az;
-        varargout{2} = el;
-    case 3
+    end
+else
+    if nargout < 4
         varargout{1} = az;
         varargout{2} = el;
         varargout{3} = rad;
-    otherwise
-        error('Invalid number of requested outputs.')
+    else
+        error('Too many output arguments requested.')
+    end
 end
 
 end
