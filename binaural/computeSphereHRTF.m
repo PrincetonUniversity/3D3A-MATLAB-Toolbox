@@ -113,9 +113,8 @@ function [H,N,thVec] = computeSphereHRTF(a,r,theta,f,varargin)
 %   =======================================================================
 
 % Refs:
-%   [1]. Sridhar and Choueiri (2020) - A Revised Algorithm for Computing
-%   Head-Related Transfer Functions of a Rigid Sphere and a Formula for 
-%   Computing Low-Frequency Interaural Level Difference.
+%   [1]. Sridhar and Choueiri (2020) - A Formula for Quickly Computing the 
+%   RS-HRTF.
 %   [2]. Cooper and Bauck (1980) - On Acoustical Specification of Natural 
 %   Stereo Imaging.
 %   [3]. Duda and Martens (1998) - Range dependence of the response of a 
@@ -565,16 +564,21 @@ else % mu > 0
                     'Iteration stopped.'],N_abort)
             end
         case 'formulan'
+            % The formula is applicable for rho >= 2 only. For rho < 2, the
+            % formula with rho = 2 may be used to obtain satisfactory 
+            % results.
+            if rho < 2
+                rho = 2;
+            end
+            
             if rho == inf
-                alphaVal = 0.5471;
-                betaVal = 2.6838;
-                gammaVal = 0.8044;
+                alphaVal = 1.41;
+                betaVal = 2.73;
+                gammaVal = 0.8;
             else
-                alphaVal = ((0.5471*rho)+8.9974)/(rho-0.9998);
-                betaVal = ((2.6838*rho^2)-(8.6672*rho)+7.2079)/(rho^2-...
-                    (2.9353*rho)+2.5073);
-                gammaVal = ((0.8044*rho^2)-(2.3079*rho)+1.8737)/(rho^2-...
-                    (3.0765*rho)+2.4826);
+                alphaVal = (1.41*rho+3.9)/(rho-1.36);
+                betaVal = (2.73*rho-4.75)/(rho-1.21);
+                gammaVal = (0.8*rho-1.01)/(rho-1.45);
             end
             N = round(alphaVal+(betaVal*mu^gammaVal));
             [H,~,thVec] = computeSphereHRTF(a,r,theta,f,{'fixedn',N},...

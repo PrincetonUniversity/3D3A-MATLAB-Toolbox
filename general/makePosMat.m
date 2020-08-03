@@ -23,7 +23,7 @@ function posMat = makePosMat(uPosVecs)
 %   
 %   MIT License
 %   
-%   Copyright (c) 2019 Princeton University
+%   Copyright (c) 2020 Princeton University
 %   
 %   Permission is hereby granted, free of charge, to any person obtaining a
 %   copy of this software and associated documentation files (the 
@@ -45,12 +45,10 @@ function posMat = makePosMat(uPosVecs)
 %   SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 %   =======================================================================
 
-narginchk(1,1);
+narginchk(1,1)
 
 % Validate input
 validateattributes(uPosVecs,{'cell'},{'nonempty'},'makePosMat','UP',1)
-
-fprintf('Generating position matrix...');
 
 N = length(uPosVecs); % Count number of unique position vectors
 if N == 1
@@ -69,8 +67,8 @@ else
         currentVec = uPosVecs{N-ii+1};
         
         % Check if each element in uniquePosVecs is a scalar or vector
-        validateattributes(currentVec,{'double'},{'vector','nonempty',...
-            'finite','nonnan'},'makePosMat',['UP{',num2str(ii),'}'],1)
+        validateattributes(currentVec,{'numeric'},{'vector','finite'},...
+            'makePosMat',['UP{',num2str(ii),'}'],1)
         
         indx = 1;
         for jj = 1:repCount:cumProdVec(ii)
@@ -83,7 +81,5 @@ else
         posMat(:,(N-ii+1)) = repmat(partitionVec,numPartitions,1);
     end
 end
-
-fprintf('done!\n');
 
 end
