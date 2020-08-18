@@ -51,11 +51,11 @@ function [mE,sdE,azVec,aE,ppts] = getITDErrPerAz(ITDErr,sPos,BINFLAG)
 narginchk(2,3);
 
 % Check inputs
-validateattributes(ITDErr,{'double'},{'vector','nonnan','real','finite',...
-    'nonempty'},'getITDErrPerAz','E',1);
+validateattributes(ITDErr,{'numeric'},{'vector','real','finite'},...
+    'getITDErrPerAz','E',1);
 ITDErr = shiftdim(ITDErr); % If vector, force to column vector
 numPos = length(ITDErr);
-validateattributes(sPos,{'double'},{'2d','nonnan','real','finite',...
+validateattributes(sPos,{'numeric'},{'2d','nonnan','real','finite',...
     'nonempty','size',[numPos,3]},'getITDErrPerAz','S',2);
 
 if nargin < 3
@@ -65,7 +65,7 @@ end
 validateattributes(BINFLAG,{'logical'},{'scalar','nonnan','nonempty'},...
     'getITDErrPerAz','flag for azimuth binning',3);
 
-sDirInt = round(sofaC2cipicI(sPos,'sofaAz'),1);
+sDirInt = round(sofaC2cipicI(sPos,'flipAz'),1);
 if BINFLAG
     % Get vector of interaural azimuths as azimuths on the horizontal plane
     [~,hpIndxs] = getHPData(sPos.',sPos);   
