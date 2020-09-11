@@ -1,14 +1,4 @@
 # 3D3A-MATLAB-Toolbox
 Collection of various MATLAB functions for spatial audio processing.
 
-Note: some functions require the LTFAT MATLAB toolbox and the SOFA API.
-
-=== Related Software ===
-The Large Time-Frequency Analysis Toolbox (LTFAT)
-http://ltfat.github.io/
-
-The Spatially Oriented Format for Acoustics (SOFA) API
-https://sourceforge.net/projects/sofacoustics/
-
-MATLAB by MathWorks
-https://www.mathworks.com/products/matlab.html
+Note: Some functions require additional toolboxes and software to work. For more information, see the README file in the "dependencies" folder.
