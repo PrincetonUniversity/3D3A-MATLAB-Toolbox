@@ -27,6 +27,15 @@ function G = computeHRTFGlobalNormGain(HL,HR,S,Fs,varargin)
 %   Fc, in Hz such that the average magnitude estimate described above is 
 %   computed from 0 to (approximately) Fc Hz. As described above, the 
 %   default value of Fc is 1 kHz.
+%
+%   Note on the algorithm: This approach to normalization is used because
+%   the magnitude response of the rigid-sphere HRTF with antipodal ears is
+%   very close to 0 dB for frontal sources, *irrespective of source
+%   distance*. When the source is infinitely far away, the low-frequency
+%   magnitude response is close to 0 dB irrespective of source direction. 
+%   But for non-frontal sources and finite source distances (typically the 
+%   case for acoustically-measured HRTFs), low-frequency magnitudes can
+%   depart from 0 dB quite significantly (depending on source distance).
 
 %   =======================================================================
 %   This file is part of the 3D3A MATLAB Toolbox.
@@ -63,9 +72,9 @@ function G = computeHRTFGlobalNormGain(HL,HR,S,Fs,varargin)
 narginchk(4,6);
 
 % Validate inputs
-validateattributes(HL,{'double'},{'2d','nonempty','finite','nonnan'},...
+validateattributes(HL,{'numeric'},{'2d','nonempty','finite','nonnan'},...
     'computeHRTFGlobalNormGain','HL',1);
-validateattributes(HR,{'double'},{'2d','nonempty','finite','nonnan'},...
+validateattributes(HR,{'numeric'},{'2d','nonempty','finite','nonnan'},...
     'computeHRTFGlobalNormGain','HR',2);
 HL = shiftdim(HL); % If HL is a vector, force it to be a column vector.
 HR = shiftdim(HR);
@@ -74,10 +83,10 @@ if size(HL) ~= size(HR)
         ' same size.'])
 end
 [HLen,numPos] = size(HL);
-validateattributes(S,{'double'},{'2d','nonempty','finite','nonnan',...
+validateattributes(S,{'numeric'},{'2d','nonempty','finite','nonnan',...
     'real','size',[numPos,3]},'computeHRTFGlobalNormGain','S',3);
-validateattributes(Fs,{'double'},{'scalar','nonempty','finite','nonnan',...
-    'real','positive'},'computeHRTFGlobalNormGain','Fs',4);
+validateattributes(Fs,{'numeric'},{'scalar','nonempty','finite','real',...
+    'nonnan','positive'},'computeHRTFGlobalNormGain','Fs',4);
 
 % Parse optional inputs
 fcIndx = find(strcmpi(varargin,'fc'),1);
@@ -90,7 +99,7 @@ else
 end
 
 % Extract HRIRs corresponding to frontal position
-[HL_front,~,front_indx] = extractIR(HL,S,sofaS2sofaC([0,0,1]),true);
+[HL_front,~,front_indx] = extractIR(HL,S,[1,0,0],true);
 HR_front = HR(:,front_indx);
 
 % Compute G
