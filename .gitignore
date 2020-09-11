@@ -1,5 +1,9 @@
+# Misc. Files
 .DS_Store
+
+# MATLAB Files
 *.m~
+dependencies/*/
 
 # LaTeX Files
 *.aux
