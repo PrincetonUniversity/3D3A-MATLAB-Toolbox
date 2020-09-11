@@ -14,8 +14,8 @@ function [dataOut,posOut,sI] = spatialSort(dataIn,posIn,varargin)
 %   of SO is 1. For more information, see the COL option in SORTROWS.
 %
 %   Y = SPATIALSORT(X,P,SO,ROUND) additionally specifies the number of
-%   digits to round data in P prior to sorting. The default value is 3. For 
-%   more information, see the function ROUND.
+%   digits to round data in P prior to sorting. The default value is 5 to
+%   accommodate rounding of single precision data.
 %
 %   [Y,Q,I] = SPATIALSORT additionally returns, Q, the sorted version of P,
 %   and the sort indices, I.
@@ -90,17 +90,17 @@ function inputs = parseSpatialSortInputs(dataIn,posIn,opts)
 p = inputParser;
 
 % Required inputs
-addRequired(p,'dataIn',@(x)validateattributes(x,{'numeric','cell'},{'2d',...
-    'nonempty'},'spatialSort','X',1));
+addRequired(p,'dataIn',@(x)validateattributes(x,{'numeric','cell'},...
+    {'2d','nonempty'},'spatialSort','X',1));
 addRequired(p,'posIn',@(x)validateattributes(x,{'numeric'},{'2d',...
-    'nonempty','nonnan','finite','size',[size(dataIn,2),NaN]},...
-    'spatialSort','P',2));
+    'nonempty','finite','size',[size(dataIn,2),NaN]},'spatialSort','P',2));
 
 % Optional inputs
 addOptional(p,'SO',1,@(x)validateattributes(x,{'numeric'},{'2d',...
     'integer','positive','<=',size(posIn,2)},'spatialSort','SO',3));
-addOptional(p,'ROUND',3,@(x)validateattributes(x,{'numeric'},{'scalar',...
-    'nonempty','integer'},'spatialSort','ROUND',4));
+roundVal = double(abs(floor(log10(100*eps('single')))));
+addOptional(p,'ROUND',roundVal,@(x)validateattributes(x,{'numeric'},...
+    {'scalar','integer'},'spatialSort','ROUND',4));
 
 p.CaseSensitive = false;
 p.FunctionName = 'spatialSort';
