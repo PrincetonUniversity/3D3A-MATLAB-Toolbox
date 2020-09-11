@@ -73,7 +73,7 @@ function varargout = estimateIROnset(inputIR,varargin)
 %
 %   MIT License
 %
-%   Copyright (c) 2019 Princeton University
+%   Copyright (c) 2020 Princeton University
 %
 %   Permission is hereby granted, free of charge, to any person obtaining a
 %   copy of this software and associated documentation files (the
@@ -208,7 +208,12 @@ switch lower(METHOD{1})
         halfSpec = [zeros(1,numIRs);diag(1./(2*pi*fVec(2:nyqFreqIndx)))*...
             phaseSpec(2:nyqFreqIndx,:)];
         onsetVal = -Fs*mean(halfSpec(fLIndx:fUIndx,:),'omitnan');
-        optOut = -forceConjugateSymmetry(halfSpec);
+        negHalfSpec = -flipud(halfSpec);
+        if isodd(irLen)
+            optOut = [halfSpec;negHalfSpec(1:(nyqFreqIndx-1),:)];
+        else
+            optOut = [halfSpec;negHalfSpec(2:(nyqFreqIndx-1),:)];
+        end
     case 'mpxc'
         onsetVec = zeros(1,numIRs);
         minPhaseIR = makeMinPhaseIR(inputIR);
