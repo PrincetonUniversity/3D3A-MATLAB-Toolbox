@@ -90,7 +90,7 @@ else
             ltfatDir = dir(fullfile(depDir,'**','ltfatstart.m'));
             if ~isempty(ltfatDir)
                 addpath(ltfatDir(1).folder)
-                disp(['LTFAT downloaded succesfully and added to',...
+                disp(['LTFAT downloaded successfully and added to',...
                     ' search path.'])
             end
         end
@@ -141,7 +141,7 @@ else
             sofaDir = dir(fullfile(depDir,'**','SOFAstart.m'));
             if ~isempty(sofaDir)
                 addpath(sofaDir(1).folder)
-                disp(['SOFA API downloaded succesfully and added to',...
+                disp(['SOFA API downloaded successfully and added to',...
                     ' search path.'])
             end
         end
@@ -182,8 +182,8 @@ else
             sfsDir = dir(fullfile(depDir,'**','SFS_start.m'));
             if ~isempty(sfsDir)
                 addpath(sfsDir(1).folder)
-                disp(['SFS toolbox downloaded succesfully and added to',...
-                    ' search path.'])
+                disp(['SFS toolbox downloaded successfully and added',...
+                    ' to search path.'])
             end
         end
     end
@@ -233,7 +233,7 @@ else
             amtDir = dir(fullfile(depDir,'**','amt_start.m'));
             if ~isempty(amtDir)
                 addpath(amtDir(1).folder)
-                disp(['AMT downloaded succesfully and added to search',...
+                disp(['AMT downloaded successfully and added to search',...
                     ' path.'])
             end
         end
