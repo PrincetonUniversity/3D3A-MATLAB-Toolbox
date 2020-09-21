@@ -280,7 +280,7 @@ switch lower(METHOD{1})
         delMatDiff = diff(delayMat);
         eqChkFlag = any(delMatDiff(:));
         if ~eqChkFlag
-            varargout{1} = delayMat(1,:);
+            onsetVal = delayMat(1,:);
         else
             finalDelayVec = zeros(1,numIRs);
             for ii = 1:numIRs

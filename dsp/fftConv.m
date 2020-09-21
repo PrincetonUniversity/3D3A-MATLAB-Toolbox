@@ -103,41 +103,54 @@ end
 switch lower(TYPE)
     case 'circ'
         if hLen == xLen
-            y = ifft(fft(h).*fft(x),'symmetric');
+            Y_tf = fft(h).*fft(x);
+            fftLen = hLen;
         else
             error(['If only H and X are specified as inputs, or the',...
                 ' type of convolution is specified as ''circ'', ',...
                 'then H and X must have the same length. If H and X ',...
-                'have different lengths, specify ''padcirc'' instead.'])
+                'have different lengths, use ''padcirc'' instead.'])
         end
     case 'padcirc'
         if hLen < xLen
             padLen = xLen-hLen;
-            y = ifft(fft([h;zeros(padLen,numColsh)]).*fft(x),...
-                'symmetric');
+            Y_tf = fft([h;zeros(padLen,numColsh)]).*fft(x);
+            fftLen = xLen;
         elseif hLen > xLen
             padLen = hLen-xLen;
-            y = ifft(fft(h).*fft([x;zeros(padLen,numColsx)]),...
-                'symmetric');
+            Y_tf = fft(h).*fft([x;zeros(padLen,numColsx)]);
+            fftLen = hLen;
         else
-            y = ifft(fft(h).*fft(x),'symmetric');
+            Y_tf = fft(h).*fft(x);
+            fftLen = hLen;
         end
     case 'lin'
-        fftLen = 2^nextpow2(hLen+xLen-1);
-        yFull = ifft(fft(h,fftLen).*fft(x,fftLen),fftLen,1,'symmetric');
-        switch TRUNC
-            case 0
-                y = yFull(1:(hLen+xLen-1),:);
-            case 1
-                y = yFull(1:hLen,:);
-            case 2
-                y = yFull(1:xLen,:);
-            otherwise
-                error('Invalid TRUNC specification.')
-        end
+        fftLen = hLen+xLen-1;
+        Y_tf = fft(h,fftLen,1).*fft(x,fftLen,1);
     otherwise
         error(['Invalid specification for type of convolution. Only ',...
             '''circ'', ''padcirc'', and ''lin'' are valid.'])
+end
+
+if isreal(h) && isreal(x)
+    yFull = ifft(Y_tf,fftLen,1,'symmetric');
+else
+    yFull = ifft(Y_tf,fftLen,1);
+end
+
+if strcmpi(TYPE,'lin')
+    switch TRUNC
+        case 0
+            y = yFull;
+        case 1
+            y = yFull(1:hLen,:);
+        case 2
+            y = yFull(1:xLen,:);
+        otherwise
+            error('Invalid TRUNC specification.')
+    end
+else
+    y = yFull;
 end
 
 end
@@ -148,9 +161,9 @@ function inputs = parseFFTConvInputs(h,x,opts)
 p = inputParser;
 
 % Required inputs
-addRequired(p,'h',@(x)validateattributes(x,{'double'},{'2d','nonempty',...
+addRequired(p,'h',@(x)validateattributes(x,{'numeric'},{'2d','nonempty',...
     'nonnan','finite'},'fftConv','H',1));
-addRequired(p,'x',@(x)validateattributes(x,{'double'},{'2d','nonempty',...
+addRequired(p,'x',@(x)validateattributes(x,{'numeric'},{'2d','nonempty',...
     'nonnan','finite'},'fftConv','X',2));
 
 % Optional inputs
@@ -160,9 +173,9 @@ if length(opts) > 1
     if strcmpi(opts{1},'circ')
         warning('Ignoring TRUNC specification for option: ''circ''')
     end
-    addOptional(p,'TRUNC',0,@(x)validateattributes(x,{'double'},...
-        {'nonempty','nonnan','scalar','finite','integer','nonnegative',...
-        '<=',2},'fftConv','TRUNC'));
+    addOptional(p,'TRUNC',0,@(x)validateattributes(x,{'numeric'},...
+        {'scalar','nonnan','finite','integer','nonnegative','<=',2},...
+        'fftConv','TRUNC'));
 else
     addOptional(p,'TRUNC',0); % Not used, so no validation needed.
 end
