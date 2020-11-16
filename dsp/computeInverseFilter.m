@@ -58,7 +58,7 @@ function hInv = computeInverseFilter(h,varargin)
 %   and 0.9 (normalized with respect to the Nyquist frequency) is used to
 %   regularize each signal in h. If B is not specified, B = 1 is assumed. 
 %   To only specify B and use the default PROFILE, specify PROFILE as []. A
-%   version of this regularization approach is decribed by Kirkeby and
+%   version of this regularization approach is described by Kirkeby and
 %   Nelson [2].
 %
 %   ___ = COMPUTEINVERSEFILTER(h,'profile',{PROFILE,B,TARGET}) optionally
@@ -285,11 +285,6 @@ switch lower(TYPE)
         avgMagdB = repmat(logmean(H,wVec,[w1,w2]),hLen,1);
         halfDR = DR/2;
         H_compressed = H - avgMagdB;
-%         H_compressed = zeros(size(H));
-%         [~,w1Indx] = min(abs(wVec-w1));
-%         [~,w2Indx] = min(abs(wVec-w2));
-%         H_compressed(w1Indx:w2Indx,:) = H(w1Indx:w2Indx,:) - ...
-%             avgMagdB(w1Indx:w2Indx,:);
         H_compressed(H_compressed > halfDR) = halfDR;
         H_compressed(H_compressed < -halfDR) = -halfDR;
         H_compressed = H_compressed + avgMagdB;

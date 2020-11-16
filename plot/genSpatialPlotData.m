@@ -89,7 +89,7 @@ end
 % Generate interpolation function
 posInX = posIn(:,1);
 posInY = posIn(:,2);
-interpF = scatteredInterpolant([posInX,posInY],dataIn,'linear','none');
+interpF = scatteredInterpolant([posInX,posInY],dataIn,'linear','linear');
 
 % Extract unique position values and generate output data matrix
 if posOutFlag
