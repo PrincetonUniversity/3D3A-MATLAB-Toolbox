@@ -29,7 +29,8 @@ function [hWin,varargout] = windowSignal(h,wLen,varargin)
 %
 %   B = WINDOWSIGNAL(...,'start',S) optionally specifies the sample number
 %   at which the window is to be applied to the signal(s) in A. S must be a 
-%   positive integer.
+%   positive integer or a vector of positive integers with length equal to
+%   the number of columns in A.
 %
 %   B = WINDOWSIGNAL(...,'offset',O) optionally specifies additional sample
 %   amounts by which the window is offset prior to being applied to the 
@@ -126,10 +127,14 @@ oVec = inputs.offset;
 hLen = extras{1,1};
 numCols = extras{2,1};
 
-oVecMax = max(oVec);
+if isscalar(wS)
+    wS = wS*ones(1,numCols);
+end
+
+winLenMax = max(wS+oVec);
 % Compute maximum window length possible if input, h, is not zero-padded on
 % the right.
-noPadMaxWinLen = hLen-(wS+oVecMax);
+noPadMaxWinLen = hLen-(winLenMax);
 % Zero pad input on the right as needed.
 if wLen > noPadMaxWinLen
     h = [h;zeros(wLen-noPadMaxWinLen,numCols)];
@@ -177,10 +182,10 @@ hPadMat = h;
 winMat = zeros(hLen,numCols);
 padWinVec = [wVec;zeros(hLen-wLen,1)];
 for ii = 1:numCols
-    currentSPos = wS+oVec(ii);
+    currentSPos = wS(ii)+oVec(ii);
     currentWin = circshift(padWinVec,currentSPos);
     hWinFull = h(:,ii).*currentWin;
-    hWin(:,ii) = hWinFull(wS:(wS+wLen-1));
+    hWin(:,ii) = hWinFull(wS(ii):(wS(ii)+wLen-1));
     winMat(:,ii) = currentWin;
 end
 
@@ -201,23 +206,22 @@ function [inputs,extras] = parseWindowSignalInputs(h,wLen,opts)
 p = inputParser;
 
 % Required inputs
-addRequired(p,'h',@(x)validateattributes(x,{'double'},{'2d','nonempty',...
+addRequired(p,'h',@(x)validateattributes(x,{'numeric'},{'2d','nonempty',...
     'nonnan','finite'},'windowSignal','A',1));
 h = shiftdim(h); % If h is a vector, force to a column.
 [hLen,numCols] = size(h);
-addRequired(p,'wLen',@(x)validateattributes(x,{'double'},{'scalar',...
-    'nonempty','nonnan','finite','positive','integer'},'windowSignal',...
-    'L',2));
+addRequired(p,'wLen',@(x)validateattributes(x,{'numeric'},{'scalar',...
+    'finite','positive','integer'},'windowSignal','L',2));
 
 % Optional inputs
 addParameter(p,'wType',{'rect'},@(x)validateattributes(x,{'cell'},...
     {'nonempty','vector'},'windowSignal','TYPE for option: wType'));
-addParameter(p,'start',1,@(x)validateattributes(x,{'double'},...
-    {'scalar','nonempty','nonnan','finite','positive','integer'},...
-    'windowSignal','S for option: start'));
+addParameter(p,'start',ones(1,numCols),@(x)validateattributes(x,...
+    {'numeric'},{'vector','finite','positive','integer'},'windowSignal',...
+    'S for option: start'));
 addParameter(p,'offset',zeros(1,numCols),@(x)validateattributes(x,...
-    {'double'},{'vector','nonempty','nonnan','finite','nonnegative',...
-    'integer','numel',numCols},'windowSignal','O for option: offset'));
+    {'numeric'},{'vector','finite','nonnegative','integer','numel',...
+    numCols},'windowSignal','O for option: offset'));
 
 % Extra outputs
 extras{1,1} = hLen;
