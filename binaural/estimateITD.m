@@ -31,6 +31,11 @@ function ITD = estimateITD(hL,hR,Fs,METHOD,varargin)
 %   cross-correlating each with its corresponding minimum-phase version, 
 %   and then taking the difference between these computed onsets. For more 
 %   on the cross-correlation algorithm, see ESTIMATEIRONSET.
+%       6. 'mpxc_robust' estimates ITD accurate to a fraction of a sample
+%   by first computing the onset of windowed versions of hL and hR by 
+%   cross-correlating each with its corresponding minimum-phase version, 
+%   and then taking the difference between these computed onsets. For more 
+%   on the cross-correlation algorithm, see ESTIMATEIRONSET.
 %
 %   ITD = ESTIMATEITD(...,Name1,Value1,...) specifies optional 
 %   comma-separated pairs of Name,Value arguments, where Name is the 
@@ -148,6 +153,9 @@ if ~isempty(indx)
         hL = filter(b,a,hL);
         hR = filter(b,a,hR);
     end
+    filtFlag = true;
+else
+    filtFlag = false;
 end
 
 % Perform resampling next ('upsample' included for backwards-compatibility)
@@ -214,10 +222,20 @@ switch lower(METHOD)
         dL = estimateIROnset(hL,{'threshold',thp*100});
         dR = estimateIROnset(hR,{'threshold',thp*100});
         d = dL-dR;
-    case {'mpxc'}
+    case 'mpxc'
         dL = estimateIROnset(hL,{'mpxc'});
         dR = estimateIROnset(hR,{'mpxc'});
         d = dL-dR;
+    case 'mpxc_robust'
+        if ~filtFlag
+            d = estimateITD(hL,hR,Fs,'mpxc_robust','filter',{4,2000,...
+                'low'});
+            d = d*Fs;
+        else
+            dL = estimateIROnset(hL,{'mpxc_robust'});
+            dR = estimateIROnset(hR,{'mpxc_robust'});
+            d = dL-dR;
+        end
     otherwise
         error('Invalid input for METHOD.')
 end

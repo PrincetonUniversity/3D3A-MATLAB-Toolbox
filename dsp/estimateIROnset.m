@@ -52,6 +52,12 @@ function varargout = estimateIROnset(inputIR,varargin)
 %       not specified, the following default vector of thresholds is used:
 %       [5, 7.5, 10, 12.5, 15, 17.5, 20, 22.5, 25].
 %
+%       7. {'mpxc_robust'} estimates onset as the sample value 
+%       corresponding to the max. absolute value of the cross-correlation 
+%       spectrum of a windowed version of X and its minimum-phase version 
+%       computed using the 'makeMinPhaseIR' function. The returned sample 
+%       onset, O, is accurate to a fraction of a sample.
+%
 %   [O,S] = ESTIMATEIRONSET(X,METHOD) when METHOD{1} is either 'grpdelay'
 %   or 'phase' additionally returns the group delay or phase spectra,
 %   respectively, where S has the same dimensions as X.
@@ -324,6 +330,34 @@ switch lower(METHOD{1})
             end
             onsetVal = finalDelayVec;
         end
+    case 'mpxc_robust'
+        if numParams > 1
+            Fs = METHOD{2};
+            validateattributes(Fs,{'numeric'},{'scalar','real','finite',...
+                'nonnan','positive'},'estimateIROnset',['the value for',...
+                ' Fs when METHOD Name is ''mpxc_robust'''],2)
+        else
+            error(['Sampling rate in Hz must be specified as an input',...
+                ' when METHOD Name is ''mpxc_robust''.']);
+        end
+        
+        onsetVec = zeros(1,numIRs);
+        postMaxLen = floor(2*Fs/1000);
+        for ii = 1:numIRs
+            [~,maxIndx] = max(abs(inputIR(:,ii)));
+            winLenVec = maxIndx+postMaxLen;
+            winIR = windowSignal(inputIR(:,ii),winLenVec,'wType',{'rc',...
+                [0,postMaxLen/(2*winLenVec)]});
+            minPhaseIR = makeMinPhaseIR(winIR);
+            [xc,lagVec] = xcorr(winIR,minPhaseIR);
+            [~,lagIndex] = getInterpMax(abs(xc));
+            x1 = floor(lagIndex);
+            x2 = ceil(lagIndex);
+            m1 = lagIndex-x1;
+            m2 = x2-lagIndex;
+            onsetVec(ii) = (m2*lagVec(x1))+(m1*lagVec(x2));
+        end
+        onsetVal = onsetVec;
     otherwise
         error('Invalid METHOD Name specification.');
 end
