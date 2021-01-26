@@ -31,8 +31,8 @@ function ITD = estimateITD(hL,hR,Fs,METHOD,varargin)
 %   cross-correlating each with its corresponding minimum-phase version, 
 %   and then taking the difference between these computed onsets. For more 
 %   on the cross-correlation algorithm, see ESTIMATEIRONSET.
-%       6. 'mpxc_robust' estimates ITD accurate to a fraction of a sample
-%   by first computing the onset of windowed versions of hL and hR by 
+%       6. 'mpxc2' estimates ITD accurate to a fraction of a sample by
+%   first computing the onset of windowed versions of hL and hR by 
 %   cross-correlating each with its corresponding minimum-phase version, 
 %   and then taking the difference between these computed onsets. For more 
 %   on the cross-correlation algorithm, see ESTIMATEIRONSET.
@@ -49,9 +49,9 @@ function ITD = estimateITD(hL,hR,Fs,METHOD,varargin)
 %                   filter. For order and type specifications, see the
 %                   documentation for 'butter'. The three parameters must
 %                   be specified in the order shown above. An optional
-%                   fourth parameter may be specified as either 'zerophase'
-%                   to design a zero-phase filter, or 'minphase' to design
-%                   a minimum-phase filter.
+%                   fourth parameter may be specified as 'zerophase' to
+%                   design a zero-phase filter. Otherwise, the default
+%                   minimum-phase filter is used.
 %
 %   'resample'      Resample hL and hR prior to computing ITD. This must
 %                   be a scalar > 0 such that a value in the range (0,1)
@@ -131,31 +131,22 @@ hR = shiftdim(hR);
 
 % Perform optional filtering first
 indx = find(strcmpi(varargin,'filter'),1);
-if ~isempty(indx)
+if ~isempty(indx) && ~(strcmpi(METHOD,'mpxc2') || strcmpi(METHOD,...
+        'mpxc_robust'))
     specCell = varargin{indx+1};
     n = specCell{1,1}; % filter order; see 'butter' help
     cutoff = specCell{1,2}; % cutoff frequency in Hz
     ftype = specCell{1,3}; % filter type; see 'butter' help
     Wn = cutoff/(Fs/2);
-    [z,p,k] = butter(n,Wn,ftype); % From Signal Processing Toolbox
-    [b,a] = zp2tf(z,p,k);
+    [z,p,k] = butter(n,Wn,ftype);
+    [sos,g] = zp2sos(z,p,k);
     if length(specCell) == 4 && strcmpi(specCell{1,4},'zerophase')
-        hL = filtfilt(b,a,hL); % From Signal Processing Toolbox
-        hR = filtfilt(b,a,hR); % From Signal Processing Toolbox
-    elseif length(specCell) == 4 && strcmpi(specCell{1,4},'minphase')
-        irLen = size(hL,1);
-        imp = [1;zeros(irLen-1,1)];
-        lpf_imp = filter(b,a,imp);
-        lpf_imp_mp = makeMinPhaseIR(lpf_imp,'hilb');
-        hL = filter(lpf_imp_mp,1,hL);
-        hR = filter(lpf_imp_mp,1,hR);
+        hL = filtfilt(sos,g,hL);
+        hR = filtfilt(sos,g,hR);
     else
-        hL = filter(b,a,hL);
-        hR = filter(b,a,hR);
+        hL = g*sosfilt(sos,hL);
+        hR = g*sosfilt(sos,hR);
     end
-    filtFlag = true;
-else
-    filtFlag = false;
 end
 
 % Perform resampling next ('upsample' included for backwards-compatibility)
@@ -226,16 +217,12 @@ switch lower(METHOD)
         dL = estimateIROnset(hL,{'mpxc'});
         dR = estimateIROnset(hR,{'mpxc'});
         d = dL-dR;
-    case 'mpxc_robust'
-        if ~filtFlag
-            d = estimateITD(hL,hR,Fs,'mpxc_robust','filter',{4,2000,...
-                'low'});
-            d = d*Fs;
-        else
-            dL = estimateIROnset(hL,{'mpxc_robust'});
-            dR = estimateIROnset(hR,{'mpxc_robust'});
-            d = dL-dR;
-        end
+    case {'mpxc_robust','mpxc2'} % mpxc_robust for backwards compatibility
+        dL = estimateIROnset(hL,{'mpxc2',Fs});
+%         dL = estimateTrueIROnset(hL,floor(dL));
+        dR = estimateIROnset(hR,{'mpxc2',Fs});
+%         dR = estimateTrueIROnset(hR,floor(dR));
+        d = dL-dR;
     otherwise
         error('Invalid input for METHOD.')
 end
