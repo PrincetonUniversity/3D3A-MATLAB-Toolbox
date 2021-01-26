@@ -37,13 +37,15 @@ function varargout = estimateIROnset(inputIR,varargin)
 %       4. {'mpxc'} estimates onset as the sample value corresponding to
 %       the max. absolute value of the cross-correlation spectrum of X and
 %       its minimum-phase version computed using the 'makeMinPhaseIR'
-%       function. The returned sample onset, O, is accurate to 1 sample.
+%       function. The returned sample onset, O, is accurate to fractions of 
+%       1 sample.
 %
-%       5. {'maxzeros'} estimates onset as the sample value which results 
-%       in the IR having a maximum number of zeros inside the unit circle
-%       when the IR is shifted to begin at that sample. The returned sample 
-%       onset, O, is accurate to 1 sample. This option can result in a long
-%       computation time.
+%       5. {'mpxc2',Fs} estimates onset as the sample value corresponding   
+%       to the max. absolute value of the cross-correlation spectrum of a 
+%       windowed version of X and its minimum-phase version computed using 
+%       the 'makeMinPhaseIR' function. The returned sample onset, O, is 
+%       accurate to a fraction of a sample. Sampling rate, Fs, must be 
+%       specified in Hz.
 %
 %       6. {'multithresh',TH} where TH is a vector of threshold 
 %       percentages. This method compares the estimated onsets using
@@ -52,11 +54,17 @@ function varargout = estimateIROnset(inputIR,varargin)
 %       not specified, the following default vector of thresholds is used:
 %       [5, 7.5, 10, 12.5, 15, 17.5, 20, 22.5, 25].
 %
-%       7. {'mpxc_robust'} estimates onset as the sample value 
-%       corresponding to the max. absolute value of the cross-correlation 
-%       spectrum of a windowed version of X and its minimum-phase version 
-%       computed using the 'makeMinPhaseIR' function. The returned sample 
-%       onset, O, is accurate to a fraction of a sample.
+%   `   7. {'multithresh2',TH} where TH is a vector of threshold 
+%       percentages. This method compares the estimated onsets using
+%       thresholding with each of the threshold values in TH before
+%       estimating the "best" onset. If TH is not specified, the following 
+%       default vector of thresholds is used: 5:5:60.
+%
+%       8. {'maxzeros'} estimates onset as the sample value which results 
+%       in the IR having a maximum number of zeros inside the unit circle
+%       when the IR is shifted to begin at that sample. The returned sample 
+%       onset, O, is accurate to 1 sample. This option can result in a long
+%       computation time.
 %
 %   [O,S] = ESTIMATEIRONSET(X,METHOD) when METHOD{1} is either 'grpdelay'
 %   or 'phase' additionally returns the group delay or phase spectra,
@@ -222,48 +230,48 @@ switch lower(METHOD{1})
         end
     case 'mpxc'
         onsetVec = zeros(1,numIRs);
-        minPhaseIR = makeMinPhaseIR(inputIR);
+        minPhaseIR = makeMinPhaseIR(inputIR,'hilb');
         for ii = 1:numIRs
             [xc,lagVec] = xcorr(inputIR(:,ii),minPhaseIR(:,ii));
-            [~,lagIndex] = max(abs(xc));
-            onsetVec(ii) = lagVec(lagIndex);
+            [~,lagIndex] = getInterpMax(abs(xc));
+            x1 = floor(lagIndex);
+            x2 = ceil(lagIndex);
+            m = x2-lagIndex;
+            onsetVec(ii) = (m*lagVec(x1))+((1-m)*lagVec(x2));
         end
         onsetVal = onsetVec;
-    case 'maxzeros'
-        % First, get sample position of absolute maximum of each IR
-        [~,absMaxVec] = max(abs(inputIR));
+    case {'mpxc_robust','mpxc2'} % mpxc_robust for backwards compatibility
+        if numParams > 1
+            Fs = METHOD{2};
+            validateattributes(Fs,{'numeric'},{'scalar','real','finite',...
+                'nonnan','positive'},'estimateIROnset',['the value for',...
+                ' Fs when METHOD Name is ''mpxc2'''],2)
+        else
+            error(['Sampling rate in Hz must be specified as an input',...
+                ' when METHOD Name is ''mpxc2''.']);
+        end
         
-        onsetVec = absMaxVec;
-        numZIn = zeros(1,numIRs);
+        onsetVec = zeros(1,numIRs);
+        postMaxLen = floor(2*Fs/1000);
         for ii = 1:numIRs
-            cLB = 0;
-            cUB = absMaxVec(ii);
-            numShifts = cUB-cLB+1;
-            fprintf('Current bracket size: %d (LB: %d; UB: %d)\n',...
-                numShifts,cLB,cUB);
-            while numShifts > 10
-                tSVec = round(linspace(cLB,cUB,6));
-                [tO,~] = getMZOnset(inputIR(:,ii),tSVec);
-                tOIndx = find(tSVec == (tO-1),1,'last');
-                if tOIndx == 1 || tOIndx == 6
-                    cLB = tSVec(tOIndx);
-                    cUB = tSVec(tOIndx);
-                else
-                    cLB = tSVec(tOIndx-1);
-                    cUB = tSVec(tOIndx+1);
-                end
-                numShifts = cUB-cLB+1;
-                fprintf('Current bracket size: %d (LB: %d; UB: %d)\n',...
-                    numShifts,cLB,cUB);
-            end
-            
-            % Determine final shift vector
-            shiftVec = cLB:cUB;
-            [onsetVec(ii),numZIn(ii)] = getMZOnset(inputIR(:,ii),shiftVec);
+            [~,maxIndx] = max(abs(inputIR(:,ii)));
+            winLenVec = maxIndx+postMaxLen;
+            winIR = windowSignal(inputIR(:,ii),winLenVec,'wType',{'rc',...
+                [0,postMaxLen/(2*winLenVec)]});
+%             minPhaseIR = makeMinPhaseIR(inputIR(:,ii),'hilb');
+            minPhaseIR = makeMinPhaseIR(winIR,'hilb');
+%             [xc,lagVec] = xcoh(inputIR(:,ii),minPhaseIR,'unweighted',...
+%                 [500,2000]/(Fs/2));
+            [xc,lagVec] = xcoh(winIR,minPhaseIR,'unweighted',...
+                [500,1500]/(Fs/2));
+            [~,lagIndex] = getInterpMax(abs(xc));
+%             [~,lagIndex] = max(abs(xc));
+            x1 = floor(lagIndex);
+            x2 = ceil(lagIndex);
+            m = x2-lagIndex;
+            onsetVec(ii) = (m*lagVec(x1))+((1-m)*lagVec(x2));
         end
-        
         onsetVal = onsetVec;
-        optOut = numZIn;
     case 'multithresh'
         if numParams < 2
             thpVec = [5;7.5;10;12.5;15;17.5;20;22.5;25];
@@ -330,34 +338,79 @@ switch lower(METHOD{1})
             end
             onsetVal = finalDelayVec;
         end
-    case 'mpxc_robust'
-        if numParams > 1
-            Fs = METHOD{2};
-            validateattributes(Fs,{'numeric'},{'scalar','real','finite',...
-                'nonnan','positive'},'estimateIROnset',['the value for',...
-                ' Fs when METHOD Name is ''mpxc_robust'''],2)
+    case 'multithresh2'
+        if numParams < 2
+            thpVec = 5:5:60;
         else
-            error(['Sampling rate in Hz must be specified as an input',...
-                ' when METHOD Name is ''mpxc_robust''.']);
+            thpVec = METHOD{2};
+            validateattributes(thpVec,{'numeric'},{'vector','real',...
+                'finite','nonnan','nonnegative','<=',100},...
+                'estimateIROnset',['the TH value when METHOD Name is',...
+                ' ''multithresh2''.'],2)
         end
         
-        onsetVec = zeros(1,numIRs);
-        postMaxLen = floor(2*Fs/1000);
-        for ii = 1:numIRs
-            [~,maxIndx] = max(abs(inputIR(:,ii)));
-            winLenVec = maxIndx+postMaxLen;
-            winIR = windowSignal(inputIR(:,ii),winLenVec,'wType',{'rc',...
-                [0,postMaxLen/(2*winLenVec)]});
-            minPhaseIR = makeMinPhaseIR(winIR);
-            [xc,lagVec] = xcorr(winIR,minPhaseIR);
-            [~,lagIndex] = getInterpMax(abs(xc));
-            x1 = floor(lagIndex);
-            x2 = ceil(lagIndex);
-            m1 = lagIndex-x1;
-            m2 = x2-lagIndex;
-            onsetVec(ii) = (m2*lagVec(x1))+(m1*lagVec(x2));
+        % Compute onset using thresholding for each threshold in thpVec
+        numTHPs = length(thpVec);
+        delayMat = zeros(numTHPs,numIRs);
+        for ii = 1:numTHPs
+            delayMat(ii,:) = thresholdIRs(inputIR,thpVec(ii)/100);
         end
+        
+        delDiff = diff(delayMat);
+        onsetVal = zeros(1,numIRs);
+        for jj = 1:numIRs
+            changeVec = [1;find(delDiff(:,jj));numTHPs];
+            [~,maxChangeIndx] = max(diff(changeVec));
+            onsetIndxL = changeVec(maxChangeIndx);
+            onsetIndxU = changeVec(maxChangeIndx+1);
+            thpValL = thpVec(onsetIndxL);
+            thpValU = thpVec(onsetIndxU);
+            thpValRange = thpValU-thpValL;
+            tempOnset = delayMat(onsetIndxL,jj);
+            if thpValL-thpValRange < 0
+                onsetVal(1,jj) = tempOnset;
+            else
+                onsetVal(1,jj) = tempOnset-floor(thpValL/thpValRange);
+            end
+            onsetVal(1,jj) = clip(onsetVal(1,jj),1,tempOnset);
+        end
+    case 'maxzeros'
+        % First, get sample position of absolute maximum of each IR
+        [~,absMaxVec] = max(abs(inputIR));
+        
+        onsetVec = absMaxVec;
+        numZIn = zeros(1,numIRs);
+        for ii = 1:numIRs
+            cLB = 0;
+            cUB = absMaxVec(ii);
+            numShifts = cUB-cLB+1;
+            stepSize = ceil(numShifts/10);
+%             fprintf('Current bracket size: %d (LB: %d; UB: %d)\n',...
+%                 numShifts,cLB,cUB);
+            while numShifts > stepSize
+                tSVec = round(linspace(cLB,cUB,stepSize));
+                [tO,~] = getMZOnset(inputIR(1:absMaxVec(ii),ii),tSVec);
+                tOIndx = find(tSVec == (tO-1),1,'last');
+                if tOIndx == 1 || tOIndx == 6
+                    cLB = tSVec(tOIndx);
+                    cUB = tSVec(tOIndx);
+                else
+                    cLB = tSVec(tOIndx-1);
+                    cUB = tSVec(tOIndx+1);
+                end
+                numShifts = cUB-cLB+1;
+%                 fprintf('Current bracket size: %d (LB: %d; UB: %d)\n',...
+%                     numShifts,cLB,cUB);
+            end
+            
+            % Determine final shift vector
+            shiftVec = cLB:cUB;
+            [onsetVec(ii),numZIn(ii)] = getMZOnset(...
+                inputIR(1:absMaxVec(ii),ii),shiftVec);
+        end
+        
         onsetVal = onsetVec;
+        optOut = numZIn;
     otherwise
         error('Invalid METHOD Name specification.');
 end
@@ -379,17 +432,17 @@ function [O,maxN] = getMZOnset(X,S)
 
 % Compute number of zeros inside unit circle after each shift of the IR
 numShifts = length(S);
-N = zeros(numShifts,1);
+numZIn = zeros(numShifts,1);
 indx = 1;
 for ii = S
     rX = circshift(X,-ii);
     rootVec = roots(rX);
-    N(indx) = numel(find(abs(rootVec) < 1));
+    numZIn(indx) = numel(find(abs(rootVec) < 1));
     indx = indx + 1;
 end
 
 % Find position of max in numZIn
-[maxN,maxNIndx] = max(N);
+[maxN,maxNIndx] = max(numZIn);
 O = S(maxNIndx)+1;
 
 end
