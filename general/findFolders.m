@@ -17,7 +17,7 @@ function pathOut = findFolders(pathIn,folderName)
 %   
 %   MIT License
 %   
-%   Copyright (c) 2019 Princeton University
+%   Copyright (c) 2020 Princeton University
 %   
 %   Permission is hereby granted, free of charge, to any person obtaining a
 %   copy of this software and associated documentation files (the 
@@ -51,13 +51,26 @@ if exist(pathIn,'dir') ~= 7
     error('Input path, PI, not found.')
 end
 
+pathOut = {};
+% Look for F in current directory
+pathIn_foundItems = dir(fullfile(pathIn,folderName));
+if ~isempty(pathIn_foundItems)
+    % Ignore files that may have the specified folder name
+    pathIn_foundFiles = pathIn_foundItems([pathIn_foundItems.isdir].');
+    pathIn_numFoundFiles = size(pathIn_foundFiles,1);
+    for ii = 1:pathIn_numFoundFiles
+        pathToAppend = fullfile(pathIn_foundFiles(ii).folder,...
+            pathIn_foundFiles(ii).name);
+        pathOut = [pathOut; pathToAppend];
+    end
+end
+
 % Get listing of contents in input path
 pathIn_contents = dir(pathIn);
 % Extract listing of directories only
 pathIn_dirsOnly = pathIn_contents([pathIn_contents.isdir].');
 % Begin recursively searching directories for F
 pathIn_size = size(pathIn_dirsOnly,1);
-pathOut = {};
 % If pathIn_size == 2, only '.' and '..' directories exist and can be
 % ignored (it is assumed that '.' and '..' always exist)
 if pathIn_size > 2
@@ -67,15 +80,17 @@ if pathIn_size > 2
         % Ignore the '.' and '..' directories to prevent an infinite loop
         if ~strcmpi(currentName,'.') && ~strcmpi(currentName,'..')
             currentPath = fullfile(pathIn_dirsOnly(ii).folder,currentName);
+            cellToAppend = findFolders(currentPath,folderName);
+            pathOut = [pathOut; cellToAppend];
             % If a folder with the desired name is found, append path to
             % the output cell array and proceed to next folder (i.e., don't
             % look inside that folder)
-            if strcmpi(currentName,folderName)
-                pathOut = [pathOut; currentPath];
-            else % Otherwise, repeat above steps within the current folder
-                cellToAppend = findFolders(currentPath,folderName);
-                pathOut = [pathOut; cellToAppend];
-            end
+%             if strcmpi(currentName,folderName)
+%                 pathOut = [pathOut; currentPath];
+%             else % Otherwise, repeat above steps within current folder
+%                 cellToAppend = findFolders(currentPath,folderName);
+%                 pathOut = [pathOut; cellToAppend];
+%             end
         end
     end
 end

@@ -142,62 +142,18 @@ switch lower(TYPE{1})
         delR = zeros(numPos,1);
         if corrFlag
             for ii = 1:numPos
-                delL(ii) = getDel(a,c,thetaL(ii),rho,maxF);
-                delR(ii) = getDel(a,c,thetaR(ii),rho,maxF);
+                delL(ii) = computeSphereOnset(a,c,thetaL(ii),rho,maxF);
+                delR(ii) = computeSphereOnset(a,c,thetaR(ii),rho,maxF);
             end
         else
             for ii = 1:numPos
-                delL(ii) = getDel(a,c,thetaL(ii),rho);
-                delR(ii) = getDel(a,c,thetaR(ii),rho);
+                delL(ii) = computeSphereOnset(a,c,thetaL(ii),rho);
+                delR(ii) = computeSphereOnset(a,c,thetaR(ii),rho);
             end
         end
         ITD = delL-delR;
     otherwise
         error('Invalid TYPE{1} specification.')
-end
-
-end
-
-function D = getDel(a,c,T,R,F)
-%GETDEL Compute delay value
-%   D = GETDEL(A,C,T,R) computes the phase delay, D, for a given input 
-%   incidence angle, T, non-dimensional source distance, R, sphere radius,
-%   A, and speed of sound, C.
-%
-%   D = GETDEL(A,C,T,R,F) optionally includes a correction based on input
-%   frequency F, in Hz.
-
-if nargin < 5
-    corrFlag = false;
-else
-    muStar = pi*F*a/c;
-    cStar = c/(1+(0.5094*(2*muStar^2)^(-1/3)));
-    corrFlag = true;
-end
-
-if R == inf
-    if T <= 90
-        D = -cosd(T)*(a/c);
-    else
-        if corrFlag
-            D = deg2rad(T-90)*(a/cStar);
-        else
-            D = deg2rad(T-90)*(a/c);
-        end
-    end
-else
-    T0 = acosd(1/R);
-    hatG = sqrt(R^2-1);
-    G = sqrt(R^2-(2*R*cosd(T))+1);
-    if T < T0
-        D = G*(a/c);
-    else
-        if corrFlag
-            D = hatG*(a/c) + deg2rad(T-T0)*(a/cStar);
-        else
-            D = (hatG + deg2rad(T-T0))*(a/c);
-        end
-    end
 end
 
 end

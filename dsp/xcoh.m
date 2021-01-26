@@ -112,16 +112,18 @@ numRows = size(x1,1);
 switch lower(method)
     % 'weighta' and 'weightb' options included for backwards compatibility
     case {'weighted','unweighted','weighta','weightb'}
+        X1 = fft(x1,2*numRows-1);
+        X2 = fft(x2,2*numRows-1);
+        numRows = size(X1,1);
         % Compute normalized frequency indices
         fVec = linspace(0,2-(2/numRows),numRows);
         [~,fL] = min(abs(fVec-frange(1)));
         [~,fU] = min(abs(fVec-frange(2)));
-        
-        X_mask = zeros(size(x1));
+        X_mask = zeros(size(X1));
         X_mask(fL:fU,:) = 1;
         X_mask = forceConjugateSymmetry(X_mask);
-        X1 = fft(x1).*X_mask;
-        X2 = fft(x2).*X_mask;
+        X1_mask = X1.*X_mask;
+        X2_mask = X2.*X_mask;
     case 'timedomain'
         numCols = size(x1,2);
         y = zeros(2*numRows-1,numCols);
@@ -133,23 +135,29 @@ switch lower(method)
     % 'weighta' option included for backwards compatibility
     case {'weighted','weighta'}
         if isreal(x1) && isreal(x2)
-            y_un = ifft(X1.*conj(X2),'symmetric');
+            y_un = ifft(X1_mask.*conj(X2_mask),'symmetric');
         else
-            y_un = ifft(X1.*conj(X2));
+            y_un = ifft(X1_mask.*conj(X2_mask));
         end
-        x1_sq = sqrt(sum(abs(X1).^2).*sum(abs(X2).^2))*(1/numRows);
+        x1_sq = sqrt(sum(abs(X1_mask).^2).*sum(abs(X2_mask).^2))*...
+            (1/numRows);
         y = y_un./repmat(x1_sq,numRows,1);
-        lag = 0:(numRows-1);
+        shiftVal = ceil(numRows/2);
+        y = circshift(y,-shiftVal);
+        lag = -(shiftVal-1):(shiftVal-1);
     % 'weightb' option included for backwards compatibility
     case {'unweighted','weightb'}
-        if isreal(x1) && isreal(x2)
-            y_un = ifft(X_mask.*exp(-1i*angle(X1.*conj(X2))),'symmetric');       
+        if isreal(x1) && isreal(x2)      
+            y_un = ifft((abs(X_mask).^2).*exp(1i*angle(X1.*conj(X2))),...
+                'symmetric');
         else
-            y_un = ifft(X_mask.*exp(-1i*angle(X1.*conj(X2))));
+            y_un = ifft((abs(X_mask).^2).*exp(1i*angle(X1.*conj(X2))));
         end
         x1_sq = sum(abs(X_mask).^2)*(1/numRows);
         y = y_un./repmat(x1_sq,numRows,1);
-        lag = 0:(numRows-1);
+        shiftVal = ceil(numRows/2);
+        y = circshift(y,shiftVal);
+        lag = -(shiftVal-1):(shiftVal-1);
     case 'timedomain'
         for ii = 1:numCols
             [y(:,ii),lag] = xcorr(x1(:,ii),x2(:,ii),'coeff');

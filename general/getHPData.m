@@ -51,8 +51,11 @@ validateattributes(inputData,{'double'},{'2d','nonempty','nonnan',...
     'finite','size',[NaN,numPos]},'getHPData','inputData',1);
 
 % Check to see where the z-coordinate is zero. round is used to prevent
-% numerical precision errors from causing z = 0 positions to be missed.  
-hPIndxs = round(posMat(:,3),3) == 0; 
+% numerical precision errors from causing z = 0 positions to be missed.
+sDirs = sofaC2sofaS(posMat);
+sDirs(:,1:2) = round(sDirs(:,1:2));
+sPos = sofaS2sofaC(sDirs);
+hPIndxs = round(sPos(:,3),abs(floor(log10(1000*eps)))) == 0; 
 hPData = inputData(:,hPIndxs);
 
 end

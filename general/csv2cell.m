@@ -11,13 +11,14 @@ function combinedCell = csv2cell(filename)
 %   This file is part of the 3D3A MATLAB Toolbox.
 %   
 %   Contributing author(s), listed alphabetically by last name:
+%   Rahulram Sridhar <rahulram@princeton.edu>
 %   Joseph G. Tylka <josephgt@princeton.edu>
 %   3D Audio and Applied Acoustics (3D3A) Laboratory
 %   Princeton University, Princeton, New Jersey 08544, USA
 %   
 %   MIT License
 %   
-%   Copyright (c) 2018 Princeton University
+%   Copyright (c) 2020 Princeton University
 %   
 %   Permission is hereby granted, free of charge, to any person obtaining a
 %   copy of this software and associated documentation files (the 
@@ -52,7 +53,10 @@ nRows = length(notesData{1}) + 1;
 for ii = 2:nCols
     temp = length(notesData{ii}) + 1;
     if temp < nRows
-        nRows = temp;
+        for jj = 1:(nRows-temp)
+            notesData{ii}{temp+jj-1} = '';
+        end
+%         nRows = temp;
     end
 end
 combinedCell = cell(nRows,nCols);

@@ -64,7 +64,7 @@ validateattributes(Fs,{'numeric'},{'scalar','real','finite','nonnan',...
     'positive'},'getGrpDelay','Fs',2)
 
 inputIR = shiftdim(inputIR); % If inputIR is a vector, force to a column.
-irLen = size(inputIR,1);
+[irLen,numIRs] = size(inputIR);
 
 % Verify optional inputs
 if nargin < 3
@@ -95,7 +95,7 @@ skipIndxs = (abs(inputTF) < minmag);
 inputTF(skipIndxs) = 1;
 
 % See [1] for theory behind following calculation.
-grpDelaySpec = real(fft(diag(0:irLen-1)*inputIR)./inputTF);
+grpDelaySpec = real(fft(repmat((0:irLen-1).',1,numIRs).*inputIR)./inputTF);
 
 % Replace samples where above calculation would have "blown up" by 0.
 grpDelaySpec(skipIndxs) = 0;
