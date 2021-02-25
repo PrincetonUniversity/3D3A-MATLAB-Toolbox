@@ -232,7 +232,8 @@ switch lower(METHOD{1})
         onsetVec = zeros(1,numIRs);
         minPhaseIR = makeMinPhaseIR(inputIR,'hilb');
         for ii = 1:numIRs
-            [xc,lagVec] = xcorr(inputIR(:,ii),minPhaseIR(:,ii));
+            [xc,lagVec] = xcoh(inputIR(:,ii),minPhaseIR(:,ii),...
+                'timedomain');
             [~,lagIndex] = getInterpMax(abs(xc));
             x1 = floor(lagIndex);
             x2 = ceil(lagIndex);

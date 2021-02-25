@@ -74,26 +74,29 @@ Y = cell(1,numDegrees);
 if strcmpi(TYPE,'complex')
     for ii = 1:numDegrees
         numOrders = (2*n(ii))+1;
-        m = (linspace(-n(ii),n(ii),numOrders)).';
-        normTerm = sqrt((numOrders/(4*pi))*(factorial(n(ii)-abs(m)))./...
-            factorial(n(ii)+abs(m)));
-        signTerm = (-1).^abs(m); % Cancel CS phase term in legendre
-        if CSPHASE == 1
-            signTerm(ceil(numOrders/2):end) = 1; % Don't cancel CS phase
+        uIndx = n(ii)+1;
+        m = (linspace(0,n(ii),uIndx)).';
+        normTerm = sqrt((numOrders/(4*pi))*(factorial(n(ii)-m))./...
+            factorial(n(ii)+m));
+        if CSPHASE == 1 % Keep CS phase from legendre calculation
+            signTermA = ones(uIndx,1);
+            signTermB = (-1).^m;
+        else % Cancel CS phase from legendre calculation
+            signTermA = (-1).^m;
+            signTermB = ones(uIndx,1);
         end
-        Pnm = zeros(numOrders,numDirs);
-        Pnm(ceil(numOrders/2):end,:) = legendre(n(ii),sin(el));
-        % The legendre function computes associated Legendre functions, 
-        % nPm, for positive values of m for a given n. Since, for negative 
-        % m, we have nP(-m) = signTerm*normTerm*nPm, we need only flip the 
-        % above calculations to populate the first half of Pnm below.
-        if numOrders > 1
-            Pnm(1:floor(numOrders/2),:) = flipud(Pnm(...
-                ceil(numOrders/2)+1:end,:));
-        end
+        
+        Pnm = legendre(n(ii),sin(el));
         phaseTerm = exp(1i*m*(az)');
-        Y{1,ii} = (repmat(signTerm,1,numDirs).*repmat(normTerm,1,...
-            numDirs).*Pnm.*phaseTerm).';
+        YHalf = repmat(signTermA,1,numDirs).*repmat(normTerm,1,...
+            numDirs).*Pnm.*phaseTerm;
+        if numOrders > 1
+            flipYHalf = flipud(repmat(signTermB,1,numDirs).*conj(YHalf));
+            YFull = [flipYHalf(1:(uIndx-1),:);YHalf];
+        else
+            YFull = YHalf;
+        end
+        Y{1,ii} = YFull.';
     end
 elseif strcmpi(TYPE,'real')
     for ii = 1:numDegrees
@@ -101,18 +104,17 @@ elseif strcmpi(TYPE,'real')
         m = (linspace(-n(ii),n(ii),numOrders)).';
         normTerm = sqrt((numOrders*(2-(~m))/(4*pi)).*...
             (factorial(n(ii)-abs(m)))./factorial(n(ii)+abs(m)));
-        signTerm = (-1).^abs(m); % Cancel CS phase term in legendre
-        if CSPHASE == 1 
-            signTerm(ceil(numOrders/2):end) = 1; % Don't cancel CS phase
+        if CSPHASE == 1 % Keep CS phase from legendre calculation
+            signTerm = ones(numOrders,1);
+        else % Cancel CS phase from legendre calculation
+            signTerm = (-1).^abs(m);
         end
+
         Pnm = zeros(numOrders,numDirs);
         Tnm = zeros(numOrders,numDirs);
         Pnm(ceil(numOrders/2):end,:) = legendre(n(ii),sin(el));
         Tnm(ceil(numOrders/2):end,:) = cos(m(ceil(numOrders/2):end)...
             *((az).'));
-        % See note on legendre function calculation for the TYPE =
-        % 'complex' case above for an explanation of the following two
-        % calculations.
         if numOrders > 1
             Pnm(1:floor(numOrders/2),:) = flipud(Pnm(...
                 ceil(numOrders/2)+1:end,:));

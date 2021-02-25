@@ -208,7 +208,7 @@ switch lower(METHOD)
             dL = estimateIROnset(hL,{'phase',Fs,[fL,fU]});
             dR = estimateIROnset(hR,{'phase',Fs,[fL,fU]});
         end
-        d = dR-dL;
+        d = dL-dR;
     case {'thresholding','thresh'}
         dL = estimateIROnset(hL,{'threshold',thp*100});
         dR = estimateIROnset(hR,{'threshold',thp*100});

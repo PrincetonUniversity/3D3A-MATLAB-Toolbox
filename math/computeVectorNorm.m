@@ -5,10 +5,12 @@ function AN = computeVectorNorm(A,P,DIM)
 %   norm of each column is computed.
 %
 %   AN = COMPUTEVECTORNORM(A,P) computes the lP-norm. Specify P as inf for
-%   the l-infinity norm.
+%   the l-infinity norm. If P is not specified or is specified as [], a
+%   default value of 2 is used.
 %
 %   AN = COMPUTEVECTORNORM(A,P,DIM) specifies the dimension along which to
-%   perform the computation. Specify P as [] to use the default value.
+%   perform the computation. If DIM is not specified, the calculation is
+%   done along the first non-singleton dimension.
 
 %   =======================================================================
 %   This file is part of the 3D3A MATLAB Toolbox.
@@ -48,11 +50,12 @@ validateattributes(A,{'numeric'},{'2d','nonempty','nonnan','finite'},...
     'computeVectorNorm','A',1)
 
 if nargin < 3
-    DIM = find(size(A) > 1,1);
+    % Take max as shown below in case A is a scalar
+    DIM = max([1,find(size(A) > 1,1)]);
 end
 
-validateattributes(DIM,{'numeric'},{'scalar','nonempty','nonnan',...
-    'finite','positive','integer'},'computeVectorNorm','DIM',3)
+validateattributes(DIM,{'numeric'},{'scalar','nonnan','finite',...
+    'positive','integer'},'computeVectorNorm','DIM',3)
 
 if nargin < 2 || isempty(P)
     P = 2;
