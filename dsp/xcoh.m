@@ -76,7 +76,7 @@ function [y,lag] = xcoh(x1,x2,varargin)
 %       Related Transfer Functions.
 
 % Check input count
-narginchk(2,4);
+narginchk(2,5);
 
 % Validate required inputs
 validateattributes(x1,{'double'},{'2d','finite','nonnan','nonempty'},...
@@ -92,6 +92,14 @@ if size(x1) ~= size(x2)
 end
 
 % Validate optional inputs
+if nargin < 5 % Hidden input
+    matchXCorrFlag = false;
+else
+    matchXCorrFlag = varargin{3};
+    validateattributes(matchXCorrFlag,{'logical'},{'scalar','nonempty'},...
+        'xcoh','matchXCorrFlag (hidden option)',5)
+end
+
 if nargin < 4
     frange = [0,1];
 else
@@ -112,9 +120,18 @@ numRows = size(x1,1);
 switch lower(method)
     % 'weighta' and 'weightb' options included for backwards compatibility
     case {'weighted','unweighted','weighta','weightb'}
-        X1 = fft(x1,2*numRows-1);
-        X2 = fft(x2,2*numRows-1);
-        numRows = size(X1,1);
+        if matchXCorrFlag
+            mxl = numRows-1;
+            ceilLog2 = nextpow2(2*numRows-1);
+            m2 = 2^ceilLog2;
+            X1 = fft(x1,m2);
+            X2 = fft(x2,m2);
+            numRows = size(X1,1);
+        else
+            X1 = fft(x1);
+            X2 = fft(x2);
+        end
+
         % Compute normalized frequency indices
         fVec = linspace(0,2-(2/numRows),numRows);
         [~,fL] = min(abs(fVec-frange(1)));
@@ -141,10 +158,14 @@ switch lower(method)
         end
         x1_sq = sqrt(sum(abs(X1_mask).^2).*sum(abs(X2_mask).^2))*...
             (1/numRows);
-        y = y_un./repmat(x1_sq,numRows,1);
-        shiftVal = ceil(numRows/2);
-        y = circshift(y,-shiftVal);
-        lag = -(shiftVal-1):(shiftVal-1);
+        if matchXCorrFlag
+            y1 = y_un./repmat(x1_sq,numRows,1);
+            y = [y1(m2 - mxl + (1:mxl),:); y1(1:mxl+1,:)];
+            lag = -mxl:mxl;
+        else
+            y = y_un./repmat(x1_sq,numRows,1);
+            lag = 0:(numRows-1);
+        end
     % 'weightb' option included for backwards compatibility
     case {'unweighted','weightb'}
         if isreal(x1) && isreal(x2)      
@@ -154,10 +175,14 @@ switch lower(method)
             y_un = ifft((abs(X_mask).^2).*exp(1i*angle(X1.*conj(X2))));
         end
         x1_sq = sum(abs(X_mask).^2)*(1/numRows);
-        y = y_un./repmat(x1_sq,numRows,1);
-        shiftVal = ceil(numRows/2);
-        y = circshift(y,shiftVal);
-        lag = -(shiftVal-1):(shiftVal-1);
+        if matchXCorrFlag
+            y1 = y_un./repmat(x1_sq,numRows,1);
+            y = [y1(m2 - mxl + (1:mxl),:); y1(1:mxl+1,:)];
+            lag = -mxl:mxl;
+        else
+            y = y_un./repmat(x1_sq,numRows,1);
+            lag = 0:(numRows-1);
+        end
     case 'timedomain'
         for ii = 1:numCols
             [y(:,ii),lag] = xcorr(x1(:,ii),x2(:,ii),'coeff');
