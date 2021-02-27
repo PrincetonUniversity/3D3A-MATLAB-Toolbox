@@ -6,7 +6,7 @@ Some functions in the 3D3A MATLAB Toolbox require additional toolboxes, APIs and
 
 2. Connect to the internet, navigate to the 3D3A MATLAB Toolbox folder from within MATLAB and call the function "start3D3AMATLABToolbox.m" from MATLAB's Command Window. If the function does not find the required toolboxes in the MATLAB search path, the default MATLAB folder, or here in the "dependencies" folder, an attempt will be made to download them from the web and store them here in the "dependencies" folder.
 
-## List of toolboxes, APIs and software used by the 3D3A MATLAB Toolbox.
+## List of toolboxes, APIs and software used by the 3D3A MATLAB Toolbox
 
 The Large Time-Frequency Analysis Toolbox (LTFAT)
 http://ltfat.github.io/

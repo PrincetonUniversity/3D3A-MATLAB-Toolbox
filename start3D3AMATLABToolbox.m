@@ -119,24 +119,13 @@ if exist('validate_init_of_3D3AMATLABTlbx.m','file') ~= 2
         else
             disp('Could not find local copy of dependency: SOFA API.')
             disp('Attempting to download from web...')
-            url = ['https://downloads.sourceforge.net/project/',...
-                'sofacoustics/SOFA%20API%20for%20Matlab%20and%',...
-                '20Octave%201.0.4.zip?r=https%3A%2F%2Fsourceforge.net',...
-                '%2Fprojects%2Fsofacoustics%2Ffiles%2FSOFA%2520API%',...
-                '2520for%2520Matlab%2520and%2520Octave%25201.0.4.zip',...
-                '%2Fdownload&ts=1599856804'];
-            zipfilepath = fullfile(depDir,'sofa.zip');
+            url = ['https://github.com/sofacoustics/API_MO/archive/',...
+                'v1.0.4.zip'];
             try
-                outfilename = websave(zipfilepath,url);
-                try
-                    unzip(outfilename,fullfile(depDir,'sofa'));
-                    delete(outfilename)
-                    foundSOFA = true;
-                catch
-                    disp('Unable to unzip downloaded SOFA API.')
-                end
+                unzip(url,fullfile(depDir,'sofa'));
+                foundSOFA = true;
             catch
-                disp('Unable to download SOFA API.')
+                disp('Unable to download/unzip SOFA API.')
             end
             
             if foundSOFA
