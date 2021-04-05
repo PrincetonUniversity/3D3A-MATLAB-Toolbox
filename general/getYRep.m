@@ -217,7 +217,7 @@ if optFlag
     invYMat = pinv(YM);
     YC = invYMat*(ID.');
 else
-    YC = 4*pi*(repmat(WV.',dataLen,1).*ID*conj(YM)).';
+    YC = (repmat(WV.',dataLen,1).*ID*conj(YM)).';
 end
 OD = (YM*YC).';
 
