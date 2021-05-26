@@ -22,7 +22,7 @@ function w = raisedcosinewin(L,r)
 %   
 %   MIT License
 %   
-%   Copyright (c) 2018 Princeton University
+%   Copyright (c) 2021 Princeton University
 %   
 %   Permission is hereby granted, free of charge, to any person obtaining a
 %   copy of this software and associated documentation files (the 
@@ -50,10 +50,10 @@ if nargin < 2
     r = [0.5,0.5];
 end
 
-validateattributes(L,{'double'},{'scalar','nonempty','nonnan','finite',...
-    'integer','positive'},'raisedcosinewin','L',1)
-validateattributes(r,{'double'},{'vector','nonempty','nonnan','finite',...
-    'real','nonnegative','<=',1,'numel',2},'raisedcosinewin','r',2)
+validateattributes(L,{'numeric'},{'scalar','nonnan','finite','integer',...
+    'positive'},'raisedcosinewin','L',1)
+validateattributes(r,{'numeric'},{'vector','nonnan','finite','real',...
+    'nonnegative','<=',1,'numel',2},'raisedcosinewin','r',2)
 
 if (r(1)+r(2)) > 1
     error('Invalid specification of values for r. sum(r) must be <= 1.')
