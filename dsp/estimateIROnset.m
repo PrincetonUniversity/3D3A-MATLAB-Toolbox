@@ -242,31 +242,61 @@ switch lower(METHOD{1})
         end
         onsetVal = onsetVec;
     case {'mpxc_robust','mpxc2'} % mpxc_robust for backwards compatibility
-        if numParams > 1
-            Fs = METHOD{2};
-            validateattributes(Fs,{'numeric'},{'scalar','real','finite',...
-                'nonnan','positive'},'estimateIROnset',['the value for',...
-                ' Fs when METHOD Name is ''mpxc2'''],2)
-        else
-            error(['Sampling rate in Hz must be specified as an input',...
-                ' when METHOD Name is ''mpxc2''.']);
+        switch numParams
+            case 1
+                error(['Sampling rate in Hz must be specified as an',...
+                    ' when METHOD Name is ''mpxc2''.']);
+            case 2
+                Fs = METHOD{2};
+                FL = 500;
+                FU = 1500;
+                postMaxDur = 1;
+            case 3
+                Fs = METHOD{2};
+                FL = min(METHOD{3});
+                FU = max(METHOD{3});
+                postMaxDur = 1;
+            case 4
+                Fs = METHOD{2};
+                FL = min(METHOD{3});
+                FU = max(METHOD{3});
+                postMaxDur = METHOD{4};
+            otherwise
+                error('Unrecognized inputs for METHOD ''mpxc2''.')
         end
         
+        validateattributes(Fs,{'numeric'},{'scalar','real','finite',...
+            'nonnan','positive'},'estimateIROnset',['the value for',...
+            ' Fs when METHOD Name is ''mpxc2'''],2)
+        validateattributes(FL,{'numeric'},{'scalar','real','finite',...
+            'nonnan','nonnegative'},'estimateIROnset',['the value for',...
+            ' FL when METHOD Name is ''mpxc2'''],2)
+        validateattributes(FU,{'numeric'},{'scalar','real','finite',...
+            'nonnan','positive'},'estimateIROnset',['the value for',...
+            ' FU when METHOD Name is ''mpxc2'''],2)
+        validateattributes(postMaxDur,{'numeric'},{'scalar','real',...
+            'finite','nonnan','positive'},'estimateIROnset',['the',...
+            ' value for postMaxDur when METHOD Name is ''mpxc2'''],2)
+        
         onsetVec = zeros(1,numIRs);
-        postMaxLen = floor(2*Fs/1000);
+        postMaxLen = floor(postMaxDur*Fs/1000);
+        inputIRLen = size(inputIR,1);
+        maxIRLen = max([ceil(20*Fs/1000),inputIRLen]);
         for ii = 1:numIRs
             [~,maxIndx] = max(abs(inputIR(:,ii)));
             winLenVec = maxIndx+postMaxLen;
             winIR = windowSignal(inputIR(:,ii),winLenVec,'wType',{'rc',...
                 [0,postMaxLen/(2*winLenVec)]});
+            winIR = padarray(winIR,[maxIRLen-winLenVec,0],0,'post');
 %             minPhaseIR = makeMinPhaseIR(inputIR(:,ii),'hilb');
-            minPhaseIR = makeMinPhaseIR(winIR,'hilb');
 %             [xc,lagVec] = xcoh(inputIR(:,ii),minPhaseIR,'unweighted',...
-%                 [500,2000]/(Fs/2));
+%                 [FL,FU]/(Fs/2));
+            minPhaseIR = makeMinPhaseIR(winIR,'hilb');
             [xc,lagVec] = xcoh(winIR,minPhaseIR,'unweighted',...
-                [500,1500]/(Fs/2));
-            [~,lagIndex] = getInterpMax(abs(xc));
+                [FL,FU]/(Fs/2));
 %             [~,lagIndex] = max(abs(xc));
+%             onsetVec(ii) = lagVec(lagIndex);
+            [~,lagIndex] = getInterpMax(abs(xc));
             x1 = floor(lagIndex);
             x2 = ceil(lagIndex);
             m = x2-lagIndex;

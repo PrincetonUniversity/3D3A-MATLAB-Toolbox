@@ -87,7 +87,8 @@ pcRadii = sphPCData(:,3);
 
 % 3: Represent radii using spherical harmonics
 [yPCRadii,YCoeffs,YMat,degVal] = getYRep(pcRadii.',{'YDirs',pcData,'D',...
-    maxN},'TYPE',typeVal,'CSPHASE',csPhaseFlag,'checkMaxD',checkMaxDFlag);
+    maxN},'TYPE',typeVal,'CSPHASE',csPhaseFlag,'checkMaxD',...
+    logical(checkMaxDFlag));
 
 % 4: Reconstruct spherical harmonic representation of point cloud using
 % spherical harmonic representation of point radii computed in step 3.

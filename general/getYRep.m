@@ -175,7 +175,7 @@ else
         indx5 = find(strcmpi(varargin,'CSPHASE'),1);
         if ~isempty(indx5)
             if numVarArgIn > indx5
-                csPhaseFlag = varargin{indx4+1};
+                csPhaseFlag = varargin{indx5+1};
             else
                 error('Option ''CSPHASE'' must be followed by a scalar.')
             end
