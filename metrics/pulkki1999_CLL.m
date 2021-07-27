@@ -2,7 +2,7 @@ function [CLL, fc] = pulkki1999_CLL(b, Fs, fc)
 %PULKKI1999_CLL Pulkki's composite loudness level model.
 %   [CLL,FC] = PULKKI1999_CLL(B,FS) computes the composite loudness level
 %   CLL at each center frequency FC given binaural signals B at sampling
-%   rate FS.
+%   rate FS. CLL is returned in phons.
 %
 %   [CLL,~] = PULKKI1999_CLL(B,FS,FC) uses specifed center frequencies FC.
 %

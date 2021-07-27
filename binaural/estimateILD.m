@@ -87,7 +87,7 @@ end
 rawILD = mag2db(abs(fft(hR,FFTLen,1)./fft(hL,FFTLen,1)));
 if bandAvgFlag
     [ILD, fc] = computeBandAvg(rawILD,f,B,FRANGE,Fs);
-    avgILD = mean(ILD,1);
+    avgILD = mean(ILD,1,'omitnan');
 else
     ILD = rawILD;
     fc = f;
