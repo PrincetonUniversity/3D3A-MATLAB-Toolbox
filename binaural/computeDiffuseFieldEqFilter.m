@@ -4,7 +4,7 @@ function fIR = computeDiffuseFieldEqFilter(h,fS,FILTERLEN)
 %   equalization filter for a set of diffuse-field IRs given in h. h must 
 %   be a matrix with columns containing IRs corresponding to different
 %   directions. The sampling rate, fS, must be specified in Hz. The output,
-%   fIR, is a vector of length 5 ms (at the specified fS). To compute
+%   fIR, is a vector of length equal to that of the IRs in h. To compute
 %   diffuse-field IRs required as input to this function, see 
 %   COMPUTEDIFFUSEFIELDIR.
 %
@@ -51,11 +51,20 @@ if nargin < 3
     FILTERLEN = size(h,1); % Default fIR length in samples.
 end
 
-w1 = 100/(fS/2);
-w2 = 16000/(fS/2);
-eqFilterIR = computeInverseFilter(h,'gardner1994',{'avgRange',[w1,w2]});
+hLen = size(h,1);
+invFiltLen = 2*max([hLen,FILTERLEN,ceil(fS/20)])+1;
+if invFiltLen > hLen
+    hPad = padarray(h,[invFiltLen-hLen,0],0,'post');
+end
 
-fIR = makeMinPhaseIR(eqFilterIR,'hilb');
-fIR = windowSignal(fIR,FILTERLEN,'wType',{'rc',[0,0.5]});
+w1a = 200/(fS/2);
+w2a = 18000/(fS/2);
+w1i = 20/(fS/2);
+w2i = 20000/(fS/2);
+eqFilterIR = computeInverseFilter(hPad,'custom',{'avgFreqRange',...
+    [w1a,w2a],'invFreqRange',[w1i,w2i],'maxDynRange',24});
+eqFilterIR = shiftSignal(ifft(abs(fft(eqFilterIR)),'symmetric'),...
+    round(FILTERLEN/2));
+fIR = windowSignal(eqFilterIR,FILTERLEN,'wType',{'tukey',0.1});
 
 end
