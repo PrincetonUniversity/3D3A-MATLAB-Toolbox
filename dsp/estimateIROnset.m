@@ -6,14 +6,15 @@ function varargout = estimateIROnset(inputIR,varargin)
 %       If X is a matrix containing N IRs, the IRs should be stored as
 %       columns. O will then be a row vector of length N.
 %   The returned onset, O, is specified in samples and is accurate to 1 
-%   sample.
+%   sample unless the IRs are resampled (see option below).
 %
 %   O = ESTIMATEIRONSET(X,METHOD) optionally specifies the method to use
 %   when estimating onsets. METHOD must be specified as a cell array with
 %   the format {Name,Parameters}. The following may be specified:
 %       1. {'threshold',THP} where THP is the thresholding percentage to
 %       use. THP can take values in the range [0,100]. The returned sample 
-%       onset, O, is accurate to 1 sample.
+%       onset, O, is accurate to 1 sample unless the IRs are resampled (see
+%       option below).
 %
 %       2. {'grpdelay',Fs} where Fs is the sampling rate in Hz. This
 %       estimates onset as the average group delay computed between 0 and
@@ -44,7 +45,7 @@ function varargout = estimateIROnset(inputIR,varargin)
 %       to the max. absolute value of the cross-correlation spectrum of a 
 %       windowed version of X and its minimum-phase version computed using 
 %       the 'makeMinPhaseIR' function. The returned sample onset, O, is 
-%       accurate to a fraction of a sample. Sampling rate, Fs, must be 
+%       accurate to fractions of 1 sample. Sampling rate, Fs, must be 
 %       specified in Hz.
 %
 %       6. {'multithresh',TH} where TH is a vector of threshold 
@@ -73,6 +74,14 @@ function varargout = estimateIROnset(inputIR,varargin)
 %   [O,N] = ESTIMATEIRONSET(X,{'maxzeros'}) additionally returns the
 %   computed number of zeros inside the unit circle.
 %
+%   ___ = ESTIMATEIRONSET(...,'resample',F) resamples the IRs in X using a
+%   resample factor of F. For example, if F is 2, then the IRs in X are
+%   upsampled by a factor of 2. If F is 0.5, the IRs are downsampled by a
+%   factor of 2. Returned onsets are in fractions of a sample at the
+%   original sampling rate. Note that this option has an effect only when
+%   METHOD{1} is one of the following: 'threshold', 'mpxc', 'mpxc2', 
+%   'multithresh', 'multithresh2'.
+%
 %   Needs: Signal Processing Toolbox.
 %
 %   See also THRESHOLDIRS, GETGRPDELAY, MAKEMINPHASEIR.
@@ -87,7 +96,7 @@ function varargout = estimateIROnset(inputIR,varargin)
 %
 %   MIT License
 %
-%   Copyright (c) 2020 Princeton University
+%   Copyright (c) 2021 Princeton University
 %
 %   Permission is hereby granted, free of charge, to any person obtaining a
 %   copy of this software and associated documentation files (the
@@ -110,7 +119,7 @@ function varargout = estimateIROnset(inputIR,varargin)
 %   =======================================================================
 
 % Check input count
-narginchk(1,2);
+narginchk(1,4);
 
 % Validate required input
 validateattributes(inputIR,{'numeric'},{'2d','nonempty','nonnan',...
@@ -130,7 +139,20 @@ validateattributes(METHOD{1},{'char'},{'scalartext','nonempty'},...
     'estimateIROnset','the first element of METHOD',2)
 numParams = length(METHOD);
 
-[irLen,numIRs] = size(inputIR);
+indx = find(strcmpi(varargin,'resample'),1);
+if indx
+    resampFac = varargin{indx+1};
+    if resampFac == 1
+        resampIR = inputIR;
+    else
+        resampIR = resample(inputIR,resampFac,1);
+    end
+else
+    resampFac = 1;
+    resampIR = inputIR;
+end
+
+[irLen,numIRs] = size(inputIR); % This should be inputIR, not resampIR
 switch lower(METHOD{1})
     case 'threshold'
         if numParams < 2
@@ -143,7 +165,8 @@ switch lower(METHOD{1})
                 ' ''threshold'''],2)
         end
         
-        onsetVal = thresholdIRs(inputIR,thp/100);
+        onsetVal = thresholdIRs(resampIR,thp/100);
+        onsetVal = onsetVal/resampFac;
     case 'grpdelay'
         if numParams > 1
             Fs = METHOD{2};
@@ -223,16 +246,16 @@ switch lower(METHOD{1})
             phaseSpec(2:nyqFreqIndx,:)];
         onsetVal = -Fs*mean(halfSpec(fLIndx:fUIndx,:),'omitnan');
         negHalfSpec = -flipud(halfSpec);
-        if isodd(irLen)
+        if bitget(abs(irLen),1) % if irLen_orig is odd
             optOut = [halfSpec;negHalfSpec(1:(nyqFreqIndx-1),:)];
         else
             optOut = [halfSpec;negHalfSpec(2:(nyqFreqIndx-1),:)];
         end
     case 'mpxc'
         onsetVec = zeros(1,numIRs);
-        minPhaseIR = makeMinPhaseIR(inputIR,'hilb');
+        minPhaseIR = makeMinPhaseIR(resampIR,'hilb');
         for ii = 1:numIRs
-            [xc,lagVec] = xcoh(inputIR(:,ii),minPhaseIR(:,ii),...
+            [xc,lagVec] = xcoh(resampIR(:,ii),minPhaseIR(:,ii),...
                 'timedomain');
             [~,lagIndex] = getInterpMax(abs(xc));
             x1 = floor(lagIndex);
@@ -241,26 +264,47 @@ switch lower(METHOD{1})
             onsetVec(ii) = (m*lagVec(x1))+((1-m)*lagVec(x2));
         end
         onsetVal = onsetVec;
+        onsetVal = onsetVal/resampFac;
     case {'mpxc_robust','mpxc2'} % mpxc_robust for backwards compatibility
         switch numParams
             case 1
                 error(['Sampling rate in Hz must be specified as an',...
-                    ' when METHOD Name is ''mpxc2''.']);
+                    ' input when METHOD Name is ''mpxc2''.']);
             case 2
                 Fs = METHOD{2};
                 FL = 500;
                 FU = 1500;
                 postMaxDur = 1;
+                threshVal = 100;
+                floorFlag = false;
             case 3
                 Fs = METHOD{2};
                 FL = min(METHOD{3});
                 FU = max(METHOD{3});
                 postMaxDur = 1;
+                threshVal = 100;
+                floorFlag = false;
             case 4
                 Fs = METHOD{2};
                 FL = min(METHOD{3});
                 FU = max(METHOD{3});
                 postMaxDur = METHOD{4};
+                threshVal = 100;
+                floorFlag = false;
+            case 5
+                Fs = METHOD{2};
+                FL = min(METHOD{3});
+                FU = max(METHOD{3});
+                postMaxDur = METHOD{4};
+                threshVal = METHOD{5};
+                floorFlag = false;
+            case 6
+                Fs = METHOD{2};
+                FL = min(METHOD{3});
+                FU = max(METHOD{3});
+                postMaxDur = METHOD{4};
+                threshVal = METHOD{5};
+                floorFlag = METHOD{6};
             otherwise
                 error('Unrecognized inputs for METHOD ''mpxc2''.')
         end
@@ -277,15 +321,23 @@ switch lower(METHOD{1})
         validateattributes(postMaxDur,{'numeric'},{'scalar','real',...
             'finite','nonnan','positive'},'estimateIROnset',['the',...
             ' value for postMaxDur when METHOD Name is ''mpxc2'''],2)
+        validateattributes(threshVal,{'numeric'},{'scalar','real',...
+            'finite','nonnan','nonnegative'},'estimateIROnset',['the',...
+            ' value for threshVal when METHOD Name is ''mpxc2'''],2)
+        validateattributes(floorFlag,{'logical'},{'scalar'},...
+            'estimateIROnset',['the value for floorFlag when METHOD',...
+            ' Name is ''mpxc2'''],2)
         
+        Fs = resampFac*Fs;
         onsetVec = zeros(1,numIRs);
         postMaxLen = floor(postMaxDur*Fs/1000);
-        inputIRLen = size(inputIR,1);
+        inputIRLen = size(resampIR,1);
         maxIRLen = max([ceil(20*Fs/1000),inputIRLen]);
         for ii = 1:numIRs
-            [~,maxIndx] = max(abs(inputIR(:,ii)));
+            maxIndx = round(estimateIROnset(resampIR(:,ii),{'threshold',...
+                threshVal}));
             winLenVec = maxIndx+postMaxLen;
-            winIR = windowSignal(inputIR(:,ii),winLenVec,'wType',{'rc',...
+            winIR = windowSignal(resampIR(:,ii),winLenVec,'wType',{'rc',...
                 [0,postMaxLen/(2*winLenVec)]});
             winIR = padarray(winIR,[maxIRLen-winLenVec,0],0,'post');
 %             minPhaseIR = makeMinPhaseIR(inputIR(:,ii),'hilb');
@@ -302,7 +354,14 @@ switch lower(METHOD{1})
             m = x2-lagIndex;
             onsetVec(ii) = (m*lagVec(x1))+((1-m)*lagVec(x2));
         end
-        onsetVal = onsetVec;
+        
+        onsetVec = onsetVec/resampFac;
+        
+        if floorFlag
+            onsetVal = floor(onsetVec);
+        else
+            onsetVal = onsetVec;
+        end
     case 'multithresh'
         if numParams < 2
             thpVec = [5;7.5;10;12.5;15;17.5;20;22.5;25];
@@ -318,7 +377,7 @@ switch lower(METHOD{1})
         numTHPs = length(thpVec);
         delayMat = zeros(numTHPs,numIRs);
         for ii = 1:numTHPs
-            delayMat(ii,:) = thresholdIRs(inputIR,thpVec(ii)/100);
+            delayMat(ii,:) = thresholdIRs(resampIR,thpVec(ii)/100);
         end
         
         % Check if all computed thresholds are equal
@@ -369,6 +428,8 @@ switch lower(METHOD{1})
             end
             onsetVal = finalDelayVec;
         end
+        
+        onsetVal = onsetVal/resampFac;
     case 'multithresh2'
         if numParams < 2
             thpVec = 5:5:60;
@@ -384,7 +445,7 @@ switch lower(METHOD{1})
         numTHPs = length(thpVec);
         delayMat = zeros(numTHPs,numIRs);
         for ii = 1:numTHPs
-            delayMat(ii,:) = thresholdIRs(inputIR,thpVec(ii)/100);
+            delayMat(ii,:) = thresholdIRs(resampIR,thpVec(ii)/100);
         end
         
         delDiff = diff(delayMat);
@@ -405,6 +466,8 @@ switch lower(METHOD{1})
             end
             onsetVal(1,jj) = clip(onsetVal(1,jj),1,tempOnset);
         end
+        
+        onsetVal = onsetVal/resampFac;
     case 'maxzeros'
         % First, get sample position of absolute maximum of each IR
         [~,absMaxVec] = max(abs(inputIR));
