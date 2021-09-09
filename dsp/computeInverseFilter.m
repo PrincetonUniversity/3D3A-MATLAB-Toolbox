@@ -87,6 +87,21 @@ function hInv = computeInverseFilter(h,varargin)
 %       2. 'dynRange',DR - DR specifies the dynamic range, in dB, of the  
 %           inverse filter subject to: 1 <= DR <= 150.
 %
+%   ___ = COMPUTEINVERSEFILTER(h,'custom',PARAMS) returns the inverse of h 
+%   with frequency-dependent regularization that is a variant of the kind 
+%   described by Gardner and Martin [1]. PARAMS specifies parameters for
+%   regularization and must be a cell array in which the following may be 
+%   specified as Name-Value pairs.
+%       1. 'avgFreqRange',[w1,w2] - vector specifying frequency range over
+%           averaging is performed to estimate overall level . As before, 
+%           w1 and w2 are normalized frequencies. Default: [0.2,0.8]
+%       2. 'invFreqRange',[w1,w2] - vector specifying frequency range over
+%           which direct inversion is performed. As before, w1 and w2 are 
+%           normalized frequencies. Default: [0.1,0.9]
+%       2. 'maxDynRange',DR - DR specifies the maximum dynamic range, in 
+%           dB, of the inverse filter subject to: 1 <= DR <= 150. Default:
+%           24.
+%
 %   See also GETPIECEWISEPROFILE.
 
 %   =======================================================================
@@ -100,7 +115,7 @@ function hInv = computeInverseFilter(h,varargin)
 %   
 %   MIT License
 %   
-%   Copyright (c) 2018 Princeton University
+%   Copyright (c) 2021 Princeton University
 %   
 %   Permission is hereby granted, free of charge, to any person obtaining a
 %   copy of this software and associated documentation files (the 
@@ -178,9 +193,9 @@ switch lower(TYPE)
             otherwise
                 error('Invalid options specification for ''profile''.')
         end
-        validateattributes(profile,{'double'},{'2d','nonempty','nonnan',...
-            'finite'},'computeInverseFilter',['PROFILE for option:',...
-            ' ''profile'''])
+        validateattributes(profile,{'numeric'},{'2d','nonempty',...
+            'nonnan','finite'},'computeInverseFilter',['PROFILE for',...
+            ' option: ''profile'''])
         
         profile = shiftdim(profile);
         if isvector(profile)
@@ -188,9 +203,9 @@ switch lower(TYPE)
                 error(['Signals in PROFILE must have the same length',...
                     ' as signals in h'])
             else
-                validateattributes(beta,{'double'},{'vector','nonempty',...
-                    'nonnan','finite'},'computeInverseFilter',...
-                    'B for option: ''profile''')
+                validateattributes(beta,{'numeric'},{'vector',...
+                    'nonempty','nonnan','finite'},...
+                    'computeInverseFilter','B for option: ''profile''')
                 if isscalar(beta)
                     beta = beta*ones(hLen,numChs);
                 else
@@ -209,7 +224,7 @@ switch lower(TYPE)
                 error(['When PROFILE is a matrix it must have the same',...
                     ' dimensions as h'])
             else
-                validateattributes(beta,{'double'},{'2d','nonempty',...
+                validateattributes(beta,{'numeric'},{'2d','nonempty',...
                     'nonnan','finite'},'computeInverseFilter',...
                     'B for option: ''profile''')
                 if isscalar(beta)
@@ -261,7 +276,7 @@ switch lower(TYPE)
             avgRange = PARAMS{indx+1};
         end
         % Verify avgRange
-        validateattributes(avgRange,{'double'},{'vector','nonempty',...
+        validateattributes(avgRange,{'numeric'},{'vector','nonempty',...
             'nonnan','finite','real','nonnegative','numel',2,'<=',1},...
             'computeInverseFilter','avgRange')
         
@@ -273,7 +288,7 @@ switch lower(TYPE)
             DR = PARAMS{indx+1};
         end
         % Verify DR
-        validateattributes(DR,{'double'},{'scalar','nonempty','nonnan',...
+        validateattributes(DR,{'numeric'},{'scalar','nonempty','nonnan',...
             'finite','real','positive','<=',150},'computeInverseFilter',...
             'DR specification for dynRange')
         
@@ -290,6 +305,83 @@ switch lower(TYPE)
         H_compressed = H_compressed + avgMagdB;
         HInv = db2mag(-H_compressed).*exp(-1i*Hp);
         hInv = ifft(HInv,'symmetric');
+    case 'custom'
+        % Extract avgFreqRange from PARAMS
+        indx = find(strcmpi(PARAMS,'avgFreqRange'),1);
+        if isempty(indx)
+            avgFreqRange = extra{1};
+        else
+            avgFreqRange = PARAMS{indx+1};
+        end
+        % Verify avgFreqRange
+        validateattributes(avgFreqRange,{'numeric'},{'vector',...
+            'nonempty','nonnan','finite','real','nonnegative','numel',2,...
+            '<=',1},'computeInverseFilter','avgFreqRange')
+        
+        % Extract invFreqRange from PARAMS
+        indx = find(strcmpi(PARAMS,'invFreqRange'),1);
+        if isempty(indx)
+            invFreqRange = extra{2};
+        else
+            invFreqRange = PARAMS{indx+1};
+        end
+        % Verify invFreqRange
+        validateattributes(invFreqRange,{'numeric'},{'vector',...
+            'nonempty','nonnan','finite','real','nonnegative','numel',2,...
+            '<=',1},'computeInverseFilter','invFreqRange')
+        
+        % Extract maxDynRange from PARAMS
+        indx = find(strcmpi(PARAMS,'maxDynRange'),1);
+        if isempty(indx)
+            DR = extra{3};
+        else
+            DR = PARAMS{indx+1};
+        end
+        % Verify DR
+        validateattributes(DR,{'numeric'},{'scalar','nonempty','nonnan',...
+            'finite','real','positive','<=',150},'computeInverseFilter',...
+            'DR specification for maxDynRange')
+        
+        wVec = getFreqVec(2,hLen);
+        w1a = min(avgFreqRange);
+        w2a = max(avgFreqRange);
+        H = getMagSpec(h);
+        Hp = getPhaseSpec(h);
+        avgMag = repmat(logmean(H,wVec,[w1a,w2a]),hLen,1);
+        [~,w1a_indx] = findNearest(wVec,w1a,'l1');
+        [~,w2a_indx] = findNearest(wVec,w2a,'l1');
+        trueDR = max(H(w1a_indx:w2a_indx,:))./min(H(w1a_indx:w2a_indx,:));
+        setDR = min([mag2db(trueDR),DR]);
+        H_norm = mag2db(H./avgMag);
+        halfDR = setDR/2;
+        H_norm(H_norm > halfDR) = halfDR;
+        H_norm(H_norm < -halfDR) = -halfDR;
+        H_norm_clip = db2mag(H_norm).*exp(1i*Hp);
+        tempHInv = 1./H_norm_clip;
+        
+        w1i = min(invFreqRange);
+        w2i = max(invFreqRange);
+        [~,w1i_indx] = findNearest(wVec,w1i,'l1');
+        [~,w2i_indx] = findNearest(wVec,w2i,'l1');
+        leftConstValVec = abs(tempHInv(w1i_indx,:));
+        rightConstValVec = abs(tempHInv(w2i_indx,:));
+        
+        [z,p,k] = butter(4,w1i,'high');
+        [sos,g] = zp2sos(z,p,k);
+        hpfIR = g*sosfilt(sos,[1;zeros(hLen-1,1)]);
+        [z,p,k] = butter(4,w2i,'low');
+        [sos,g] = zp2sos(z,p,k);
+        lpfIR = g*sosfilt(sos,[1;zeros(hLen-1,1)]);
+        
+        HPF = getMagSpec(repmat(leftConstValVec*db2mag(3),hLen,1).*...
+            repmat(hpfIR,1,numChs));
+        LPF = getMagSpec(repmat(rightConstValVec*db2mag(3),hLen,1).*...
+            repmat(lpfIR,1,numChs));
+        tempHInv(1:w1i_indx,:) = HPF(1:w1i_indx,:).*exp(1i*angle(...
+            tempHInv(1:w1i_indx,:)));
+        tempHInv(w2i_indx:end,:) = LPF(w2i_indx:end,:).*exp(1i*angle(...
+            tempHInv(w2i_indx:end,:)));
+        hInv = ifft(tempHInv,'symmetric')./avgMag;
     otherwise
         error('Unrecognized second input.')
 end
@@ -303,7 +395,7 @@ function [inputs,extra] = parseComputeInverseFilterInputs(h,opts)
 p = inputParser;
 
 % Required inputs
-addRequired(p,'h',@(x)validateattributes(x,{'double'},{'2d','nonempty',...
+addRequired(p,'h',@(x)validateattributes(x,{'numeric'},{'2d','nonempty',...
     'nonnan','finite','real'},'computeInverseFilter','h',1));
 h = shiftdim(h); % If h is a vector, force it to be a column vector.
 
@@ -316,7 +408,7 @@ if ~isempty(opts)
         case 'piecewise'
             defaultVal = [0,0.1,0.001; 0.2,0.8,0; 0.9,1,0.001];
             addOptional(p,'PARAMS',defaultVal,@(x)validateattributes(x,...
-                {'double'},{'2d','nonempty','nonnan','finite','real',...
+                {'numeric'},{'2d','nonempty','nonnan','finite','real',...
                 'ncols',3},'computeInverseFilter',['PARAMS for option:',...
                 ' ''piecewise''']));
         case 'profile'
@@ -352,6 +444,17 @@ if ~isempty(opts)
                 'PARAMS for option: ''gardner1994'''));
             extra = {[w1,w2],DR}; % Default values returned for performing  
                                   % additional checks.
+        case 'custom'
+            DR = 24; % Default dynamic range in dB.
+            avgFreqRange = [0.2,0.8];
+            invFreqRange = [0.1,0.9];
+            defaultVal = {'avgFreqRange',avgFreqRange,'invFreqRange',...
+                invFreqRange,'maxDynRange',DR};
+            addOptional(p,'PARAMS',defaultVal,@(x)validateattributes(x,...
+                {'cell'},{'nonempty','nrows',1},'computeInverseFilter',...
+                'PARAMS for option: ''gardner1994'''));
+            % Default values returned for performing additional checks.
+            extra = {avgFreqRange,invFreqRange,DR}; 
         otherwise
             addOptional(p,'PARAMS',[]); % Unused, so no validation needed.
     end
