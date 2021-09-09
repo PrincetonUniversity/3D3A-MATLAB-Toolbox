@@ -8,7 +8,8 @@ function Hsm = fractionalOctaveSmooth(H, varargin)
 %   to be used. By default, 'tylka' is assumed.
 %
 %   HS = FRACTIONALOCTAVESMOOTH(H,N,METHOD,WINTYPE) specifies the type of
-%   the smoothing window, either 'rectangular' (default) or 'hanning'.
+%   the smoothing window, either 'rectangular' (default) or 'hann' (or 
+%   'hanning').
 %
 %   HS = FRACTIONALOCTAVESMOOTH(H,N,METHOD,WINTYPE,SCALE) performs
 %   smoothing on the specified SCALE, either 'raw', 'power' (default),

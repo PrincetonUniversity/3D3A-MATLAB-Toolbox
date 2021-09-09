@@ -20,7 +20,7 @@ function Y = logmean(Q,F,FRANGE)
 %   
 %   MIT License
 %   
-%   Copyright (c) 2018 Princeton University
+%   Copyright (c) 2021 Princeton University
 %   
 %   Permission is hereby granted, free of charge, to any person obtaining a
 %   copy of this software and associated documentation files (the 
@@ -49,8 +49,8 @@ Q(F==0,:) = [];
 F(F==0) = [];
 
 if nargin==3 && numel(FRANGE)==2
-    [~, F1] = findNearest(F,min(FRANGE));
-    [~, F2] = findNearest(F,max(FRANGE));
+    [~,F1] = findNearest(F,min(FRANGE),'l1');
+    [~,F2] = findNearest(F,max(FRANGE),'l1');
     
     if F1==F2
         warning('Only one data point within FRANGE.');

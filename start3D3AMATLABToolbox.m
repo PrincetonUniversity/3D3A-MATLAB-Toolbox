@@ -119,8 +119,8 @@ if exist('validate_init_of_3D3AMATLABTlbx.m','file') ~= 2
         else
             disp('Could not find local copy of dependency: SOFA API.')
             disp('Attempting to download from web...')
-            url = ['https://github.com/sofacoustics/API_MO/archive/',...
-                'v1.0.4.zip'];
+            url = ['https://sourceforge.net/projects/sofacoustics/',...
+                'files/latest/download'];
             try
                 unzip(url,fullfile(depDir,'sofa'));
                 foundSOFA = true;
@@ -202,10 +202,8 @@ if exist('validate_init_of_3D3AMATLABTlbx.m','file') ~= 2
         else
             disp('Could not find local copy of the dependency: AMT.')
             disp('Attempting to download from web...')
-            url = ['https://downloads.sourceforge.net/project/',...
-                'amtoolbox/amtoolbox-full-0.10.0.zip?r=https%3A%2F%2F',...
-                'sourceforge.net%2Fprojects%2Famtoolbox%2Ffiles%',...
-                '2Flatest%2Fdownload%3Fsource%3Dfiles&ts=1599858933'];
+            url = ['https://sourceforge.net/projects/amtoolbox/files/',...
+                'AMT%201.0/amtoolbox-full-1.0.0.zip/download'];
             zipfilepath = fullfile(depDir,'amt.zip');
             try
                 outfilename = websave(zipfilepath,url);
