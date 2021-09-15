@@ -1,4 +1,4 @@
-function [CLL, fc] = pulkki1999_CLL(b, Fs, fc)
+function [CLL, fc] = pulkki1999_CLL(b, Fs, fc, varargin)
 %PULKKI1999_CLL Pulkki's composite loudness level model.
 %   [CLL,FC] = PULKKI1999_CLL(B,FS) computes the composite loudness level
 %   CLL at each center frequency FC given binaural signals B at sampling
@@ -12,6 +12,7 @@ function [CLL, fc] = pulkki1999_CLL(b, Fs, fc)
 %   This file is part of the 3D3A MATLAB Toolbox.
 %   
 %   Contributing author(s), listed alphabetically by last name:
+%   Rahulram Sridhar <rahulram@princeton.edu>
 %   Joseph G. Tylka <josephgt@princeton.edu>
 %   3D Audio and Applied Acoustics (3D3A) Laboratory
 %   Princeton University, Princeton, New Jersey 08544, USA
@@ -57,10 +58,18 @@ if nargin < 3
     fc = fc(1:end-1);
 end
 
-pinkNoiseSource = dsp.ColoredNoise(1, IRLen, 1);
-x = shiftdim(step(pinkNoiseSource));
-bxL = fftConv(b(:,1),x,'lin');
-bxR = fftConv(b(:,2),x,'lin');
+indx = find(strcmpi(varargin,'uncorr'),1);
+if indx
+    pinkNoiseSourceL = dsp.ColoredNoise(1, IRLen, 1);
+    pinkNoiseSourceR = dsp.ColoredNoise(1, IRLen, 1);
+else
+    pinkNoiseSourceL = dsp.ColoredNoise(1, IRLen, 1);
+    pinkNoiseSourceR = pinkNoiseSourceL;
+end
+xL = shiftdim(step(pinkNoiseSourceL));
+xR = shiftdim(step(pinkNoiseSourceR));
+bxL = fftConv(b(:,1),xL,'lin');
+bxR = fftConv(b(:,2),xR,'lin');
 
 h = getGammatoneFilters(fc, Fs, IRLen);
 [B, A] = butter(1,1000/(Fs/2));
