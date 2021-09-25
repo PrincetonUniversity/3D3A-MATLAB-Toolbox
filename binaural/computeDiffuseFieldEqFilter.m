@@ -1,4 +1,4 @@
-function fIR = computeDiffuseFieldEqFilter(h,fS,FILTERLEN)
+function fIR = computeDiffuseFieldEqFilter(h,fS,varargin)
 %COMPUTEDIFFUSEFIELDEQFILTER Compute diffuse-field equalization filter.
 %   fIR = COMPUTEDIFFUSEFIELDEQFILTER(h,fS) computes a diffuse-field
 %   equalization filter for a set of diffuse-field IRs given in h. h must 
@@ -9,7 +9,17 @@ function fIR = computeDiffuseFieldEqFilter(h,fS,FILTERLEN)
 %   COMPUTEDIFFUSEFIELDIR.
 %
 %   fIR = COMPUTEDIFFUSEFIELDEQFILTER(...,FILTERLEN) optionally specifies
-%   the desired length of fIR in samples.
+%   the desired length of fIR in samples. Specify FILTERLEN as [] to use
+%   the default value of size(h,1) when also specifying other options (see
+%   below).
+%
+%   fIR = COMPUTEDIFFUSEFIELDEQFILTER(...,'avgFreqRange',[FL,FU]) specifies
+%   the frequency range over which avg. spectrum level (required for
+%   computing the inverse filter) is estimated. Default: [200,18000]
+%
+%   fIR = COMPUTEDIFFUSEFIELDEQFILTER(...,'invFreqRange',[FL,FU]) specifies
+%   the frequency range over which inversion is performed.
+%   Default: [20,20000]
 %
 %   See also COMPUTEDIFFUSEFIELDIR.
 
@@ -23,7 +33,7 @@ function fIR = computeDiffuseFieldEqFilter(h,fS,FILTERLEN)
 %   
 %   MIT License
 %   
-%   Copyright (c) 2018 Princeton University
+%   Copyright (c) 2021 Princeton University
 %   
 %   Permission is hereby granted, free of charge, to any person obtaining a
 %   copy of this software and associated documentation files (the 
@@ -45,10 +55,15 @@ function fIR = computeDiffuseFieldEqFilter(h,fS,FILTERLEN)
 %   SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 %   =======================================================================
 
-narginchk(2,3);
+narginchk(2,7);
 
 if nargin < 3
     FILTERLEN = size(h,1); % Default fIR length in samples.
+else
+    FILTERLEN = varargin{1};
+    if isempty(FILTERLEN)
+        FILTERLEN = size(h,1); % Default fIR length in samples.
+    end
 end
 
 hLen = size(h,1);
@@ -57,10 +72,24 @@ if invFiltLen > hLen
     hPad = padarray(h,[invFiltLen-hLen,0],0,'post');
 end
 
-w1a = 200/(fS/2);
-w2a = 18000/(fS/2);
-w1i = 20/(fS/2);
-w2i = 20000/(fS/2);
+indx = find(strcmpi(varargin,'avgFreqRange'),1);
+if isempty(indx)
+    w1a = 200/(fS/2);
+    w2a = 18000/(fS/2);
+else
+    w1a = min(varargin{indx+1})/(fS/2);
+    w2a = max(varargin{indx+1})/(fS/2);
+end
+
+indx = find(strcmpi(varargin,'invFreqRange'),1);
+if isempty(indx)
+    w1i = 20/(fS/2);
+    w2i = 20000/(fS/2);
+else
+    w1i = min(varargin{indx+1})/(fS/2);
+    w2i = max(varargin{indx+1})/(fS/2);
+end
+
 eqFilterIR = computeInverseFilter(hPad,'custom',{'avgFreqRange',...
     [w1a,w2a],'invFreqRange',[w1i,w2i],'maxDynRange',24});
 eqFilterIR = shiftSignal(ifft(abs(fft(eqFilterIR)),'symmetric'),...
