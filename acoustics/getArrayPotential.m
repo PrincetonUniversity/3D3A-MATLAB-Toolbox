@@ -23,7 +23,7 @@ function psi = getArrayPotential(a,k,r)
 %       a positive integer.
 %
 %       3. 'sourceRadii' - the radius of each source if sourceType is
-%       'baffled circular piston'. This field is ignored is sourceType is
+%       'baffled circular piston'. This field is ignored if sourceType is
 %       'point source'. This must be a numSources-length vector.
 %
 %       4. 'sourcePos' - the positions of the sources on the array in

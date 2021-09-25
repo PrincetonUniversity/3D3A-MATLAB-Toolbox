@@ -87,8 +87,13 @@ else
 end
 
 % Generate interpolation function
-posInX = posIn(:,1);
-posInY = posIn(:,2);
+if roundFlag
+    posInX = round(posIn(:,1),5);
+    posInY = round(posIn(:,2),5);
+else
+    posInX = posIn(:,1);
+    posInY = posIn(:,2);
+end
 interpF = scatteredInterpolant([posInX,posInY],dataIn,'linear','linear');
 
 % Extract unique position values and generate output data matrix
@@ -96,13 +101,8 @@ if posOutFlag
     xPos = unique(SO(:,1),'stable');
     yPos = unique(SO(:,2),'stable');
 else
-    if roundFlag
-        [xPos,~,~] = unique(round(posInX,5));
-        [yPos,~,~] = unique(round(posInY,5));
-    else
-        [xPos,~,~] = unique(posInX);
-        [yPos,~,~] = unique(posInY);
-    end
+    [xPos,~,~] = unique(posInX);
+    [yPos,~,~] = unique(posInY);
 end
 [xPosGrid,yPosGrid] = meshgrid(xPos,yPos);
 
