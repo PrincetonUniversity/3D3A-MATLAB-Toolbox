@@ -1,9 +1,20 @@
-function pathOut = findFolders(pathIn,folderName)
+function pathOut = findFolders(pathIn,folderName,varargin)
 %FINDFOLDERS Recursively search for particular folders in given path.
 %   PO = FINDFOLDERS(PI,F) recursively searches PI for folders with name
 %   given in F. If N such folders are found, N > 0, the paths to the 
 %   folders are returned in the cell array PO. If no such folders are
-%   found, PO is returned as an empty cell array.
+%   found, PO is returned as an empty cell array. By default, FINDFOLDERS
+%   returns all paths within the directory PI that contain a folder with
+%   name given in F. For example, if searching for 'B' within the folder
+%   structure: A/B/C/B, PO will contain the following directories:
+%   1) A/B 2) A/B/C/B
+%
+%   PO = FINDFOLDERS(PI,F,'first') optionally stops the search as soon as
+%   the first folder with name given in F is found. If another folder with
+%   name F is located at any level within this folder, it will not be found
+%   when this option is specified. For example, if searching for 'B' within 
+%   the folder structure: A/B/C/B, PO will contain the following 
+%   directories: 1) A/B
 %
 %   See also FINDFILES.
 
@@ -39,7 +50,7 @@ function pathOut = findFolders(pathIn,folderName)
 %   SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 %   =======================================================================
 
-narginchk(2,2);
+narginchk(2,3);
 
 % Validate inputs
 validateattributes(pathIn,{'char'},{'scalartext','nonempty'},...
@@ -47,50 +58,45 @@ validateattributes(pathIn,{'char'},{'scalartext','nonempty'},...
 validateattributes(folderName,{'char'},{'scalartext','nonempty'},...
     'findFolders','F',2);
 
+indx = find(strcmpi(varargin,'first'),1);
+if ~isempty(indx)
+    firstFlag = true;
+    firstString = 'first';
+else
+    firstFlag = false;
+    firstString = 'default';
+end
+
 if exist(pathIn,'dir') ~= 7
     error('Input path, PI, not found.')
 end
 
 pathOut = {};
-% Look for F in current directory
-pathIn_foundItems = dir(fullfile(pathIn,folderName));
-if ~isempty(pathIn_foundItems)
-    % Ignore files that may have the specified folder name
-    pathIn_foundFiles = pathIn_foundItems([pathIn_foundItems.isdir].');
-    pathIn_numFoundFiles = size(pathIn_foundFiles,1);
-    for ii = 1:pathIn_numFoundFiles
-        pathToAppend = fullfile(pathIn_foundFiles(ii).folder,...
-            pathIn_foundFiles(ii).name);
-        pathOut = [pathOut; pathToAppend];
-    end
-end
-
 % Get listing of contents in input path
 pathIn_contents = dir(pathIn);
 % Extract listing of directories only
 pathIn_dirsOnly = pathIn_contents([pathIn_contents.isdir].');
-% Begin recursively searching directories for F
 pathIn_size = size(pathIn_dirsOnly,1);
 % If pathIn_size == 2, only '.' and '..' directories exist and can be
 % ignored (it is assumed that '.' and '..' always exist)
 if pathIn_size > 2
-    % Loop through all folders in current directory
     for ii = 1:pathIn_size
         currentName = pathIn_dirsOnly(ii).name;
+        currentDir = pathIn_dirsOnly(ii).folder;
+        currentPath = fullfile(currentDir,currentName);
         % Ignore the '.' and '..' directories to prevent an infinite loop
         if ~strcmpi(currentName,'.') && ~strcmpi(currentName,'..')
-            currentPath = fullfile(pathIn_dirsOnly(ii).folder,currentName);
-            cellToAppend = findFolders(currentPath,folderName);
-            pathOut = [pathOut; cellToAppend];
-            % If a folder with the desired name is found, append path to
-            % the output cell array and proceed to next folder (i.e., don't
-            % look inside that folder)
-%             if strcmpi(currentName,folderName)
-%                 pathOut = [pathOut; currentPath];
-%             else % Otherwise, repeat above steps within current folder
-%                 cellToAppend = findFolders(currentPath,folderName);
-%                 pathOut = [pathOut; cellToAppend];
-%             end
+            if strcmpi(currentName,folderName)
+                pathOut = [pathOut;{currentPath}];
+                if ~firstFlag
+                    cellToAppend = findFolders(currentPath,folderName);
+                    pathOut = [pathOut;cellToAppend];
+                end
+            else
+                cellToAppend = findFolders(currentPath,folderName,...
+                    firstString);
+                pathOut = [pathOut;cellToAppend];
+            end
         end
     end
 end
