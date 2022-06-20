@@ -5,11 +5,11 @@ function G = computeHRTFGlobalNormGain(HL,HR,S,Fs,varargin)
 %   consisting of left-ear HRTFs, HL, and right-ear HRTFs, HR along with a
 %   source position matrix, S, and computes a global normalization gain, G,
 %   to apply to the HRTFs in HL and HR so that the estimated average 
-%   magnitude (up to 1 kHz) is 0 dB for a response that might have been 
-%   measured at the center of the head (with the head absent). Such a
+%   magnitude between 400 and 800 Hz is 0 dB for a response that might have 
+%   been measured at the center of the head (with the head absent). Such a
 %   response is estimated by averaging the left- and right-ear HRTFs for 
-%   the frontal direction (i.e., Az = 0 and El = 0 in SOFA spherical 
-%   coordinates), or the closest available such direction.
+%   the lateral directions (i.e., Az = 90, 270 and El = 0 in SOFA spherical 
+%   coordinates), or the closest available such directions.
 %
 %       HL and HR must each be an N-by-P matrix where N is the length of an
 %       individual HRIR and P is the number of source directions. The data
