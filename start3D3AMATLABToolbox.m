@@ -12,7 +12,7 @@ function start3D3AMATLABToolbox()
 %
 %   MIT License
 %
-%   Copyright (c) 2020 Princeton University
+%   Copyright (c) 2022 Princeton University
 %
 %   Permission is hereby granted, free of charge, to any person obtaining a
 %   copy of this software and associated documentation files (the
@@ -203,7 +203,7 @@ if exist('validate_init_of_3D3AMATLABTlbx.m','file') ~= 2
             disp('Could not find local copy of the dependency: AMT.')
             disp('Attempting to download from web...')
             url = ['https://sourceforge.net/projects/amtoolbox/files/',...
-                'AMT%201.0/amtoolbox-full-1.0.0.zip/download'];
+                'AMT%201.x/amtoolbox-1.2.0.zip/download'];
             zipfilepath = fullfile(depDir,'amt.zip');
             try
                 outfilename = websave(zipfilepath,url);
@@ -253,7 +253,7 @@ if exist('validate_init_of_3D3AMATLABTlbx.m','file') ~= 2
     disp('Launching available dependencies...')
     
     if foundAMT
-        amt_start; % This should also start SOFA, LTFAT, and SFS.
+        amt_start('install'); % This should also start SOFA, LTFAT, SFS.
         if foundLTFAT
             % Delete rms.m from the LTFAT toolbox due to naming conflict
             ltfatPath = fileparts(which('ltfatstart.m'));
