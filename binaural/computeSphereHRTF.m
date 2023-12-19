@@ -78,6 +78,13 @@ function [H,N,thVec] = computeSphereHRTF(a,r,theta,f,varargin)
 %       chosen sampling rate.
 %   To specify NORMLOC with default METHOD, specify METHOD as {}.
 %
+%   [H,N,T] = COMPUTESPHEREHRTF(A,R,THETA,F,METHOD,NORMLOC,'built-in')
+%   optionally allows MATLAB's built-in functions to be used to compute the
+%   values of special functions. The built-in functions employ Miller's
+%   recurrence algorithms to avoid rounding errors in the calculation of
+%   some of the special functions. Note: Specifying this option can result
+%   in very long computation times.
+%
 %   See also GETCENTRALANGLE, COMPUTESPHEREITD, COMPUTESPHEREILD.
 
 %   =======================================================================
@@ -120,7 +127,14 @@ function [H,N,thVec] = computeSphereHRTF(a,r,theta,f,varargin)
 %   [3]. Duda and Martens (1998) - Range dependence of the response of a 
 %   spherical head model.
 
-narginchk(4,7);
+narginchk(4,8);
+
+global funcFlag
+if any(strcmpi(varargin,'built-in'))
+    funcFlag = true;
+else
+    funcFlag = false;
+end
 
 if nargin < 6
     NORMLOC = 'center';
@@ -604,7 +618,12 @@ function out = computeHX(hx,m,z)
 %   2-element vector containing the values of the function for the same
 %   argument but for orders M-2 and M-1, stored in this order.
 
-out = (((2*m-1)/z)*hx(2))-hx(1);
+global funcFlag
+if funcFlag
+    out = sphericalHankelH(m,1,z);
+else
+    out = (((2*m-1)/z)*hx(2))-hx(1);
+end
 
 end
 
@@ -616,7 +635,12 @@ function out = computeDH(hf,m,z)
 %   spherical-hankel function of the first kind for the same argument, Z,
 %   but for orders M and M+1, stored in this order.
 
-out = -hf(2)+((m/z)*hf(1));
+global funcFlag
+if funcFlag
+    out = dSphericalHankelH(m,1,z);
+else
+    out = -hf(2)+((m/z)*hf(1));
+end
 
 end
 
@@ -627,7 +651,12 @@ function out = computeP(P,m,x)
 %   values of the Legendre polynomial for the same argument but for degrees
 %   M-2 and M-1, stored in this order.
 
-out = (((2*m)-1)/m)*x*P(2)-(((m-1)/m)*P(1));
+global funcFlag
+if funcFlag
+    out = legendreP(m,x);
+else
+    out = (((2*m)-1)/m)*x*P(2)-(((m-1)/m)*P(1));
+end
 
 end
 
