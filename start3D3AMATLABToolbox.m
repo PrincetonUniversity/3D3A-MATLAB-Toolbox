@@ -39,6 +39,10 @@ narginchk(0,0)
 
 if exist('validate_init_of_3D3AMATLABTlbx.m','file') ~= 2
     disp('Starting 3D3A MATLAB Toolbox...')
+    
+    % Get current working directory
+    currDir = pwd;
+    
     [toolboxDir,~,~] = fileparts(which('start3D3AMATLABToolbox'));
     depDir = fullfile(toolboxDir,'dependencies');
     
@@ -292,6 +296,9 @@ if exist('validate_init_of_3D3AMATLABTlbx.m','file') ~= 2
     
     addpath(genpath(toolboxDir))
     rmpath(genpath(fullfile(toolboxDir,'.git')))
+    
+    % Restore working directory
+    cd(currDir)
     
     disp('3D3A MATLAB Toolbox initialization complete.')
 else
